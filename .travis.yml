@@ -1,0 +1,41 @@
+language: java
+sudo: false
+jdk:
+- oraclejdk8
+- oraclejdk9
+- openjdk8
+before_install:
+- chmod +x gradlew
+script: "./gradlew junitPlatformTest"
+stages:
+- test
+- coverage
+- name: snapshot
+  if: branch != master
+- name: release
+  if: branch = master
+jobs:
+  include:
+  - stage: coverage
+    script:
+    - "./gradlew check"
+    - bash <(curl -s https://codecov.io/bash)
+    jdk: oraclejdk8
+  - stage: snapshot
+    script: "./gradlew artifactoryPublish -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER"
+    jdk: oraclejdk8
+  - stage: release
+    script: "./gradlew bintrayUpload -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dsigning.pass=$SIGN_PASS -Dbuild.number=$TRAVIS_BUILD_NUMBER"
+    jdk: oraclejdk8
+before_cache:
+- rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+cache:
+  directories:
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
+  - "$HOME/.m2/repositories/"
+env:
+  global:
+  - secure: qmLJTU5QXyGigUUjKbItFYldXNA5AscvJvXR7mUZhjwN7UTrimCyYX0TOlFlYqH2mo2W7IyvIWq1+HwiEicrAFOJ43JR+sUJEBGbgF8nAxMD5FYLESS//Eo2qo2a080vmnTe7DephUooPBUfR1Z2gX2JWeLaAPJ0wpBR+khCr4z6/QVvPxAeAs73K2GRP4TDY1Bpipbj0qhjkw0W18ipO6KnB7a/LQvgsbauzSFUfVhOaXIhuqUeX1ZFl2XgILFsVCeKj9aXMbbuNXZNgQJaf+SIMPFv/mXZ7gNzL7VDZi+iXqxhhcRLibr/s4PFIuKALoGj1h90uutQwibzzSxcX6bcb/oio1wJngqV55ucm7LCY4Ox6yvlzKYum9mEdBAA+RCEF4zl4wI6pAQtZv0kLE/WZ5+NM0pqhBO7mxTNXwctwzD+9NWE8YksI+VXg8cHlefWPiUrXKq41828VXuITo9nOxgfNwFVINUiJEjJkin/Mfz3vJ1Oqhw7vtBZuGuLZWtfXo4NDXt2zi2luWFHtf5HXAVEYKo/k1dOn+GDnsug6T+iHDw92D1bUWe1l0QfIGHER8CH4HCzWIJPTyr8C7/O+x3mYVs5brF30Ksd6phSM2oP+HsvQ9nJa6m8KF6NjE67BbxBEJKHVqnYsDbaW6qcS0onl7YVK2Fq4xVhNjI=
+  - secure: SRaGn22d8OJ5G2awh3lmgQfO9lwAWIAXqAdKZCPOnac7Fptx4lYIBUVLswBRodVf+2me6qN/bag8pTF0WicQBoxD6fdQ+J3TbsrzbkUvbjuEBnQ+889mLxkvkcLrIAMw/7c91oZGfUagyalUdGfrKYiExHN3h19lKFxwVTEI7U9Jk1tE6OkiQ88ifomXlb6n7uIHdroxFDye9TzrIAGgd4QGAzKyyqWJnelFaUWuv2AtXzkOyGZgblU9bqLuHUdNOk/Gbtd0cNL1V/7A5ckybyIsbYI6MuW0eYWeHA7pCX0O2zRzoKn5vtNWQYN5e3T1Wjukq9tf51rIzU9o79i8UuCaGUafw0UNHcoBxb83xcBzjfxYDda86jcvPfjIXxi5g2lLPNOwkCByQd0IBS/0bK+vpHQ9su9s+PR4D4R8WvZLA4BaSxDDkA65RcPsd97UHeFYq2ZVdxaPjS9Ou2KFDEFq40V8o5ekUEjpFmqahKopOXpji6kiFTfPQDVuvbsjaGeMu48ALoXL562LP0cK/0NdGZvhL9vEKk/AUexSqYfiXxxaU2XRUKi7TS8zz77qBIAibZcGpZsdkZobbwcT/3zBIZVtebXh2OLjw1Sgv4vd52S8QGabqjz/jvSuZt4CPIaF1IBb/yvOisC8aCGiy/HuIhqu9CDF+uBQ0+m+fA4=
+  - secure: zxo0/8YmIL+1PZFrOBEAB/TPoAwA2u6MJDKfCWodEy7UrchZuUT/HatQJzNvgYJX2+NZnsLt/MQvpVvOgJE/5DYLzdTqXjDe0+QQJikv4YXzyAiKkRgpjVYHb2QKMZHICawywukmnYmB1NaPt6Ur5Q5Hx4KrbLoR/NdwWGar6i3LSa4udBZ5dF7GfDA+5KvuSkDAl94SuakdH8yAuJRMYLZ815vAwfHQi4/WaB28qyUFHVr6Gt456DRpNHZA7fQ0dmMYEY0+4tq/KMgQMlyJ72xEpTCGWLl4UXSfDGlXe8p8M6SEY90qUZlyXnqA4K2DGkWD03H2+hiRuoDJFdGVYJMK/Ig6vYUkjHpaXILLSSZgsfGTelmUqomVoVTn9ez90HQHRFvS5sAO7s1MB6j1O7qD6FZNIOm+d660JFw2TqvIQlzqaQm+Vb0lM3eAimJZXuq1uz5HoyVdkSBunpWlblIiDa14veOTyuEd+YrYA2X3pqULEJ/UrZSmaSI2nKQFJhwHjMDvjl91segdxsHTBs7KDRIFMYKrVG0ikEo5Z3KxmBlqDWWeWxsKzlYdVrH6t+pSujSJrmHU+t9ugMCC1RYZe+JIps+gXVP88zsR/VhxmMgkD60x/NYum2H75y9rhkiS+szCVr7dvKqVCruccfCYf8l3mRswpV3EP1S319o=
