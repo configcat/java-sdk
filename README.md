@@ -120,7 +120,7 @@ client.getRefreshPolicy(AutoPollingPolicy.class)
         // parser.parseValue(Boolean.class, newConfiguration, "key-of-my-awesome-feature")  
     });
 ```
-You can check this in action in the [Android sample](https://github.com/ConfigCat/java-sdk/tree/dev/samples/android).
+You can check this in action in the [Android sample](https://github.com/ConfigCat/java-sdk/tree/master/samples/android).
 #### 2. Expiring cache policy
 This policy uses an expiring cache to maintain the internally stored configuration. 
 ##### Cache refresh interval 
@@ -230,6 +230,6 @@ which will initiate a new fetch and will update the local cache.
 The ConfigCat client uses the facade of [slf4j](https://www.slf4j.org) for logging.
 
 ## Samples
-* [Console](https://github.com/ConfigCat/java-sdk/tree/dev/samples/console)
-* [Web app](https://github.com/ConfigCat/java-sdk/tree/dev/samples/web)
-* [Android](https://github.com/ConfigCat/java-sdk/tree/dev/samples/android)
+* [Console](https://github.com/ConfigCat/java-sdk/tree/master/samples/console)
+* [Web app](https://github.com/ConfigCat/java-sdk/tree/master/samples/web)
+* [Android](https://github.com/ConfigCat/java-sdk/tree/master/samples/android)
