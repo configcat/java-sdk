@@ -2,7 +2,7 @@
 ConfigCat is a cloud based configuration as a service. It integrates with your apps, backends, websites, 
 and other programs, so you can configure them through [this](https://configcat.com) website even after they are deployed.
 
-[![Build Status](https://travis-ci.org/ConfigCat/java-sdk.svg?branch=master)](https://travis-ci.org/ConfigCat/java-sdk)
+[![Build Status](https://travis-ci.org/configcat/java-sdk.svg?branch=master)](https://travis-ci.org/configcat/java-sdk)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-client)
 [![Coverage Status](https://img.shields.io/codecov/c/github/ConfigCat/java-sdk.svg)](https://codecov.io/gh/ConfigCat/java-sdk)
 [![Javadocs](http://javadoc.io/badge/com.configcat/configcat-client.svg)](http://javadoc.io/doc/com.configcat/configcat-client)
