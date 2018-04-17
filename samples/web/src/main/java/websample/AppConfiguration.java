@@ -11,6 +11,6 @@ public class AppConfiguration {
     public ConfigCatClient configCatClient() {
         return ConfigCatClient
                 .newBuilder()
-                .build("samples/01");
+                .build("PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA");
     }
 }

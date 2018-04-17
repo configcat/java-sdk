@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         })
                         .build(fetcher, cache)})
-                .build("samples/01")
+                .build("PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA")
     }
 
     data class Sample(val keyBool: Boolean = false, val keyInteger: Int = 0, val keyDouble: Double = 0.0, val keyString: String = "")

@@ -4,7 +4,7 @@ public class Main {
     public static void main(String[] args) {
         ConfigCatClient client = ConfigCatClient
                 .newBuilder()
-                .build("samples/01");
+                .build("PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA");
 
         // get the configuration serialized to an object
         SampleConfig config = client.getConfiguration(SampleConfig.class, SampleConfig.Empty);
