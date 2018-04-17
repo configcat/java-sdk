@@ -24,7 +24,7 @@ public class ExpiringCachePolicy extends RefreshPolicy {
      */
     private ExpiringCachePolicy(ConfigFetcher configFetcher, ConfigCache cache, Builder builder) {
         super(configFetcher, cache);
-
+        super.fetcher().setMode("l");
         this.asyncRefresh = builder.asyncRefresh;
         this.cacheRefreshIntervalInSeconds = builder.cacheRefreshIntervalInSeconds;
         this.isFetching = new AtomicBoolean(false);

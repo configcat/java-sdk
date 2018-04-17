@@ -16,11 +16,13 @@ public class ConfigFetcher implements Closeable {
     private final OkHttpClient httpClient;
     private String url;
     private String eTag;
+    private String mode;
     private final String version;
 
     void setUrl(String url) {
         this.url = url;
     }
+    void setMode(String mode) { this.mode = mode; }
 
     /**
      * Constructs a new instance.
@@ -91,7 +93,7 @@ public class ConfigFetcher implements Closeable {
 
     Request getRequest() {
         Request.Builder builder =  new Request.Builder()
-                .addHeader("User-Agent", "ConfigCat-Java/" + this.version);
+                .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/"+ this.mode + "-" + this.version);
 
         if(this.eTag != null)
             builder.addHeader("If-None-Match", this.eTag);

@@ -15,6 +15,7 @@ public class ManualPollingPolicy extends RefreshPolicy {
      */
     public ManualPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache) {
         super(configFetcher, cache);
+        super.fetcher().setMode("m");
     }
 
     @Override

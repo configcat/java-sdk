@@ -31,7 +31,7 @@ public class AutoPollingPolicy extends RefreshPolicy {
      */
     private AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, Builder builder) {
         super(configFetcher, cache);
-
+        super.fetcher().setMode("p");
         this.listeners = new ArrayList<>();
 
         if(builder.listener != null)
