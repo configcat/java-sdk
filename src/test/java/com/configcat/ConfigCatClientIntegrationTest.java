@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigCatClientIntegrationTest {
 
-    private static final String SECRET = "TEST_SECRET";
+    private static final String APIKEY = "TEST_KEY";
     private ConfigCatClient client;
     private MockWebServer server;
 
@@ -34,7 +34,7 @@ public class ConfigCatClientIntegrationTest {
                             .asyncRefresh(true)
                             .build(configFetcher, cache);
                 })
-                .build(SECRET);
+                .build(APIKEY);
     }
 
     @AfterEach
@@ -230,7 +230,7 @@ public class ConfigCatClientIntegrationTest {
     public void getConfigurationJsonStringWithDefaultConfigTimeout() {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SECRET);
+                .build(APIKEY);
 
         // makes a call to a real url which would fail, null expected
         String config = cl.getConfigurationJsonString();
@@ -239,7 +239,7 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getConfigurationJsonStringWithDefaultConfig() {
-        ConfigCatClient cl = new ConfigCatClient(SECRET);
+        ConfigCatClient cl = new ConfigCatClient(APIKEY);
 
         // makes a call to a real url which would fail, timeout expected
         assertThrows(TimeoutException.class, () -> cl.getConfigurationJsonStringAsync().get(2, TimeUnit.SECONDS));

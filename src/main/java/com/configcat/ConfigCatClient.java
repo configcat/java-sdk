@@ -18,9 +18,9 @@ public class ConfigCatClient implements ConfigurationProvider {
     private final RefreshPolicy refreshPolicy;
     private final int maxWaitTimeForSyncCallsInSeconds;
 
-    private ConfigCatClient(String projectSecret, Builder builder) throws IllegalArgumentException {
-        if(projectSecret == null || projectSecret.isEmpty())
-            throw new IllegalArgumentException("projectSecret is null or empty");
+    private ConfigCatClient(String apiKey, Builder builder) throws IllegalArgumentException {
+        if(apiKey == null || apiKey.isEmpty())
+            throw new IllegalArgumentException("apiKey is null or empty");
 
         this.maxWaitTimeForSyncCallsInSeconds = builder.maxWaitTimeForSyncCallsInSeconds;
 
@@ -29,7 +29,7 @@ public class ConfigCatClient implements ConfigurationProvider {
                     .Builder()
                     .retryOnConnectionFailure(true)
                     .build()
-                : builder.httpClient, projectSecret);
+                : builder.httpClient, apiKey);
 
         ConfigCache cache = builder.cache == null
                 ? new InMemoryConfigCache()
@@ -44,10 +44,10 @@ public class ConfigCatClient implements ConfigurationProvider {
     /**
      * Constructs a new client instance with the default configuration.
      *
-     * @param projectSecret the token which identifies your project configuration.
+     * @param apiKey the token which identifies your project configuration.
      */
-    public ConfigCatClient(String projectSecret) {
-        this(projectSecret, newBuilder());
+    public ConfigCatClient(String apiKey) {
+        this(apiKey, newBuilder());
     }
 
     @Override
@@ -242,11 +242,11 @@ public class ConfigCatClient implements ConfigurationProvider {
         /**
          * Builds the configured {@link ConfigCatClient} instance.
          *
-         * @param projectSecret the project token.
+         * @param apiKey the project token.
          * @return the configured {@link ConfigCatClient} instance.
          */
-        public ConfigCatClient build(String projectSecret) {
-            return new ConfigCatClient(projectSecret, this);
+        public ConfigCatClient build(String apiKey) {
+            return new ConfigCatClient(apiKey, this);
         }
     }
 }

@@ -16,15 +16,15 @@ and other programs, so you can configure them through [this](https://configcat.c
 <dependency>
     <groupId>com.configcat</groupId>
     <artifactId>configcat-client</artifactId>
-    <version>1.1.2</version>
+    <version>1.1.3</version>
 </dependency>
 ```
 *Gradle:*
 ```groovy
-compile 'com.configcat:configcat-client:1.1.2'
+compile 'com.configcat:configcat-client:1.1.3'
 ```
-**2. Get your Project Secret from [ConfigCat.com](https://configcat.com) portal**
-![YourConnectionUrl](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "YourProjectToken")
+**2. Get your Api Key from [ConfigCat.com](https://configcat.com) portal**
+![YourConnectionUrl](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "ApiKey")
 
 **3. Import the ConfigCat package**
 ```java
@@ -33,7 +33,7 @@ import com.configcat.*;
 
 **4. Create a ConfigCatClient instance**
 ```java
-ConfigCatClient client = new ConfigCatClient("<PLACE-YOUR-PROJECT-SECRET-HERE>");
+ConfigCatClient client = new ConfigCatClient("<PLACE-YOUR-API-KEY-HERE>");
 ```
 **5. Get your config value**
 ```java
@@ -81,7 +81,7 @@ ConfigCatClient client = ConfigCatClient.newBuilder()
                 .httpClient(new OkHttpClient.Builder()
                             .proxy(proxy)
                             .build())
-                .build("<PLACE-YOUR-PROJECT-SECRET-HERE>");
+                .build("<PLACE-YOUR-API-KEY-HERE>");
 ```
 > As the ConfigCat client maintains the whole lifetime of the internal HttpClient, it's being closed simultaneously with the ConfigCat client, refrain from closing the HttpClient manually.
 
@@ -97,7 +97,7 @@ ConfigCatClient client = ConfigCatClient.newBuilder()
                     AutoPollingPolicy.newBuilder()
                         .autoPollIntervalInSeconds(120) // set the polling interval
                         .build(configFetcher, cache)
-                .build("<PLACE-YOUR-PROJECT-SECRET-HERE>");
+                .build("<PLACE-YOUR-API-KEY-HERE>");
 ```
 ##### Change listeners 
 You can set change listeners that will be notified when a new configuration is fetched. The policy calls the listeners only, when the new configuration is differs from the cached one.
@@ -110,7 +110,7 @@ ConfigCatClient client = ConfigCatClient.newBuilder()
                             // parser.parseValue(Boolean.class, newConfiguration, "key-of-my-awesome-feature")                            
                         })
                         .build(configFetcher, cache)
-                .build("<PLACE-YOUR-PROJECT-SECRET-HERE>");
+                .build("<PLACE-YOUR-API-KEY-HERE>");
 ```
 If you want to subscribe to the configuration changed event later in your applications lifetime, then you can do the following (this will only work when you have an auto polling refresh policy configured in the ConfigCat client):
 ```java
@@ -132,7 +132,7 @@ ConfigCatClient client = ConfigCatClient.newBuilder()
                     ExpiringCachePolicy.newBuilder()
                         .cacheRefreshIntervalInSeconds(120) // the cache will expire in 120 seconds
                         .build(configFetcher, cache)
-                .build("<PLACE-YOUR-PROJECT-SECRET-HERE>");
+                .build("<PLACE-YOUR-API-KEY-HERE>");
 ```
 ##### Async / Sync refresh
 You can define how do you want to handle the expiration of the cached configuration. If you choose asynchronous refresh then 
@@ -144,7 +144,7 @@ ConfigCatClient client = ConfigCatClient.newBuilder()
                     ExpiringCachePolicy.newBuilder()
                         .asyncRefresh(true) // the refresh will be executed asynchronously
                         .build(configFetcher, cache)
-                .build("<PLACE-YOUR-PROJECT-SECRET-HERE>");
+                .build("<PLACE-YOUR-API-KEY-HERE>");
 ```
 If you set the `.asyncRefresh()` to be `false`, the refresh operation will be awaited
 until the fetching of the new configuration is completed.
@@ -185,7 +185,7 @@ Then you can simply inject your custom policy implementation into the ConfigCat 
 ```java
 ConfigCatClient client = ConfigCatClient.newBuilder()
                 .refreshPolicy((configFetcher, cache) -> new MyCustomPolicy(configFetcher, cache)) // inject your custom policy
-                .build("<PLACE-YOUR-PROJECT-SECRET-HERE>");
+                .build("<PLACE-YOUR-API-KEY-HERE>");
 ```
 
 ### Custom Cache
@@ -211,7 +211,7 @@ Then use your custom cache implementation:
 ```java
 ConfigCatClient client = ConfigCatClient.newBuilder()
                 .cache(new MyCustomCache()) // inject your custom cache
-                .build("<PLACE-YOUR-PROJECT-SECRET-HERE>");
+                .build("<PLACE-YOUR-API-KEY-HERE>");
 ```
 
 ### Maximum wait time for synchronous calls
@@ -220,7 +220,7 @@ when a sync call takes longer than the timeout value, it'll return with the defa
 ```java
 ConfigCatClient client = ConfigCatClient.newBuilder()
                 .maxWaitTimeForSyncCallsInSeconds(2) // set the max wait time
-                .build("<PLACE-YOUR-PROJECT-SECRET-HERE>");
+                .build("<PLACE-YOUR-API-KEY-HERE>");
 ```
 ### Force refresh
 Any time you want to refresh the cached configuration with the latest one, you can call the `forceRefresh()` method of the library,

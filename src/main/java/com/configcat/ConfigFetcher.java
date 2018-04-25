@@ -28,11 +28,11 @@ public class ConfigFetcher implements Closeable {
      * Constructs a new instance.
      *
      * @param httpClient the http client.
-     * @param projectSecret the project secret.
+     * @param apiKey the api key.
      */
-    public ConfigFetcher(OkHttpClient httpClient, String projectSecret) {
+    public ConfigFetcher(OkHttpClient httpClient, String apiKey) {
         this.httpClient = httpClient;
-        this.url = "https://cdn.configcat.com/configuration-files/" + projectSecret + "/config.json";
+        this.url = "https://cdn.configcat.com/configuration-files/" + apiKey + "/config.json";
         this.version = this.getClass().getPackage().getImplementationVersion();
     }
 

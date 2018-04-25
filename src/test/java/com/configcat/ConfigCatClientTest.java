@@ -11,32 +11,32 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigCatClientTest {
 
-    private static final String SECRET = "TEST_SECRET";
+    private static final String APIKEY = "TEST_KEY";
 
     @Test
-    public void ensuresProjectSecretIsNotNull() {
+    public void ensuresApiKeyIsNotNull() {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(null));
 
-        assertEquals("projectSecret is null or empty", exception.getMessage());
+        assertEquals("apiKey is null or empty", exception.getMessage());
 
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.newBuilder().build(null));
 
-        assertEquals("projectSecret is null or empty", builderException.getMessage());
+        assertEquals("apiKey is null or empty", builderException.getMessage());
     }
 
     @Test
-    public void ensuresProjectSecretIsNotEmpty() {
+    public void ensuresApiKeyIsNotEmpty() {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(""));
 
-        assertEquals("projectSecret is null or empty", exception.getMessage());
+        assertEquals("apiKey is null or empty", exception.getMessage());
 
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.newBuilder().build(""));
 
-        assertEquals("projectSecret is null or empty", builderException.getMessage());
+        assertEquals("apiKey is null or empty", builderException.getMessage());
     }
 
     @Test
@@ -50,7 +50,7 @@ public class ConfigCatClientTest {
     public void getConfigurationJsonWithDefaultConfigTimeout() {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SECRET);
+                .build(APIKEY);
 
         // makes a call to a real url which would fail, default expected
         ConfigCatClientIntegrationTest.Sample config = cl.getConfiguration(ConfigCatClientIntegrationTest.Sample.class, ConfigCatClientIntegrationTest.Sample.Empty);
@@ -61,7 +61,7 @@ public class ConfigCatClientTest {
     public void getValueWithDefaultConfigTimeout() throws IOException {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SECRET);
+                .build(APIKEY);
 
         // makes a call to a real url which would fail, default expected
         boolean config = cl.getValue(Boolean.class, "key", true);
@@ -72,7 +72,7 @@ public class ConfigCatClientTest {
 
     @Test
     public void getPolicy() {
-        ConfigCatClient cl = new ConfigCatClient(SECRET);
+        ConfigCatClient cl = new ConfigCatClient(APIKEY);
         assertNotNull(cl.getRefreshPolicy(AutoPollingPolicy.class));
     }
 
@@ -87,7 +87,7 @@ public class ConfigCatClientTest {
                     f.setUrl(server.url("/").toString());
                     return new ManualPollingPolicy(f,c);
                 })
-                .build(SECRET);
+                .build(APIKEY);
 
         String result = "{ \"fakeKey\":\"fakeValue\" }";
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -109,7 +109,7 @@ public class ConfigCatClientTest {
                     return new ManualPollingPolicy(f,c);
                 })
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SECRET);
+                .build(APIKEY);
 
         String result = "{ \"fakeKey\":\"fakeValue\" }";
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -133,7 +133,7 @@ public class ConfigCatClientTest {
                     return new ManualPollingPolicy(f,c);
                 })
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SECRET);
+                .build(APIKEY);
 
         String badJson = "{ test: test] }";
         ConfigCatClientIntegrationTest.Sample def = new ConfigCatClientIntegrationTest.Sample();
@@ -159,7 +159,7 @@ public class ConfigCatClientTest {
                     return new ManualPollingPolicy(f,c);
                 })
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SECRET);
+                .build(APIKEY);
 
         String badJson = "{ test: test] }";
         String def = "def";
@@ -185,7 +185,7 @@ public class ConfigCatClientTest {
                     return new ManualPollingPolicy(f,c);
                 })
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SECRET);
+                .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(5, TimeUnit.SECONDS));
 
@@ -197,7 +197,7 @@ public class ConfigCatClientTest {
 
     @Test
     public void getValueInvalidArguments() {
-        ConfigCatClient client = new ConfigCatClient("secret");
+        ConfigCatClient client = new ConfigCatClient("key");
         assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class,null, false));
         assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class,"", false));
         assertThrows(IllegalArgumentException.class, () -> client.getValue(ConfigCatClientIntegrationTest.Sample.class,"key", ConfigCatClientIntegrationTest.Sample.Empty));
