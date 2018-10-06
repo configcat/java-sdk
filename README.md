@@ -16,12 +16,12 @@ and other programs, so you can configure them through [this](https://configcat.c
 <dependency>
     <groupId>com.configcat</groupId>
     <artifactId>configcat-client</artifactId>
-    <version>1.1.3</version>
+    <version>1.2.3</version>
 </dependency>
 ```
 *Gradle:*
 ```groovy
-compile 'com.configcat:configcat-client:1.1.3'
+compile 'com.configcat:configcat-client:1.2.3'
 ```
 **2. Get your Api Key from [ConfigCat.com](https://configcat.com) portal**
 ![YourConnectionUrl](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "ApiKey")
@@ -35,16 +35,23 @@ import com.configcat.*;
 ```java
 ConfigCatClient client = new ConfigCatClient("<PLACE-YOUR-API-KEY-HERE>");
 ```
-**5. Get your config value**
+**5. (Optional) Prepare a User object for rollout calculation**
 ```java
-boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "key-of-my-awesome-feature", false);
+User user = User.newBuilder()
+        .email("simple@but.awesome.com")
+        .country("Awesomnia")
+        .build("<PLACE-YOUR-USER-IDENTIFIER-HERE>");
+```
+**6. Get your config value**
+```java
+boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "key-of-my-awesome-feature", user, false);
 if(isMyAwesomeFeatureEnabled) {
     //show your awesome feature to the world!
 }
 ```
 Or use the async APIs:
 ```java
-client.getValueAsync(Boolean.class, "key-of-my-awesome-feature", false)
+client.getValueAsync(Boolean.class, "key-of-my-awesome-feature", user, false)
     .thenAccept(isMyAwesomeFeatureEnabled -> {
         if(isMyAwesomeFeatureEnabled) {
             //show your awesome feature to the world!
@@ -70,6 +77,25 @@ android {
 You also have to put this line into your manifest xml to enable the library access to the network.
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
+```
+## User object
+Percentage and targeted rollouts are calculated by the user object you can optionally pass to the configuration requests.
+The user object must be created with a **mandatory** identifier parameter which should uniquely identify each user:
+```java
+User user = User.newBuilder()
+        .build("<PLACE-YOUR-USER-IDENTIFIER-HERE>"); // mandatory
+```
+But you can also set other custom attributes if you'd like to calculate the rollout based on them:
+```java
+Map<String,String> customAttributes = new HashMap<String,String>();
+        customAttributes.put("SubscriptionType", "Free");
+        customAttributes.put("Role", "Knight of Awesomnia");
+
+User user = User.newBuilder()
+        .email("simple@but.awesome.com")
+        .country("Awesomnia")
+        .custom(customAttributes)
+        .build("<PLACE-YOUR-USER-IDENTIFIER-HERE>"); // mandatory
 ```
 ## Configuration
 ### HttpClient
@@ -107,7 +133,7 @@ ConfigCatClient client = ConfigCatClient.newBuilder()
                     AutoPollingPolicy.newBuilder()
                         .configurationChangeListener((parser, newConfiguration) -> {
                             // here you can parse the new configuration like this: 
-                            // parser.parseValue(Boolean.class, newConfiguration, "key-of-my-awesome-feature")                            
+                            // parser.parseValue(Boolean.class, newConfiguration, "key-of-my-awesome-feature", user)                            
                         })
                         .build(configFetcher, cache)
                 .build("<PLACE-YOUR-API-KEY-HERE>");
@@ -117,7 +143,7 @@ If you want to subscribe to the configuration changed event later in your applic
 client.getRefreshPolicy(AutoPollingPolicy.class)
     .addConfigurationChangeListener((parser, newConfiguration) -> {
         // here you can parse the new configuration like this: 
-        // parser.parseValue(Boolean.class, newConfiguration, "key-of-my-awesome-feature")  
+        // parser.parseValue(Boolean.class, newConfiguration, "key-of-my-awesome-feature", user)  
     });
 ```
 You can check this in action in the [Android sample](https://github.com/ConfigCat/java-sdk/tree/master/samples/android).
