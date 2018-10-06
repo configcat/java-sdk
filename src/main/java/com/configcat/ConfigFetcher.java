@@ -32,7 +32,7 @@ public class ConfigFetcher implements Closeable {
      */
     public ConfigFetcher(OkHttpClient httpClient, String apiKey) {
         this.httpClient = httpClient;
-        this.url = "https://cdn.configcat.com/configuration-files/" + apiKey + "/config.json";
+        this.url = "https://cdn.configcat.com/configuration-files/" + apiKey + "/config_v2.json";
         this.version = this.getClass().getPackage().getImplementationVersion();
     }
 

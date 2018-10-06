@@ -1,9 +1,11 @@
 package com.configcat;
 
+import com.google.gson.JsonSyntaxException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ConfigurationParserTest {
     private final static ConfigurationParser parser = new ConfigurationParser();
@@ -28,5 +30,6 @@ public class ConfigurationParserTest {
         String badJson = "{ test: test] }";
         ParsingFailedException exp = assertThrows(ParsingFailedException.class, () -> parser.parseValue(String.class, badJson, "test"));
         assertEquals(badJson, exp.getJson());
+        assertTrue(exp.getInnerException() instanceof JsonSyntaxException);
     }
 }

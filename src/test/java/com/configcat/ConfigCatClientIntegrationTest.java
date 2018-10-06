@@ -1,6 +1,5 @@
 package com.configcat;
 
-import com.google.gson.Gson;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -19,6 +18,12 @@ public class ConfigCatClientIntegrationTest {
     private static final String APIKEY = "TEST_KEY";
     private ConfigCatClient client;
     private MockWebServer server;
+
+    private static final String TEST_JSON = "{ fakeKey: { Value: %s, RolloutPercentageItems: [] ,RolloutRules: [] } }";
+    private static final String TEST_OBJECT_JSON = "{ value1: { Value: 1, RolloutPercentageItems: [] ,RolloutRules: [] }, " +
+                                                    " value2: { Value: \"abc\", RolloutPercentageItems: [] ,RolloutRules: [] }, " +
+                                                    " value3: { Value: 2.4, RolloutPercentageItems: [] ,RolloutRules: [] }," +
+                                                    " value4: { Value: true, RolloutPercentageItems: [] ,RolloutRules: [] }}";
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -44,28 +49,9 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getConfigurationJsonString() {
-        String result = "{ \"fakeKey\":\"fakeValue\" }";
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
-
-        String config = this.client.getConfigurationJsonString();
-        assertEquals(result, config);
-    }
-
-    @Test
-    public void getConfigurationJsonStringFailToRefresh() {
-        server.enqueue(new MockResponse().setResponseCode(500));
-
-        String config = this.client.getConfigurationJsonString();
-        assertNull(config);
-    }
-
-    @Test
     public void getConfiguration() {
         Sample sample = new Sample();
-        Gson gson = new Gson();
-        String json = gson.toJson(sample);
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(json));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_OBJECT_JSON));
 
         Sample result = this.client.getConfiguration(Sample.class,null);
         assertEquals(sample.value1, result.value1);
@@ -107,7 +93,7 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void getStringValue() {
         String sValue = "ááúúóüüőőööúúűű";
-        String result = "{ \"fakeKey\":\""+sValue+"\" }";
+        String result = String.format(TEST_JSON, sValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         String config = this.client.getValue(String.class,"fakeKey", null);
         assertEquals(sValue, config);
@@ -132,7 +118,7 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getBooleanValue() {
-        String result = "{ \"fakeKey\":\"true\" }";
+        String result = String.format(TEST_JSON, "true");
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         boolean config = this.client.getValue(Boolean.class,"fakeKey", false);
         assertTrue(config);
@@ -157,7 +143,7 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void getIntegerValue() {
         int iValue = 342423;
-        String result = "{ \"fakeKey\":"+iValue+" }";
+        String result = String.format(TEST_JSON, String.valueOf(iValue));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         int config = this.client.getValue(Integer.class,"fakeKey", 0);
         assertEquals(iValue, config);
@@ -183,7 +169,7 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void getDoubleValue() {
         double iValue = 432.234;
-        String result = "{ \"fakeKey\":"+iValue+" }";
+        String result = String.format(TEST_JSON, String.valueOf(iValue));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         double config = this.client.getValue(Double.class,"fakeKey", 0.0);
         assertEquals(iValue, config);
@@ -208,22 +194,22 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void invalidateCache() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("test2"));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, String.valueOf("test"))));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, String.valueOf("test2"))));
 
-        assertEquals("test", this.client.getConfigurationJsonString());
+        assertEquals("test", this.client.getValue(String.class, "fakeKey", null));
         this.client.forceRefresh();
-        assertEquals("test2", this.client.getConfigurationJsonString());
+        assertEquals("test2", this.client.getValue(String.class, "fakeKey", null));
     }
 
     @Test
     public void invalidateCacheFail() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, String.valueOf("test"))));
         server.enqueue(new MockResponse().setResponseCode(500));
 
-        assertEquals("test", this.client.getConfigurationJsonString());
+        assertEquals("test", this.client.getValue(String.class, "fakeKey", null));
         this.client.forceRefresh();
-        assertEquals("test", this.client.getConfigurationJsonString());
+        assertEquals("test", this.client.getValue(String.class, "fakeKey", null));
     }
 
     @Test
@@ -233,7 +219,7 @@ public class ConfigCatClientIntegrationTest {
                 .build(APIKEY);
 
         // makes a call to a real url which would fail, null expected
-        String config = cl.getConfigurationJsonString();
+        String config = cl.getValue(String.class, "test", null);
         assertEquals(null, config);
     }
 
@@ -242,14 +228,14 @@ public class ConfigCatClientIntegrationTest {
         ConfigCatClient cl = new ConfigCatClient(APIKEY);
 
         // makes a call to a real url which would fail, timeout expected
-        assertThrows(TimeoutException.class, () -> cl.getConfigurationJsonStringAsync().get(2, TimeUnit.SECONDS));
+        assertThrows(TimeoutException.class, () -> cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
     }
 
     static class Sample {
         static Sample Empty = new Sample();
-        int value1 = 1;
+        Integer value1 = 1;
         String value2 = "abc";
-        double value3 = 2.4;
-        boolean value4 = true;
+        Double value3 = 2.4;
+        Boolean value4 = true;
     }
 }

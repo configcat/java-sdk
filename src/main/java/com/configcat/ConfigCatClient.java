@@ -56,44 +56,42 @@ public class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public String getConfigurationJsonString() {
-        try {
-            return this.maxWaitTimeForSyncCallsInSeconds > 0
-                    ? this.getConfigurationJsonStringAsync().get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
-                    : this.getConfigurationJsonStringAsync().get();
-        } catch (Exception e) {
-            LOGGER.error("An error occurred during reading the configuration.", e);
-            return this.refreshPolicy.getLatestCachedValue();
-        }
-    }
-
-    @Override
-    public CompletableFuture<String> getConfigurationJsonStringAsync() {
-        return this.refreshPolicy.getConfigurationJsonAsync();
-    }
-
-    @Override
     public <T> T getConfiguration(Class<T> classOfT, T defaultValue) {
+        return this.getConfiguration(classOfT, null, defaultValue);
+    }
+
+    @Override
+    public <T> T getConfiguration(Class<T> classOfT, User user, T defaultValue) {
         try {
             return this.maxWaitTimeForSyncCallsInSeconds > 0
-                    ? this.getConfigurationAsync(classOfT, defaultValue).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
-                    : this.getConfigurationAsync(classOfT, defaultValue).get();
+                    ? this.getConfigurationAsync(classOfT, user, defaultValue).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
+                    : this.getConfigurationAsync(classOfT, user, defaultValue).get();
         } catch (Exception e) {
             LOGGER.error("An error occurred during deserialization.", e);
-            return this.getDefaultValue(classOfT, defaultValue);
+            return this.getDefaultValue(classOfT, user, defaultValue);
         }
     }
 
     @Override
     public <T> CompletableFuture<T> getConfigurationAsync(Class<T> classOfT, T defaultValue) {
+        return this.getConfigurationAsync(classOfT, null, defaultValue);
+    }
+
+    @Override
+    public <T> CompletableFuture<T> getConfigurationAsync(Class<T> classOfT, User user, T defaultValue) {
         return this.refreshPolicy.getConfigurationJsonAsync()
                 .thenApply(config -> config == null
                         ? defaultValue
-                        : this.deserializeJson(classOfT, config, defaultValue));
+                        : this.deserializeJson(classOfT, config, user, defaultValue));
     }
 
     @Override
     public  <T> T getValue(Class<T> classOfT, String key, T defaultValue) {
+        return this.getValue(classOfT, key, null, defaultValue);
+    }
+
+    @Override
+    public  <T> T getValue(Class<T> classOfT, String key, User user, T defaultValue) {
         if(key == null || key.isEmpty())
             throw new IllegalArgumentException("key is null or empty");
 
@@ -102,24 +100,29 @@ public class ConfigCatClient implements ConfigurationProvider {
 
         try {
             return this.maxWaitTimeForSyncCallsInSeconds > 0
-                    ? this.getValueAsync(classOfT, key, defaultValue).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
-                    : this.getValueAsync(classOfT, key, defaultValue).get();
+                    ? this.getValueAsync(classOfT, key, user, defaultValue).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
+                    : this.getValueAsync(classOfT, key, user, defaultValue).get();
         } catch (Exception e) {
             LOGGER.error("An error occurred during the reading of the value for key '"+key+"'.", e);
-            return this.getDefaultJsonValue(classOfT, key, defaultValue);
+            return this.getDefaultJsonValue(classOfT, key, user, defaultValue);
         }
     }
 
     @Override
     public <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, T defaultValue) {
+        return this.getValueAsync(classOfT, key, null, defaultValue);
+    }
+
+    @Override
+    public <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, User user, T defaultValue) {
         if(key == null || key.isEmpty())
             throw new IllegalArgumentException("key is null or empty");
 
         if(classOfT != String.class && classOfT != Integer.class && classOfT != Double.class && classOfT != Boolean.class)
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
 
-        return this.getConfigurationJsonStringAsync()
-                .thenApply(config -> this.getJsonValue(classOfT, config, key, defaultValue));
+        return this.refreshPolicy.getConfigurationJsonAsync()
+                .thenApply(config -> this.getJsonValue(classOfT, config, key, user, defaultValue));
     }
 
     @Override
@@ -144,28 +147,28 @@ public class ConfigCatClient implements ConfigurationProvider {
         this.refreshPolicy.close();
     }
 
-    private <T> T getJsonValue(Class<T> classOfT, String config, String key, T defaultValue) {
+    private <T> T getJsonValue(Class<T> classOfT, String config, String key, User user, T defaultValue) {
         try {
-            return parser.parseValue(classOfT, config, key);
+            return parser.parseValue(classOfT, config, key, user);
         } catch (Exception e) {
             LOGGER.error("An error occurred during the deserialization of the value for key '"+key+"'.", e);
             return defaultValue;
         }
     }
 
-    private <T> T getDefaultValue(Class<T> classOfT, T defaultValue) {
+    private <T> T getDefaultValue(Class<T> classOfT, User user, T defaultValue) {
         String latest = this.refreshPolicy.getLatestCachedValue();
-        return latest != null ? this.deserializeJson(classOfT, latest, defaultValue) : defaultValue;
+        return latest != null ? this.deserializeJson(classOfT, latest, user, defaultValue) : defaultValue;
     }
 
-    private <T> T getDefaultJsonValue(Class<T> classOfT, String key, T defaultValue) {
+    private <T> T getDefaultJsonValue(Class<T> classOfT, String key, User user, T defaultValue) {
         String latest = this.refreshPolicy.getLatestCachedValue();
-        return latest != null ? this.getJsonValue(classOfT, latest, key, defaultValue) : defaultValue;
+        return latest != null ? this.getJsonValue(classOfT, latest, key, user, defaultValue) : defaultValue;
     }
 
-    private <T> T deserializeJson(Class<T> classOfT, String config, T defaultValue) {
+    private <T> T deserializeJson(Class<T> classOfT, String config, User user, T defaultValue) {
         try {
-            return parser.parse(classOfT, config);
+            return parser.parse(classOfT, config, user);
         } catch (Exception e) {
             return defaultValue;
         }

@@ -13,6 +13,8 @@ public class ConfigCatClientTest {
 
     private static final String APIKEY = "TEST_KEY";
 
+    private static final String TEST_JSON = "{ fakeKey: { Value: fakeValue, SettingType: 0, RolloutPercentageItems: [] ,RolloutRules: [] } }";
+
     @Test
     public void ensuresApiKeyIsNotNull() {
         IllegalArgumentException exception = assertThrows(
@@ -89,10 +91,10 @@ public class ConfigCatClientTest {
                 })
                 .build(APIKEY);
 
-        String result = "{ \"fakeKey\":\"fakeValue\" }";
+        String result = TEST_JSON;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
 
-        assertEquals(result, cl.getConfigurationJsonString());
+        assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
 
         server.close();
         cl.close();
@@ -111,12 +113,12 @@ public class ConfigCatClientTest {
                 .maxWaitTimeForSyncCallsInSeconds(2)
                 .build(APIKEY);
 
-        String result = "{ \"fakeKey\":\"fakeValue\" }";
+        String result = TEST_JSON;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(5, TimeUnit.SECONDS));
 
-        assertEquals(result, cl.getConfigurationJsonString());
-        assertEquals(result, cl.getConfigurationJsonString());
+        assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
+        assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
 
         server.close();
         cl.close();

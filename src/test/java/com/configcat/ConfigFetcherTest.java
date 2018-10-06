@@ -35,7 +35,7 @@ public class ConfigFetcherTest {
 
     @Test
     public void getConfigurationJsonStringETag() throws InterruptedException, ExecutionException {
-        String result = "{ \"fakeKey\":\"fakeValue\" }";
+        String result = "test";
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(result).setHeader("ETag", "fakeETag"));
         this.server.enqueue(new MockResponse().setResponseCode(304));
 
