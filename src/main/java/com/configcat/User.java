@@ -16,7 +16,6 @@ public class User {
             throw new IllegalArgumentException("identifier is null or empty");
 
         this.identifier = identifier;
-
         this.attributes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         this.attributes.put("identifier", identifier);
         this.attributes.put("country", country);
@@ -42,9 +41,6 @@ public class User {
     String getAttribute(String key) {
         if(key == null || key.isEmpty())
             throw new IllegalArgumentException("key is null or empty");
-
-        if(this.attributes == null)
-            return null;
 
         return this.attributes.getOrDefault(key, null);
     }

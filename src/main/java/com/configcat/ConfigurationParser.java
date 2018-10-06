@@ -50,7 +50,7 @@ public class ConfigurationParser {
             Object instance = classOfT.newInstance();
             Field[] fields = classOfT.getDeclaredFields();
             for (Field field : fields) {
-                if(Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers()))
+                if(Modifier.isStatic(field.getModifiers()))
                     continue;
 
                 Class<?> fieldType = field.getType();

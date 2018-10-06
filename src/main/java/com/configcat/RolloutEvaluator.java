@@ -56,16 +56,16 @@ class RolloutEvaluator {
         if(percentageRules.size() > 0){
             String hashCandidate = key + user.getIdentifier();
             long scale = 100;
-            String hex = DigestUtils.sha1Hex(hashCandidate).substring(0, 15);
-            long hashVal = Long.parseLong(hex, 16);
-            long hash = hashVal % scale ;
+            String hexHash = DigestUtils.sha1Hex(hashCandidate).substring(0, 15);
+            long longHash = Long.parseLong(hexHash, 16);
+            long scaled = longHash % scale;
 
             int bucket = 0;
             for (JsonElement rule: percentageRules) {
                 JsonObject ruleObject = rule.getAsJsonObject();
 
                 bucket += ruleObject.get("Percentage").getAsFloat();
-                if(hash < bucket)
+                if(scaled < bucket)
                     return ruleObject.get("Value");
             }
         }
