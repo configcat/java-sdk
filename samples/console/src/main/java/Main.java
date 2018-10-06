@@ -19,7 +19,7 @@ public class Main {
         System.out.println("integer25One25Two25Three25FourAdvancedRules: " + config.integer25One25Two25Three25FourAdvancedRules);
         System.out.println("string25Cat25Dog25Falcon25Horse: " + config.string25Cat25Dog25Falcon25Horse);
 
-        // get individual config values identified by a key
+        // get individual config values identified by a key for a user
         System.out.println("keySampleText: " + client.getValue(String.class,"keySampleText", user, ""));
     }
 

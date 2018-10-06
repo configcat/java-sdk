@@ -19,17 +19,24 @@ class MainActivity : AppCompatActivity() {
                         .autoPollRateInSeconds(5)
                         .configurationChangeListener({parser, newConfiguration ->
                             run {
-                                var config = parser.parse(Sample::class.java, newConfiguration)
+                                // create a user object to identify the caller
+                                val user = User.newBuilder()
+                                        .build("key")
+
+                                var config = parser.parse(Sample::class.java, newConfiguration, user)
                                 var textField = findViewById<TextView>(R.id.editText)
-                                textField.text = "keyBool: " + config.keyBool + "\n" +
-                                        "keyInteger: " + config.keyInteger + "\n" +
-                                        "keyDouble: " + config.keyDouble + "\n" +
-                                        "keyString: " + config.keyString
+                                textField.text = "bool30TrueAdvancedRules: " + config.bool30TrueAdvancedRules + "\n" +
+                                        "integer25One25Two25Three25FourAdvancedRules: " + config.keyInteger + "\n" +
+                                        "double25Pi25E25Gr25Zero: " + config.double25Pi25E25Gr25Zero + "\n" +
+                                        "string25Cat25Dog25Falcon25Horse: " + config.keyString
                             }
                         })
                         .build(fetcher, cache)})
-                .build("PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA")
+                .build("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A")
     }
 
-    data class Sample(val keyBool: Boolean = false, val keyInteger: Int = 0, val keyDouble: Double = 0.0, val keyString: String = "")
+    data class Sample(val bool30TrueAdvancedRules: Boolean = false,
+                      val integer25One25Two25Three25FourAdvancedRules: Int = 0,
+                      val double25Pi25E25Gr25Zero: Double = 0.0,
+                      val string25Cat25Dog25Falcon25Horse: String = "")
 }

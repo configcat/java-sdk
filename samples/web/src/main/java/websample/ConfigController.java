@@ -1,6 +1,7 @@
 package websample;
 
 import com.configcat.ConfigCatClient;
+import com.configcat.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -19,7 +20,13 @@ public class ConfigController {
     // reads the configuration value from the client
     @RequestMapping(value = "/config", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
     public @ResponseBody String config() {
-        return this.client.getConfigurationJsonString() ;
+
+        // create a user object to identify the caller
+        User user = User.newBuilder()
+                .build("key");
+
+        // get individual config values identified by a key for a user
+        return this.client.getValue(String.class,"keySampleText", user, "") ;
     }
 
     // invalidates the config cache, this forces a refresh, can be used
