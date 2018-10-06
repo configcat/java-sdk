@@ -55,8 +55,8 @@ public class ConfigCatClientTest {
                 .build(APIKEY);
 
         // makes a call to a real url which would fail, default expected
-        ConfigCatClientIntegrationTest.Sample config = cl.getConfiguration(ConfigCatClientIntegrationTest.Sample.class, ConfigCatClientIntegrationTest.Sample.Empty);
-        assertEquals(ConfigCatClientIntegrationTest.Sample.Empty, config);
+        Sample config = cl.getConfiguration(Sample.class, Sample.Empty);
+        assertEquals(Sample.Empty, config);
     }
 
     @Test
@@ -138,13 +138,13 @@ public class ConfigCatClientTest {
                 .build(APIKEY);
 
         String badJson = "{ test: test] }";
-        ConfigCatClientIntegrationTest.Sample def = new ConfigCatClientIntegrationTest.Sample();
+        Sample def = new Sample();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(5, TimeUnit.SECONDS));
 
-        assertSame(def, cl.getConfiguration(ConfigCatClientIntegrationTest.Sample.class, def));
+        assertSame(def, cl.getConfiguration(Sample.class, def));
 
-        assertSame(def, cl.getConfiguration(ConfigCatClientIntegrationTest.Sample.class, def));
+        assertSame(def, cl.getConfiguration(Sample.class, def));
 
         server.shutdown();
         cl.close();
@@ -202,10 +202,18 @@ public class ConfigCatClientTest {
         ConfigCatClient client = new ConfigCatClient("key");
         assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class,null, false));
         assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class,"", false));
-        assertThrows(IllegalArgumentException.class, () -> client.getValue(ConfigCatClientIntegrationTest.Sample.class,"key", ConfigCatClientIntegrationTest.Sample.Empty));
+        assertThrows(IllegalArgumentException.class, () -> client.getValue(Sample.class,"key", Sample.Empty));
 
         assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,null, false).get());
         assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,"", false).get());
-        assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(ConfigCatClientIntegrationTest.Sample.class,"key", ConfigCatClientIntegrationTest.Sample.Empty).get());
+        assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Sample.class,"key", Sample.Empty).get());
+    }
+
+    private static class Sample {
+        static Sample Empty = new Sample();
+        private Integer value1 = 1;
+        private String value2 = "abc";
+        private Double value3 = 2.4;
+        private Boolean value4 = true;
     }
 }

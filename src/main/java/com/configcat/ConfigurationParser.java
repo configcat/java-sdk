@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -47,7 +48,9 @@ public class ConfigurationParser {
             throw new IllegalArgumentException("config is null or empty");
 
         try {
-            Object instance = classOfT.newInstance();
+            Constructor<?> constructor = classOfT.getDeclaredConstructors()[0];
+            constructor.setAccessible(true);
+            Object instance = constructor.newInstance();
             Field[] fields = classOfT.getDeclaredFields();
             for (Field field : fields) {
                 if(Modifier.isStatic(field.getModifiers()))

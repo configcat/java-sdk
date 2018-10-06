@@ -231,11 +231,11 @@ public class ConfigCatClientIntegrationTest {
         assertThrows(TimeoutException.class, () -> cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
     }
 
-    static class Sample {
+    private static class Sample {
         static Sample Empty = new Sample();
-        Integer value1 = 1;
-        String value2 = "abc";
-        Double value3 = 2.4;
-        Boolean value4 = true;
+        private Integer value1 = 1;
+        private String value2 = "abc";
+        private Double value3 = 2.4;
+        private Boolean value4 = true;
     }
 }
