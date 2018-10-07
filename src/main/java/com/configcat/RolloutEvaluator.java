@@ -64,7 +64,7 @@ class RolloutEvaluator {
             for (JsonElement rule: percentageRules) {
                 JsonObject ruleObject = rule.getAsJsonObject();
 
-                bucket += ruleObject.get("Percentage").getAsFloat();
+                bucket += ruleObject.get("Percentage").getAsInt();
                 if(scaled < bucket)
                     return ruleObject.get("Value");
             }

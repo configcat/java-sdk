@@ -18,8 +18,12 @@ public class User {
         this.identifier = identifier;
         this.attributes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         this.attributes.put("identifier", identifier);
-        this.attributes.put("country", country);
-        this.attributes.put("email", email);
+
+        if(country != null && !country.isEmpty())
+            this.attributes.put("country", country);
+
+        if(email != null && !email.isEmpty())
+            this.attributes.put("email", email);
 
         if(custom != null)
             this.attributes.putAll(custom);
