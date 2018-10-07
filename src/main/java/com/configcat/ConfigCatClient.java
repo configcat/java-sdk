@@ -95,7 +95,13 @@ public class ConfigCatClient implements ConfigurationProvider {
         if(key == null || key.isEmpty())
             throw new IllegalArgumentException("key is null or empty");
 
-        if(classOfT != String.class && classOfT != Integer.class && classOfT != Double.class && classOfT != Boolean.class)
+        if(classOfT != String.class &&
+                classOfT != Integer.class &&
+                classOfT != int.class &&
+                classOfT != Double.class &&
+                classOfT != double.class &&
+                classOfT != Boolean.class &&
+                classOfT != boolean.class)
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
 
         try {

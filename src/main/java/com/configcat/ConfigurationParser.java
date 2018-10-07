@@ -111,7 +111,13 @@ public class ConfigurationParser {
         if(config == null || config.isEmpty())
             throw new IllegalArgumentException("config is null or empty");
 
-        if(classOfT != String.class && classOfT != Integer.class && classOfT != Double.class && classOfT != Boolean.class)
+        if(classOfT != String.class &&
+                classOfT != Integer.class &&
+                classOfT != int.class &&
+                classOfT != Double.class &&
+                classOfT != double.class &&
+                classOfT != Boolean.class &&
+                classOfT != boolean.class)
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
 
         try {
@@ -119,12 +125,12 @@ public class ConfigurationParser {
             JsonElement element = this.rolloutEvaluator.evaluate(root.getAsJsonObject(key), key, user);
             if (classOfT == String.class)
                 return classOfT.cast(element.getAsString());
-            else if (classOfT == Integer.class)
-                return classOfT.cast(element.getAsInt());
-            else if (classOfT == Double.class)
-                return classOfT.cast(element.getAsDouble());
+            else if (classOfT == Integer.class || classOfT == int.class)
+                return element.getAsInt();
+            else if (classOfT == Double.class || classOfT == double.class)
+                return element.getAsDouble();
             else
-                return classOfT.cast(element.getAsBoolean());
+                return element.getAsBoolean();
         } catch (Exception e) {
             LOGGER.error("Parsing of the json ("+ config +") failed", e);
             throw new ParsingFailedException("Parsing failed.", config, e);

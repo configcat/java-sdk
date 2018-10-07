@@ -233,9 +233,9 @@ public class ConfigCatClientIntegrationTest {
 
     private static class Sample {
         static Sample Empty = new Sample();
-        private Integer value1 = 1;
+        private int value1 = 1;
         private String value2 = "abc";
-        private Double value3 = 2.4;
-        private Boolean value4 = true;
+        private double value3 = 2.4;
+        private boolean value4 = true;
     }
 }

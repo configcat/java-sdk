@@ -50,7 +50,7 @@ public class User {
     }
 
     /**
-     * A builder that helps construct a {@link ConfigCatClient} instance.
+     * A builder that helps construct a {@link User} instance.
      */
     public static class Builder {
         private String email;

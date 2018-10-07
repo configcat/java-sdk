@@ -16,12 +16,12 @@ and other programs, so you can configure them through [this](https://configcat.c
 <dependency>
     <groupId>com.configcat</groupId>
     <artifactId>configcat-client</artifactId>
-    <version>1.2.3</version>
+    <version>2.0.1</version>
 </dependency>
 ```
 *Gradle:*
 ```groovy
-compile 'com.configcat:configcat-client:1.2.3'
+compile 'com.configcat:configcat-client:2.0.1'
 ```
 **2. Get your Api Key from [ConfigCat.com](https://configcat.com) portal**
 ![YourConnectionUrl](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "ApiKey")
