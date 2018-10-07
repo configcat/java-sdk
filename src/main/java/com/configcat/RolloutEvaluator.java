@@ -56,7 +56,7 @@ class RolloutEvaluator {
         if(percentageRules.size() > 0){
             String hashCandidate = key + user.getIdentifier();
             long scale = 100;
-            String hexHash = DigestUtils.sha1Hex(hashCandidate).substring(0, 15);
+            String hexHash = new String(Hex.encodeHex(DigestUtils.sha1(hashCandidate))).substring(0, 15);
             long longHash = Long.parseLong(hexHash, 16);
             long scaled = longHash % scale;
 
