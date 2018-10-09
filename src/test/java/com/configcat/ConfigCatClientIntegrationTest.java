@@ -20,10 +20,6 @@ public class ConfigCatClientIntegrationTest {
     private MockWebServer server;
 
     private static final String TEST_JSON = "{ fakeKey: { Value: %s, RolloutPercentageItems: [] ,RolloutRules: [] } }";
-    private static final String TEST_OBJECT_JSON = "{ value1: { Value: 1, RolloutPercentageItems: [] ,RolloutRules: [] }, " +
-                                                    " value2: { Value: \"abc\", RolloutPercentageItems: [] ,RolloutRules: [] }, " +
-                                                    " value3: { Value: 2.4, RolloutPercentageItems: [] ,RolloutRules: [] }," +
-                                                    " value4: { Value: true, RolloutPercentageItems: [] ,RolloutRules: [] }}";
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -46,48 +42,6 @@ public class ConfigCatClientIntegrationTest {
     public void tearDown() throws IOException {
         this.client.close();
         this.server.shutdown();
-    }
-
-    @Test
-    public void getConfiguration() {
-        Sample sample = new Sample();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_OBJECT_JSON));
-
-        Sample result = this.client.getConfiguration(Sample.class,null);
-        assertEquals(sample.value1, result.value1);
-        assertEquals(sample.value2, result.value2);
-        assertEquals(sample.value3, result.value3);
-        assertEquals(sample.value4, result.value4);
-    }
-
-    @Test
-    public void getConfigurationReturnsDefaultOnFail() {
-        Sample sample = new Sample();
-        server.enqueue(new MockResponse().setResponseCode(500));
-
-        Sample result = this.client.getConfiguration(Sample.class,sample);
-        assertSame(sample, result);
-    }
-
-    @Test
-    public void getConfigurationReturnsDefaultOnException() {
-        String badJson = "{ test: test] }";
-        Sample def = new Sample();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson));
-
-        Sample result = this.client.getConfiguration(Sample.class,def);
-        assertSame(def, result);
-    }
-
-    @Test
-    public void getConfigurationReturnsDefaultOnExceptionRepeatedly() {
-        String badJson = "{ test: test] }";
-        Sample def = new Sample();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(5, TimeUnit.SECONDS));
-
-        Sample result = this.client.getConfiguration(Sample.class,def);
-        assertSame(def, result);
     }
 
     @Test
@@ -125,9 +79,17 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
+    public void getBooleanValuePrimitive() {
+        String result = String.format(TEST_JSON, "true");
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        boolean config = this.client.getValue(boolean.class,"fakeKey", false);
+        assertTrue(config);
+    }
+
+    @Test
     public void getBooleanValueReturnsDefaultOnFail() {
         server.enqueue(new MockResponse().setResponseCode(500));
-        boolean config = this.client.getValue(Boolean.class,"fakeKey", true);
+        boolean config = this.client.getValue(boolean.class,"fakeKey", true);
         assertTrue(config);
     }
 
@@ -150,10 +112,19 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
+    public void getIntegerValuePrimitive() {
+        int iValue = 342423;
+        String result = String.format(TEST_JSON, String.valueOf(iValue));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        int config = this.client.getValue(int.class,"fakeKey", 0);
+        assertEquals(iValue, config);
+    }
+
+    @Test
     public void getIntegerValueReturnsDefaultOnFail() {
         int def = 342423;
         server.enqueue(new MockResponse().setResponseCode(500));
-        int config = this.client.getValue(Integer.class,"fakeKey", def);
+        int config = this.client.getValue(int.class,"fakeKey", def);
         assertEquals(def, config);
     }
 
@@ -171,7 +142,7 @@ public class ConfigCatClientIntegrationTest {
         double iValue = 432.234;
         String result = String.format(TEST_JSON, String.valueOf(iValue));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
-        double config = this.client.getValue(Double.class,"fakeKey", 0.0);
+        double config = this.client.getValue(double.class,"fakeKey", 0.0);
         assertEquals(iValue, config);
     }
 
@@ -229,13 +200,5 @@ public class ConfigCatClientIntegrationTest {
 
         // makes a call to a real url which would fail, timeout expected
         assertThrows(TimeoutException.class, () -> cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
-    }
-
-    private static class Sample {
-        static Sample Empty = new Sample();
-        private int value1 = 1;
-        private String value2 = "abc";
-        private double value3 = 2.4;
-        private boolean value4 = true;
     }
 }

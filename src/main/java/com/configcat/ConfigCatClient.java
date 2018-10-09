@@ -56,36 +56,6 @@ public class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public <T> T getConfiguration(Class<T> classOfT, T defaultValue) {
-        return this.getConfiguration(classOfT, null, defaultValue);
-    }
-
-    @Override
-    public <T> T getConfiguration(Class<T> classOfT, User user, T defaultValue) {
-        try {
-            return this.maxWaitTimeForSyncCallsInSeconds > 0
-                    ? this.getConfigurationAsync(classOfT, user, defaultValue).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
-                    : this.getConfigurationAsync(classOfT, user, defaultValue).get();
-        } catch (Exception e) {
-            LOGGER.error("An error occurred during deserialization.", e);
-            return this.getDefaultValue(classOfT, user, defaultValue);
-        }
-    }
-
-    @Override
-    public <T> CompletableFuture<T> getConfigurationAsync(Class<T> classOfT, T defaultValue) {
-        return this.getConfigurationAsync(classOfT, null, defaultValue);
-    }
-
-    @Override
-    public <T> CompletableFuture<T> getConfigurationAsync(Class<T> classOfT, User user, T defaultValue) {
-        return this.refreshPolicy.getConfigurationJsonAsync()
-                .thenApply(config -> config == null
-                        ? defaultValue
-                        : this.deserializeJson(classOfT, config, user, defaultValue));
-    }
-
-    @Override
     public  <T> T getValue(Class<T> classOfT, String key, T defaultValue) {
         return this.getValue(classOfT, key, null, defaultValue);
     }
@@ -124,7 +94,13 @@ public class ConfigCatClient implements ConfigurationProvider {
         if(key == null || key.isEmpty())
             throw new IllegalArgumentException("key is null or empty");
 
-        if(classOfT != String.class && classOfT != Integer.class && classOfT != Double.class && classOfT != Boolean.class)
+        if(classOfT != String.class &&
+                classOfT != Integer.class &&
+                classOfT != int.class &&
+                classOfT != Double.class &&
+                classOfT != double.class &&
+                classOfT != Boolean.class &&
+                classOfT != boolean.class)
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
 
         return this.refreshPolicy.getConfigurationJsonAsync()
@@ -162,22 +138,9 @@ public class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private <T> T getDefaultValue(Class<T> classOfT, User user, T defaultValue) {
-        String latest = this.refreshPolicy.getLatestCachedValue();
-        return latest != null ? this.deserializeJson(classOfT, latest, user, defaultValue) : defaultValue;
-    }
-
     private <T> T getDefaultJsonValue(Class<T> classOfT, String key, User user, T defaultValue) {
         String latest = this.refreshPolicy.getLatestCachedValue();
         return latest != null ? this.getJsonValue(classOfT, latest, key, user, defaultValue) : defaultValue;
-    }
-
-    private <T> T deserializeJson(Class<T> classOfT, String config, User user, T defaultValue) {
-        try {
-            return parser.parse(classOfT, config, user);
-        } catch (Exception e) {
-            return defaultValue;
-        }
     }
 
     /**

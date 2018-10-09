@@ -1,5 +1,6 @@
 package com.configcat.configcatsample
 
+import android.annotation.SuppressLint
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.TextView
@@ -7,6 +8,7 @@ import com.configcat.*
 
 class MainActivity : AppCompatActivity() {
 
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -20,21 +22,12 @@ class MainActivity : AppCompatActivity() {
                                 val user = User.newBuilder()
                                         .build("key")
 
-
-                                var config = parser.parse(Sample::class.java, newConfiguration, user)
+                                var config = parser.parseValue(Boolean::class.java, newConfiguration, "bool30TrueAdvancedRules", user)
                                 var textField = findViewById<TextView>(R.id.editText)
-                                textField.text = "bool30TrueAdvancedRules: " + config.bool30TrueAdvancedRules + "\n" +
-                                        "integer25One25Two25Three25FourAdvancedRules: " + config.integer25One25Two25Three25FourAdvancedRules + "\n" +
-                                        "double25Pi25E25Gr25Zero: " + config.double25Pi25E25Gr25Zero + "\n" +
-                                        "string25Cat25Dog25Falcon25Horse: " + config.string25Cat25Dog25Falcon25Horse
+                                textField.text = "bool30TrueAdvancedRules: $config"
                             }
                         }
                         .build(fetcher, cache)}
                 .build("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A")
     }
-
-    data class Sample(val bool30TrueAdvancedRules: Boolean = false,
-                      val integer25One25Two25Three25FourAdvancedRules: Int = 0,
-                      val double25Pi25E25Gr25Zero: Double = 0.0,
-                      val string25Cat25Dog25Falcon25Horse: String = "")
 }

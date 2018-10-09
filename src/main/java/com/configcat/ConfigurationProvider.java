@@ -17,48 +17,6 @@ public interface ConfigurationProvider extends Closeable {
     <T extends RefreshPolicy> T getRefreshPolicy(Class<T> classOfT);
 
     /**
-     * Gets the configuration synchronously parsed to a {@code <T>} type.
-     *
-     * @param classOfT the class of T.
-     * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T> the type of the desired object.
-     * @return an object of type T containing the whole configuration.
-     */
-    <T> T getConfiguration(Class<T> classOfT, T defaultValue);
-
-    /**
-     * Gets the configuration synchronously parsed to a {@code <T>} type.
-     *
-     * @param classOfT the class of T.
-     * @param user the user object to identify the caller.
-     * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T> the type of the desired object.
-     * @return an object of type T containing the whole configuration.
-     */
-    <T> T getConfiguration(Class<T> classOfT, User user, T defaultValue);
-
-    /**
-     * Gets the configuration asynchronously parsed to a {@code <T>} type.
-     *
-     * @param classOfT the class of T.
-     * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T> the type of the desired object.
-     * @return a future which computes an object of type T containing the whole configuration.
-     */
-    <T> CompletableFuture<T> getConfigurationAsync(Class<T> classOfT, T defaultValue);
-
-    /**
-     * Gets the configuration asynchronously parsed to a {@code <T>} type.
-     *
-     * @param classOfT the class of T.
-     * @param user the user object to identify the caller.
-     * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T> the type of the desired object.
-     * @return a future which computes an object of type T containing the whole configuration.
-     */
-    <T> CompletableFuture<T> getConfigurationAsync(Class<T> classOfT, User user, T defaultValue);
-
-    /**
      * Gets a value synchronously as T from the configuration identified by the given {@code key}.
      *
      * @param classOfT the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
