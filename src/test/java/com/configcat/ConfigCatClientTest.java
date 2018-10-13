@@ -5,6 +5,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -108,6 +109,29 @@ public class ConfigCatClientTest {
 
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
+
+        server.close();
+        cl.close();
+    }
+
+    @Test
+    public void getConfigurationReturnsPreviousCachedOnFailAsync() throws IOException, ExecutionException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.newBuilder()
+                .refreshPolicy((f, c) -> {
+                    f.setUrl(server.url("/").toString());
+                    return new ManualPollingPolicy(f,c);
+                })
+                .build(APIKEY);
+
+        String result = TEST_JSON;
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        server.enqueue(new MockResponse().setResponseCode(500));
+
+        assertEquals("fakeValue", cl.getValueAsync(String.class, "fakeKey", null).get());
+        assertEquals("fakeValue", cl.getValueAsync(String.class, "fakeKey", null).get());
 
         server.close();
         cl.close();

@@ -104,7 +104,14 @@ public class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
 
         return this.refreshPolicy.getConfigurationJsonAsync()
-                .thenApply(config -> this.getJsonValue(classOfT, config, key, user, defaultValue));
+                .thenApply(config -> {
+                    try {
+                        return parser.parseValue(classOfT, config, key, user);
+                    } catch (Exception e) {
+                        LOGGER.error("An error occurred during the deserialization of the value for key '"+key+"'.", e);
+                        return this.getDefaultJsonValue(classOfT, key, user, defaultValue);
+                    }
+                });
     }
 
     @Override

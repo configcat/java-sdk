@@ -1,5 +1,8 @@
 package com.configcat;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -9,12 +12,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * to maintain the internally stored configuration.
  */
 public class ExpiringCachePolicy extends RefreshPolicy {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExpiringCachePolicy.class);
     private Instant lastRefreshedTime;
     private int cacheRefreshIntervalInSeconds;
     private boolean asyncRefresh;
     private final AtomicBoolean isFetching;
     private final AtomicBoolean initialized;
     private CompletableFuture<String> fetchingFuture;
+    private CompletableFuture<Void> init;
 
     /**
      * Constructor used by the child classes.
@@ -30,38 +35,58 @@ public class ExpiringCachePolicy extends RefreshPolicy {
         this.isFetching = new AtomicBoolean(false);
         this.initialized = new AtomicBoolean(false);
         this.lastRefreshedTime = Instant.MIN;
+        this.init = new CompletableFuture<>();
     }
 
     @Override
     public CompletableFuture<String> getConfigurationJsonAsync() {
         if(Instant.now().isAfter(lastRefreshedTime.plusSeconds(this.cacheRefreshIntervalInSeconds))) {
-            if(!this.isFetching.compareAndSet(false, true))
+            boolean isInitialized = this.init.isDone();
+
+            if(isInitialized && !this.isFetching.compareAndSet(false, true))
                 return this.asyncRefresh && this.initialized.get()
                         ? CompletableFuture.completedFuture(super.cache().get())
                         : this.fetchingFuture;
 
-
-            this.fetchingFuture = super.fetcher().getConfigurationJsonStringAsync()
-                    .thenApplyAsync(response -> {
-                        String cached = super.cache().get();
-                        if (response.isFetched() && !response.config().equals(cached)) {
-                            super.cache().set(response.config());
-                            this.isFetching.set(false);
-                            this.initialized.set(true);
-                        }
-
-                        if(!response.isFailed())
-                            this.lastRefreshedTime = Instant.now();
-
-                        return response.isFetched() ? response.config() : cached;
-                    });
-
-            return this.asyncRefresh && this.initialized.get()
-                    ? CompletableFuture.completedFuture(super.cache().get())
-                    : this.fetchingFuture;
+            LOGGER.debug("Cache expired, refreshing");
+            if(isInitialized) {
+                this.fetchingFuture = this.fetch();
+                if(this.asyncRefresh) {
+                    return CompletableFuture.completedFuture(super.cache().get());
+                }
+                return this.fetchingFuture;
+            } else {
+                if(this.isFetching.compareAndSet(false, true)) {
+                    this.fetchingFuture = this.fetch();
+                }
+                return this.init.thenApplyAsync(v -> super.cache().get());
+            }
         }
 
         return CompletableFuture.completedFuture(super.cache().get());
+    }
+
+    private CompletableFuture<String> fetch() {
+        return super.fetcher().getConfigurationJsonStringAsync()
+                .thenApplyAsync(response -> {
+                    String cached = super.cache().get();
+                    if (response.isFetched() && !response.config().equals(cached)) {
+                        super.cache().set(response.config());
+                    }
+
+                    if(!response.isFailed())
+                        this.lastRefreshedTime = Instant.now();
+
+                    if(this.initialized.compareAndSet(false, true)) {
+                        this.init.complete(null);
+                    }
+
+                    if(response.isFetched()) {
+                        this.isFetching.set(false);
+                    }
+
+                    return response.isFetched() ? response.config() : cached;
+                });
     }
 
     /**
