@@ -60,6 +60,14 @@ public class AutoPollingPolicyIntegrationTest {
     }
 
     @Test
+    public void getFail() throws InterruptedException, ExecutionException {
+        this.server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+
+        //first call
+        assertEquals(null, this.policy.getConfigurationJsonAsync().get());
+    }
+
+    @Test
     public void configChanged() throws InterruptedException {
         AtomicReference<String> newConfig  = new AtomicReference<>();
         ConfigurationChangeListener listener = (parser, newConfiguration) -> newConfig.set(newConfiguration);

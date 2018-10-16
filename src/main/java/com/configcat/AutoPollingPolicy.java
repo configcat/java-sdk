@@ -50,7 +50,7 @@ public class AutoPollingPolicy extends RefreshPolicy {
                     this.broadcastConfigurationChanged(config);
                 }
 
-                if(!response.isFailed() && !initialized.getAndSet(true))
+                if(!initialized.getAndSet(true))
                     initFuture.complete(null);
 
             } catch (Exception e){

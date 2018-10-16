@@ -91,6 +91,69 @@ public class ConfigCatClientTest {
     }
 
     @Test
+    public void getConfigurationAutoPollFail() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.newBuilder()
+                .cache(new FailingCache())
+                .refreshPolicy((f, c) -> {
+                    f.setUrl(server.url("/").toString());
+                    return AutoPollingPolicy.newBuilder().autoPollIntervalInSeconds(5).build(f, c);
+                })
+                .build(APIKEY);
+
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+
+        assertEquals("", cl.getValue(String.class, "fakeKey", ""));
+
+        server.close();
+        cl.close();
+    }
+
+    @Test
+    public void getConfigurationExpCacheFail() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.newBuilder()
+                .cache(new FailingCache())
+                .refreshPolicy((f, c) -> {
+                    f.setUrl(server.url("/").toString());
+                    return ExpiringCachePolicy.newBuilder().cacheRefreshIntervalInSeconds(5).build(f, c);
+                })
+                .build(APIKEY);
+
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+
+        assertEquals("", cl.getValue(String.class, "fakeKey", ""));
+
+        server.close();
+        cl.close();
+    }
+
+    @Test
+    public void getConfigurationManualFail() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.newBuilder()
+                .cache(new FailingCache())
+                .refreshPolicy((f, c) -> {
+                    f.setUrl(server.url("/").toString());
+                    return new ManualPollingPolicy(f, c);
+                })
+                .build(APIKEY);
+
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+
+        assertEquals("", cl.getValue(String.class, "fakeKey", ""));
+
+        server.close();
+        cl.close();
+    }
+
+    @Test
     public void getConfigurationReturnsPreviousCachedOnFail() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();

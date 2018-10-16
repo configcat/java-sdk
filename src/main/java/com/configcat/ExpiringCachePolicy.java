@@ -81,9 +81,7 @@ public class ExpiringCachePolicy extends RefreshPolicy {
                         this.init.complete(null);
                     }
 
-                    if(response.isFetched()) {
-                        this.isFetching.set(false);
-                    }
+                    this.isFetching.set(false);
 
                     return response.isFetched() ? response.config() : cached;
                 });

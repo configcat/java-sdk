@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -195,10 +196,8 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getConfigurationJsonStringWithDefaultConfig() {
+    public void getConfigurationJsonStringWithDefaultConfig() throws InterruptedException, ExecutionException, TimeoutException {
         ConfigCatClient cl = new ConfigCatClient(APIKEY);
-
-        // makes a call to a real url which would fail, timeout expected
-        assertThrows(TimeoutException.class, () -> cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
+        assertEquals(null, cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
     }
 }
