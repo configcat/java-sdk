@@ -1,16 +1,19 @@
-# ConfigCat Java SDK
-ConfigCat is a cloud based configuration as a service. It integrates with your apps, backends, websites, 
-and other programs, so you can configure them through [this](https://configcat.com) website even after they are deployed.
+# ConfigCat SDK for Java
+
+ConfigCat SDK for Java provides easy integration between ConfigCat service and applications using Java.
+
+ConfigCat is a feature flag, feature toggle, and configuration management service. That lets you launch new features and change your software configuration remotely without actually (re)deploying code. ConfigCat even helps you do controlled roll-outs like canary releases and blue-green deployments.
+https://configcat.com  
 
 [![Build Status](https://travis-ci.org/configcat/java-sdk.svg?branch=master)](https://travis-ci.org/configcat/java-sdk)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-client)
 [![Coverage Status](https://img.shields.io/codecov/c/github/ConfigCat/java-sdk.svg)](https://codecov.io/gh/ConfigCat/java-sdk)
 [![Javadocs](http://javadoc.io/badge/com.configcat/configcat-client.svg)](http://javadoc.io/doc/com.configcat/configcat-client)
+![License](https://img.shields.io/github/license/configcat/node-sdk.svg)
 
 ## Getting started
 
-**1. Add the package to your project**
-
+### 1. Install the package
 *Maven:*
 ```xml
 <dependency>
@@ -23,38 +26,37 @@ and other programs, so you can configure them through [this](https://configcat.c
 ```groovy
 compile 'com.configcat:configcat-client:2.+'
 ```
-**2. Get your Api Key from [ConfigCat.com](https://configcat.com) portal**
-![YourConnectionUrl](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "ApiKey")
 
-**3. Import the ConfigCat package**
+### 2. <a href="https://configcat.com/Account/Login" target="_blank">Log in to ConfigCat Management Console</a> and go to your *Project* to get your *API Key*:
+![API-KEY](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "API-KEY")
+
+### 3. Import *com.configcat.** to your application
 ```java
 import com.configcat.*;
 ```
 
-**4. Create a ConfigCatClient instance**
+### 4. Create the *ConfigCat* client instance
 ```java
-ConfigCatClient client = new ConfigCatClient("<PLACE-YOUR-API-KEY-HERE>");
+ConfigCatClient client = new ConfigCatClient("#YOUR-API-KEY#");
 ```
-**5. (Optional) Prepare a User object for rollout calculation**
+
+### 5. Get your setting value:
 ```java
-User user = User.newBuilder()
-        .email("simple@but.awesome.com")
-        .country("Awesomnia")
-        .build("<PLACE-YOUR-USER-IDENTIFIER-HERE>");
-```
-**6. Get your config value**
-```java
-boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "key-of-my-awesome-feature", user, false);
+boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "isMyAwesomeFeatureEnabled", false);
 if(isMyAwesomeFeatureEnabled) {
-    //show your awesome feature to the world!
+    doTheNewThing();
+} else{
+    doTheOldThing();
 }
 ```
 Or use the async APIs:
 ```java
-client.getValueAsync(Boolean.class, "key-of-my-awesome-feature", user, false)
+client.getValueAsync(Boolean.class, "isMyAwesomeFeatureEnabled", false)
     .thenAccept(isMyAwesomeFeatureEnabled -> {
         if(isMyAwesomeFeatureEnabled) {
-            //show your awesome feature to the world!
+            doTheNewThing();
+        } else{
+            doTheOldThing();
         }
     });
 ```
@@ -78,184 +80,41 @@ You also have to put this line into your manifest xml to enable the library acce
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 ```
+
+## Getting user specific setting values with Targeting
+Using this feature, you will be able to get different setting values for different users in your application by passing a `User Object` to the `getValue()` function.
+
+Read more about [Targeting here](https://docs.configcat.com/docs/advanced/targeting/).
+
+
 ## User object
 Percentage and targeted rollouts are calculated by the user object you can optionally pass to the configuration requests.
 The user object must be created with a **mandatory** identifier parameter which should uniquely identify each user:
 ```java
 User user = User.newBuilder()
-        .build("<PLACE-YOUR-USER-IDENTIFIER-HERE>"); // mandatory
-```
-But you can also set other custom attributes if you'd like to calculate the rollout based on them:
-```java
-Map<String,String> customAttributes = new HashMap<String,String>();
-        customAttributes.put("SubscriptionType", "Free");
-        customAttributes.put("Role", "Knight of Awesomnia");
+        .build("#USER-IDENTIFIER#"); // mandatory
 
-User user = User.newBuilder()
-        .email("simple@but.awesome.com")
-        .country("Awesomnia")
-        .custom(customAttributes)
-        .build("<PLACE-YOUR-USER-IDENTIFIER-HERE>"); // mandatory
-```
-## Configuration
-### HttpClient
-The ConfigCat client internally uses an [OkHttpClient](https://github.com/square/okhttp) instance to fetch the latest configuration over HTTP. You have the option to override the internal HttpClient with your customized one. For example if your application runs behind a proxy you can do the following:
-```java
-Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("proxyHost", proxyPort));
-
-ConfigCatClient client = ConfigCatClient.newBuilder()
-                .httpClient(new OkHttpClient.Builder()
-                            .proxy(proxy)
-                            .build())
-                .build("<PLACE-YOUR-API-KEY-HERE>");
-```
-> As the ConfigCat client maintains the whole lifetime of the internal HttpClient, it's being closed simultaneously with the ConfigCat client, refrain from closing the HttpClient manually.
-
-### Refresh policies
-The internal caching control and the communication between the client and ConfigCat are managed through a refresh policy. There are 3 predefined implementations built in the library.
-#### 1. Auto polling policy (default)
-This policy fetches the latest configuration and updates the cache repeatedly. 
-##### Poll interval 
-You have the option to configure the polling interval through its builder (it has to be greater than 2 seconds, the default is 60):
-```java
-ConfigCatClient client = ConfigCatClient.newBuilder()
-                .refreshPolicy((configFetcher, cache) -> 
-                    AutoPollingPolicy.newBuilder()
-                        .autoPollIntervalInSeconds(120) // set the polling interval
-                        .build(configFetcher, cache)
-                .build("<PLACE-YOUR-API-KEY-HERE>");
-```
-##### Change listeners 
-You can set change listeners that will be notified when a new configuration is fetched. The policy calls the listeners only, when the new configuration is differs from the cached one.
-```java
-ConfigCatClient client = ConfigCatClient.newBuilder()
-                .refreshPolicy((configFetcher, cache) -> 
-                    AutoPollingPolicy.newBuilder()
-                        .configurationChangeListener((parser, newConfiguration) -> {
-                            // here you can parse the new configuration like this: 
-                            // parser.parseValue(Boolean.class, newConfiguration, "key-of-my-awesome-feature", user)                            
-                        })
-                        .build(configFetcher, cache)
-                .build("<PLACE-YOUR-API-KEY-HERE>");
-```
-If you want to subscribe to the configuration changed event later in your applications lifetime, then you can do the following (this will only work when you have an auto polling refresh policy configured in the ConfigCat client):
-```java
-client.getRefreshPolicy(AutoPollingPolicy.class)
-    .addConfigurationChangeListener((parser, newConfiguration) -> {
-        // here you can parse the new configuration like this: 
-        // parser.parseValue(Boolean.class, newConfiguration, "key-of-my-awesome-feature", user)  
-    });
-```
-You can check this in action in the [Android sample](https://github.com/ConfigCat/java-sdk/tree/master/samples/android).
-#### 2. Expiring cache policy
-This policy uses an expiring cache to maintain the internally stored configuration. 
-##### Cache refresh interval 
-You can define the refresh rate of the cache in seconds, 
-after the initial cached value is set this value will be used to determine how much time must pass before initiating a new configuration fetch request through the `ConfigFetcher`.
-```java
-ConfigCatClient client = ConfigCatClient.newBuilder()
-                .refreshPolicy((configFetcher, cache) -> 
-                    ExpiringCachePolicy.newBuilder()
-                        .cacheRefreshIntervalInSeconds(120) // the cache will expire in 120 seconds
-                        .build(configFetcher, cache)
-                .build("<PLACE-YOUR-API-KEY-HERE>");
-```
-##### Async / Sync refresh
-You can define how do you want to handle the expiration of the cached configuration. If you choose asynchronous refresh then 
-when a request is being made on the cache while it's expired, the previous value will be returned immediately 
-until the fetching of the new configuration is completed.
-```java
-ConfigCatClient client = ConfigCatClient.newBuilder()
-                .refreshPolicy((configFetcher, cache) -> 
-                    ExpiringCachePolicy.newBuilder()
-                        .asyncRefresh(true) // the refresh will be executed asynchronously
-                        .build(configFetcher, cache)
-                .build("<PLACE-YOUR-API-KEY-HERE>");
-```
-If you set the `.asyncRefresh()` to be `false`, the refresh operation will be awaited
-until the fetching of the new configuration is completed.
-
-#### 3. Manual polling policy
-With this policy every new configuration request on the ConfigCatClient will trigger a new fetch over HTTP.
-```java
-ConfigCatClient client = ConfigCatClient.newBuilder()
-                .refreshPolicy((configFetcher, cache) -> new ManualPollingPolicy(configFetcher,cache));
-```
-
-#### Custom Policy
-You can also implement your custom refresh policy by extending the `RefreshPolicy` abstract class.
-```java
-public class MyCustomPolicy extends RefreshPolicy {
-    
-    public MyCustomPolicy(ConfigFetcher configFetcher, ConfigCache cache) {
-        super(configFetcher, cache);
-    }
-
-    @Override
-    public CompletableFuture<String> getConfigurationJsonAsync() {
-        // this method will be called when the configuration is requested from the ConfigCat client.
-        // you can access the config fetcher through the super.fetcher() and the internal cache via super.cache()
-    }
-    
-    // optional, in case if you have any resources that should be closed
-    @Override
-     public void close() throws IOException {
-        super.close();
-        // here you can close your resources
-    }
-}
-```
-> If you decide to override the `close()` method, you also have to call the `super.close()` to tear down the policy appropriately.
-
-Then you can simply inject your custom policy implementation into the ConfigCat client:
-```java
-ConfigCatClient client = ConfigCatClient.newBuilder()
-                .refreshPolicy((configFetcher, cache) -> new MyCustomPolicy(configFetcher, cache)) // inject your custom policy
-                .build("<PLACE-YOUR-API-KEY-HERE>");
-```
-
-### Custom Cache
-You have the option to inject your custom cache implementation into the client. All you have to do is to inherit from the `ConfigCache` abstract class:
-```java
-public class MyCustomCache extends ConfigCache {
-    
-    @Override
-    public String read() {
-        // here you have to return with the cached value
-        // you can access the latest cached value in case 
-        // of a failure like: super.inMemoryValue();
-    }
-
-    @Override
-    public void write(String value) {
-        // here you have to store the new value in the cache
-    }
+boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "isMyAwesomeFeatureEnabled", user, false);
+if(isMyAwesomeFeatureEnabled) {
+    doTheNewThing();
+} else{
+    doTheOldThing();
 }
 ```
 
-Then use your custom cache implementation:
-```java
-ConfigCatClient client = ConfigCatClient.newBuilder()
-                .cache(new MyCustomCache()) // inject your custom cache
-                .build("<PLACE-YOUR-API-KEY-HERE>");
-```
+## Sample/Demo app
+* [Sample Console App](https://github.com/ConfigCat/java-sdk/tree/master/samples/console)
+* [Sample Web app](https://github.com/ConfigCat/java-sdk/tree/master/samples/web)
+* [Sample Android app](https://github.com/ConfigCat/java-sdk/tree/master/samples/android)
 
-### Maximum wait time for synchronous calls
-You have the option to set a timeout value for the synchronous methods of the library (`getValue()`, `forceRefresh()`) which means
-when a sync call takes longer than the timeout value, it'll return with the default.
-```java
-ConfigCatClient client = ConfigCatClient.newBuilder()
-                .maxWaitTimeForSyncCallsInSeconds(2) // set the max wait time
-                .build("<PLACE-YOUR-API-KEY-HERE>");
-```
-### Force refresh
-Any time you want to refresh the cached configuration with the latest one, you can call the `forceRefresh()` method of the library,
-which will initiate a new fetch and will update the local cache.
+## Polling Modes
+The ConfigCat SDK supports 3 different polling mechanisms to acquire the setting values from ConfigCat. After latest setting values are downloaded, they are stored in the internal cache then all requests are served from there. Read more about Polling Modes and how to use them at [ConfigCat Java Docs](https://docs.configcat.com/docs/sdk-reference/java/) or [ConfigCat Android Docs](https://docs.configcat.com/docs/sdk-reference/android/).
 
-## Logging
-The ConfigCat client uses the facade of [slf4j](https://www.slf4j.org) for logging.
+## Support
+If you need help how to use this SDK feel free to to contact the ConfigCat Staff on https://configcat.com. We're happy to help.
 
-## Samples
-* [Console](https://github.com/ConfigCat/java-sdk/tree/master/samples/console)
-* [Web app](https://github.com/ConfigCat/java-sdk/tree/master/samples/web)
-* [Android](https://github.com/ConfigCat/java-sdk/tree/master/samples/android)
+## Contributing
+Contributions are welcome.
+
+## License
+[MIT](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/LICENSE)
