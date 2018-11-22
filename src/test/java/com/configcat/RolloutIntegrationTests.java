@@ -45,17 +45,28 @@ public class RolloutIntegrationTests {
             String[] testObject = this.csvScanner.nextLine().split(";");
 
             User user = null;
-            if(!testObject[0].isEmpty() && !testObject[0].equals("##nouserobject##"))
+            if(!testObject[0].isEmpty() && !testObject[0].equals("##null##"))
             {
+                String email = "";
+                String country = "";
+
+                String identifier = testObject[0];
+
+                if(!testObject[1].isEmpty() && !testObject[1].equals("##null##"))
+                    email = testObject[1];
+
+                if(!testObject[2].isEmpty() && !testObject[2].equals("##null##"))
+                    country = testObject[2];
+
                 Map<String, String> customAttributes = new HashMap<>();
-                if(!testObject[3].isEmpty())
+                if(!testObject[3].isEmpty() && !testObject[3].equals("##null##"))
                     customAttributes.put("Custom1", testObject[3]);
 
                 user = User.newBuilder()
-                        .email(testObject[1])
-                        .country(testObject[2])
+                        .email(email)
+                        .country(country)
                         .custom(customAttributes)
-                        .build(testObject[0]);
+                        .build(identifier);
             }
 
             int i = 0;
