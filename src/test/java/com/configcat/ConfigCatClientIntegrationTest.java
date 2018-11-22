@@ -31,7 +31,7 @@ public class ConfigCatClientIntegrationTest {
                 .httpClient(new OkHttpClient.Builder().build())
                 .refreshPolicy((configFetcher, cache) -> {
                     configFetcher.setUrl(this.server.url("/").toString());
-                    return ExpiringCachePolicy.newBuilder()
+                    return LazyLoadingPolicy.newBuilder()
                             .cacheRefreshIntervalInSeconds(2)
                             .asyncRefresh(true)
                             .build(configFetcher, cache);

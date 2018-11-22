@@ -11,8 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Describes a {@link RefreshPolicy} which uses an expiring cache
  * to maintain the internally stored configuration.
  */
-public class ExpiringCachePolicy extends RefreshPolicy {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExpiringCachePolicy.class);
+public class LazyLoadingPolicy extends RefreshPolicy {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LazyLoadingPolicy.class);
     private Instant lastRefreshedTime;
     private int cacheRefreshIntervalInSeconds;
     private boolean asyncRefresh;
@@ -27,7 +27,7 @@ public class ExpiringCachePolicy extends RefreshPolicy {
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
      */
-    private ExpiringCachePolicy(ConfigFetcher configFetcher, ConfigCache cache, Builder builder) {
+    private LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, Builder builder) {
         super(configFetcher, cache);
         super.fetcher().setMode("l");
         this.asyncRefresh = builder.asyncRefresh;
@@ -97,7 +97,7 @@ public class ExpiringCachePolicy extends RefreshPolicy {
     }
 
     /**
-     * A builder that helps construct a {@link ExpiringCachePolicy} instance.
+     * A builder that helps construct a {@link LazyLoadingPolicy} instance.
      */
     public static class Builder {
         private int cacheRefreshIntervalInSeconds = 60;
@@ -131,14 +131,14 @@ public class ExpiringCachePolicy extends RefreshPolicy {
         }
 
         /**
-         * Builds the configured {@link ExpiringCachePolicy} instance.
+         * Builds the configured {@link LazyLoadingPolicy} instance.
          *
          * @param configFetcher the internal config fetcher.
          * @param cache the internal cache.
-         * @return the configured {@link ExpiringCachePolicy} instance
+         * @return the configured {@link LazyLoadingPolicy} instance
          */
-        public ExpiringCachePolicy build(ConfigFetcher configFetcher, ConfigCache cache) {
-            return new ExpiringCachePolicy(configFetcher, cache, this);
+        public LazyLoadingPolicy build(ConfigFetcher configFetcher, ConfigCache cache) {
+            return new LazyLoadingPolicy(configFetcher, cache, this);
         }
     }
 }

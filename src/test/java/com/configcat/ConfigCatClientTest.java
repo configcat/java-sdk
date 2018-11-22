@@ -120,7 +120,7 @@ public class ConfigCatClientTest {
                 .cache(new FailingCache())
                 .refreshPolicy((f, c) -> {
                     f.setUrl(server.url("/").toString());
-                    return ExpiringCachePolicy.newBuilder().cacheRefreshIntervalInSeconds(5).build(f, c);
+                    return LazyLoadingPolicy.newBuilder().cacheRefreshIntervalInSeconds(5).build(f, c);
                 })
                 .build(APIKEY);
 

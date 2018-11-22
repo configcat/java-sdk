@@ -8,12 +8,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-public class ExpiringCachePolicyAsyncTest {
+public class LazyLoadingPolicySyncTest {
     private RefreshPolicy policy;
     private MockWebServer server;
 
@@ -25,9 +27,9 @@ public class ExpiringCachePolicyAsyncTest {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
         ConfigCache cache = new InMemoryConfigCache();
         fetcher.setUrl(this.server.url("/").toString());
-        this.policy = ExpiringCachePolicy.newBuilder()
+        this.policy = LazyLoadingPolicy.newBuilder()
                 .cacheRefreshIntervalInSeconds(5)
-                .asyncRefresh(true)
+                .asyncRefresh(false)
                 .build(fetcher,cache);
     }
 
@@ -40,22 +42,15 @@ public class ExpiringCachePolicyAsyncTest {
     @Test
     public void get() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(2, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));
 
-        //simulate quick first calls
-        assertEquals("test", this.policy.getConfigurationJsonAsync().get());
+        //first call
         assertEquals("test", this.policy.getConfigurationJsonAsync().get());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
-        //previous value returned until the new is not fetched
-        assertEquals("test", this.policy.getConfigurationJsonAsync().get());
-
-        //wait for refresh response
-        Thread.sleep(3000);
-
-        //new value is present
+        //next call will block until the new value is fetched
         assertEquals("test2", this.policy.getConfigurationJsonAsync().get());
     }
 
@@ -63,28 +58,21 @@ public class ExpiringCachePolicyAsyncTest {
     public void getCacheFails() throws InterruptedException, ExecutionException {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
         fetcher.setUrl(this.server.url("/").toString());
-        ExpiringCachePolicy lPolicy = ExpiringCachePolicy.newBuilder()
+        LazyLoadingPolicy lPolicy = LazyLoadingPolicy.newBuilder()
                 .cacheRefreshIntervalInSeconds(5)
-                .asyncRefresh(true)
+                .asyncRefresh(false)
                 .build(fetcher, new FailingCache());
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(2, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));
 
-        //simulate quick first calls
-        assertEquals("test", lPolicy.getConfigurationJsonAsync().get());
+        //first call
         assertEquals("test", lPolicy.getConfigurationJsonAsync().get());
 
-        ///wait for cache invalidation
+        //wait for cache invalidation
         Thread.sleep(6000);
 
-        //previous value returned until the new is not fetched
-        assertEquals("test", lPolicy.getConfigurationJsonAsync().get());
-
-        //wait for refresh response
-        Thread.sleep(3000);
-
-        //new value is present
+        //next call will block until the new value is fetched
         assertEquals("test2", lPolicy.getConfigurationJsonAsync().get());
     }
 
@@ -93,20 +81,33 @@ public class ExpiringCachePolicyAsyncTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
-        //simulate quick first calls
-        assertEquals("test", this.policy.getConfigurationJsonAsync().get());
+        //first call
         assertEquals("test", this.policy.getConfigurationJsonAsync().get());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
-        //trigger reload
-        this.policy.getConfigurationJsonAsync().get();
-
-        //wait for refresh response
-        Thread.sleep(1000);
-
         //previous value returned because of the refresh failure
         assertEquals("test", this.policy.getConfigurationJsonAsync().get());
+    }
+
+    @Test
+    public void getFetchedSameResponseNotUpdatesCache() throws Exception {
+        String result = "test";
+
+        ConfigFetcher fetcher = mock(ConfigFetcher.class);
+        ConfigCache cache = mock(ConfigCache.class);
+
+        when(cache.get()).thenReturn(result);
+
+        when(fetcher.getConfigurationJsonStringAsync())
+                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
+
+        LazyLoadingPolicy policy = LazyLoadingPolicy.newBuilder()
+                .build(fetcher, cache);
+
+        assertEquals("test", policy.getConfigurationJsonAsync().get());
+
+        verify(cache, never()).write(result);
     }
 }
