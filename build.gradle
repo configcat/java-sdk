@@ -128,7 +128,7 @@ publishing {
             }
             pom.withXml {
                 def root = asNode()
-                root.appendNode("description", "ConfigCat Java SDK")
+                root.appendNode("description", "ConfigCat is a feature flag, feature toggle, and configuration management service. That lets you launch new features and change your software configuration remotely without actually (re)deploying code. ConfigCat even helps you do controlled roll-outs like canary releases and blue-green deployments.")
                 root.appendNode("name", "ConfigCat Java SDK")
                 root.appendNode("url", "https://github.com/configcat/java-sdk")
                 root.children().last() + pomConfig
@@ -167,7 +167,7 @@ bintray {
     pkg {
         repo = "releases"
         name = "configcat-client"
-        desc = "ConfigCat Java SDK"
+        desc = "ConfigCat is a feature flag, feature toggle, and configuration management service. That lets you launch new features and change your software configuration remotely without actually (re)deploying code. ConfigCat even helps you do controlled roll-outs like canary releases and blue-green deployments."
         licenses = ["MIT"]
         websiteUrl = "https://configcat.com"
         issueTrackerUrl = 'https://github.com/configcat/java-sdk/issues'
