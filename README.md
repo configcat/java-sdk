@@ -5,7 +5,7 @@ ConfigCat SDK for Java provides easy integration between ConfigCat service and a
 ConfigCat is a feature flag, feature toggle, and configuration management service. That lets you launch new features and change your software configuration remotely without actually (re)deploying code. ConfigCat even helps you do controlled roll-outs like canary releases and blue-green deployments.
 https://configcat.com  
 
-[![Build Status](https://travis-ci.org/configcat/java-sdk.svg?branch=master)](https://travis-ci.org/configcat/java-sdk)
+[![Build Status](https://travis-ci.com/configcat/java-sdk.svg?branch=master)](https://travis-ci.com/configcat/java-sdk)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-client)
 [![Coverage Status](https://img.shields.io/codecov/c/github/ConfigCat/java-sdk.svg)](https://codecov.io/gh/ConfigCat/java-sdk)
 [![Javadocs](http://javadoc.io/badge/com.configcat/configcat-client.svg)](http://javadoc.io/doc/com.configcat/configcat-client)
