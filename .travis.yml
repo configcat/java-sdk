@@ -12,8 +12,6 @@ stages:
 - coverage
 - name: snapshot
   if: branch != master
-- name: release
-  if: branch = master
 jobs:
   include:
   - stage: coverage
@@ -23,9 +21,6 @@ jobs:
     jdk: oraclejdk8
   - stage: snapshot
     script: "./gradlew artifactoryPublish -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER"
-    jdk: oraclejdk8
-  - stage: release
-    script: "./gradlew bintrayUpload -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dsigning.pass=$SIGN_PASS -Dbuild.number=$TRAVIS_BUILD_NUMBER"
     jdk: oraclejdk8
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
