@@ -22,12 +22,14 @@ class MainActivity : AppCompatActivity() {
                                 val user = User.newBuilder()
                                         .build("key")
 
-                                var config = parser.parseValue(Boolean::class.java, newConfiguration, "bool30TrueAdvancedRules", user)
-                                var textField = findViewById<TextView>(R.id.editText)
-                                textField.text = "bool30TrueAdvancedRules: $config"
+                                var config = parser.parseValue(Boolean::class.java, newConfiguration, "isPOCFeatureEnabled", user)
+                                this@MainActivity.runOnUiThread(java.lang.Runnable {
+                                    var textField = findViewById<TextView>(R.id.editText)
+                                    textField.text = "isPOCFeatureEnabled: $config"
+                                })
                             }
                         }
                         .build(fetcher, cache)}
-                .build("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A")
+                .build("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ")
     }
 }
