@@ -6,10 +6,10 @@ ConfigCat SDK for Java provides easy integration for your application to ConfigC
 ConfigCat is a feature flag and configuration management service that lets you separate releases from deployments. You can turn your features ON/OFF using <a href="http://app.configcat.com" target="_blank">ConfigCat Management Console</a> even after they are deployed. ConfigCat lets you target specific groups of users based on region, email or any other custom user attribute.
 
 [![Build Status](https://travis-ci.com/configcat/java-sdk.svg?branch=master)](https://travis-ci.com/configcat/java-sdk)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-client)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-java-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-java-client)
 [![Coverage Status](https://img.shields.io/codecov/c/github/ConfigCat/java-sdk.svg)](https://codecov.io/gh/ConfigCat/java-sdk)
-[![Javadocs](http://javadoc.io/badge/com.configcat/configcat-client.svg)](http://javadoc.io/doc/com.configcat/configcat-client)
-![License](https://img.shields.io/github/license/configcat/node-sdk.svg)
+[![Javadocs](http://javadoc.io/badge/com.configcat/configcat-java-client.svg)](http://javadoc.io/doc/com.configcat/configcat-java-client)
+![License](https://img.shields.io/github/license/configcat/java-sdk.svg)
 
 ## Getting started
 
@@ -18,13 +18,13 @@ ConfigCat is a feature flag and configuration management service that lets you s
 ```xml
 <dependency>
     <groupId>com.configcat</groupId>
-    <artifactId>configcat-client</artifactId>
-    <version>[2.0.0,)</version>
+    <artifactId>configcat-java-client</artifactId>
+    <version>[1.0.0,)</version>
 </dependency>
 ```
 *Gradle:*
 ```groovy
-compile 'com.configcat:configcat-client:2.+'
+implementation 'com.configcat:configcat-java-client:1.+'
 ```
 
 ### 2. Go to <a href="https://app.configcat.com/connect" target="_blank">Connect your application</a> tab to get your *API Key*:
@@ -61,26 +61,6 @@ client.getValueAsync(Boolean.class, "isMyAwesomeFeatureEnabled", false)
     });
 ```
 
-## Android
-The minimum supported sdk version is 26 (oreo). Java 1.8 or later is required.
-```groovy
-android {
-    defaultConfig {
-        //...
-        minSdkVersion 26
-    }
-    
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-}
-```
-You also have to put this line into your manifest xml to enable the library access to the network.
-```xml
-<uses-permission android:name="android.permission.INTERNET" />
-```
-
 ## Getting user specific setting values with Targeting
 Using this feature, you will be able to get different setting values for different users in your application by passing a `User Object` to the `getValue()` function.
 
@@ -105,7 +85,6 @@ if(isMyAwesomeFeatureEnabled) {
 ## Sample/Demo app
 * [Sample Console App](https://github.com/ConfigCat/java-sdk/tree/master/samples/console)
 * [Sample Web app](https://github.com/ConfigCat/java-sdk/tree/master/samples/web)
-* [Sample Android app](https://github.com/ConfigCat/java-sdk/tree/master/samples/android)
 
 ## Polling Modes
 The ConfigCat SDK supports 3 different polling mechanisms to acquire the setting values from ConfigCat. After latest setting values are downloaded, they are stored in the internal cache then all requests are served from there. Read more about Polling Modes and how to use them at [ConfigCat Java Docs](https://docs.configcat.com/docs/sdk-reference/java/) or [ConfigCat Android Docs](https://docs.configcat.com/docs/sdk-reference/android/).

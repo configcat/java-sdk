@@ -166,7 +166,7 @@ bintray {
 
     pkg {
         repo = "releases"
-        name = "configcat-client"
+        name = "configcat-java-client"
         desc = "ConfigCat is a feature flag, feature toggle, and configuration management service. That lets you launch new features and change your software configuration remotely without actually (re)deploying code. ConfigCat even helps you do controlled roll-outs like canary releases and blue-green deployments."
         licenses = ["MIT"]
         websiteUrl = "https://configcat.com"
