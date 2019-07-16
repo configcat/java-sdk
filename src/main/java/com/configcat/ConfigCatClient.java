@@ -29,7 +29,9 @@ public class ConfigCatClient implements ConfigurationProvider {
                     .Builder()
                     .retryOnConnectionFailure(true)
                     .build()
-                : builder.httpClient, apiKey);
+                : builder.httpClient,
+                apiKey,
+                builder.baseUrl);
 
         ConfigCache cache = builder.cache == null
                 ? new InMemoryConfigCache()
@@ -166,6 +168,7 @@ public class ConfigCatClient implements ConfigurationProvider {
         private OkHttpClient httpClient;
         private ConfigCache cache;
         private int maxWaitTimeForSyncCallsInSeconds;
+        private String baseUrl;
         private BiFunction<ConfigFetcher, ConfigCache, RefreshPolicy> refreshPolicy;
 
         /**
@@ -187,6 +190,17 @@ public class ConfigCatClient implements ConfigurationProvider {
          */
         public Builder cache(ConfigCache cache) {
             this.cache = cache;
+            return this;
+        }
+
+        /**
+         * Sets the base ConfigCat CDN url.
+         *
+         * @param baseUrl the base ConfigCat CDN url.
+         * @return the builder.
+         */
+        public Builder baseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
             return this;
         }
 
