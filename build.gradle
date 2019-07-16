@@ -69,6 +69,7 @@ jacoco {
 }
 
 task junit5CodeCoverageReport(type:JacocoReport){
+    dependsOn junitPlatformTest
     executionData junitPlatformTest
     sourceSets sourceSets.main
     sourceDirectories = files(project.sourceSets.main.allSource.srcDirs)
