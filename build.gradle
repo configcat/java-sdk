@@ -8,7 +8,7 @@ apply plugin: "com.jfrog.bintray"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-ext{
+ext {
     bintrayUser = System.getProperty("bintray.user")
     bintrayKey = System.getProperty("bintray.key")
     buildNumber = System.getProperty("build.number")
@@ -69,13 +69,14 @@ jacoco {
 }
 
 task junit5CodeCoverageReport(type:JacocoReport){
+    dependsOn junitPlatformTest
     executionData junitPlatformTest
     sourceSets sourceSets.main
     sourceDirectories = files(project.sourceSets.main.allSource.srcDirs)
     classDirectories = files(project.sourceSets.main.output)
     reports {
         xml.enabled = true
-        xml.destination "${buildDir}/reports/jacoco/report.xml"
+        xml.destination file("${buildDir}/reports/jacoco/report.xml")
         html.enabled = false
         csv.enabled = false
     }

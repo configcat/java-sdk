@@ -24,15 +24,14 @@ public class ConfigFetcher implements Closeable {
     }
     void setMode(String mode) { this.mode = mode; }
 
-    /**
-     * Constructs a new instance.
-     *
-     * @param httpClient the http client.
-     * @param apiKey the api key.
-     */
-    public ConfigFetcher(OkHttpClient httpClient, String apiKey) {
+    ConfigFetcher(OkHttpClient httpClient, String apiKey) {
+        this(httpClient, apiKey, null);
+    }
+
+    ConfigFetcher(OkHttpClient httpClient, String apiKey, String baseUrl) {
+        baseUrl = baseUrl == null || baseUrl.isEmpty() ? "https://cdn.configcat.com" : baseUrl;
         this.httpClient = httpClient;
-        this.url = "https://cdn.configcat.com/configuration-files/" + apiKey + "/config_v2.json";
+        this.url = baseUrl + "/configuration-files/" + apiKey + "/config_v2.json";
         this.version = this.getClass().getPackage().getImplementationVersion();
     }
 
