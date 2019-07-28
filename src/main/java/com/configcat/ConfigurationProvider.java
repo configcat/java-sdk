@@ -1,6 +1,8 @@
 package com.configcat;
 
 import java.io.Closeable;
+import java.util.Collection;
+import java.util.Enumeration;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -61,6 +63,20 @@ public interface ConfigurationProvider extends Closeable {
      * @return a future which computes the configuration value identified by the given key.
      */
     <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, User user, T defaultValue);
+
+    /**
+     * Gets a collection of all setting keys.
+     *
+     * @return a collection of all setting keys.
+     */
+    Collection<String> getAllKeys();
+
+    /**
+     * Gets a collection of all setting keys asynchronously.
+     *
+     * @return a collection of all setting keys.
+     */
+    CompletableFuture<Collection<String>> getAllKeysAsync();
 
     /**
      * Initiates a force refresh synchronously on the cached configuration.

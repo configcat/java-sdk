@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -199,5 +200,15 @@ public class ConfigCatClientIntegrationTest {
     public void getConfigurationJsonStringWithDefaultConfig() throws InterruptedException, ExecutionException, TimeoutException {
         ConfigCatClient cl = new ConfigCatClient(APIKEY);
         assertEquals(null, cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void getAllKeys() {
+        ConfigCatClient cl = new ConfigCatClient("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
+
+        Collection<String> keys = cl.getAllKeys();
+
+        assertEquals(16, keys.size());
+        assertTrue(keys.contains("stringDefaultCat"));
     }
 }

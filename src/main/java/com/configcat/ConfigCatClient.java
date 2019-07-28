@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -113,6 +115,31 @@ public class ConfigCatClient implements ConfigurationProvider {
                         LOGGER.error("An error occurred during the deserialization of the value for key '"+key+"'.", e);
                         return this.getDefaultJsonValue(classOfT, key, user, defaultValue);
                     }
+                });
+    }
+
+    @Override
+    public Collection<String> getAllKeys() {
+        try {
+            return this.maxWaitTimeForSyncCallsInSeconds > 0
+                    ? this.getAllKeysAsync().get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
+                    : this.getAllKeysAsync().get();
+        } catch (Exception e) {
+            LOGGER.error("An error occurred during getting all the setting keys.", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public CompletableFuture<Collection<String>> getAllKeysAsync() {
+        return this.refreshPolicy.getConfigurationJsonAsync()
+                .thenApply(config -> {
+                   try {
+                       return parser.getAllKeys(config);
+                   } catch (Exception e) {
+                       LOGGER.error("An error occurred during the deserialization.", e);
+                       return new ArrayList<String>();
+                   }
                 });
     }
 

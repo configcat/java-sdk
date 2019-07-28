@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Collection;
 
 /**
  * A json parser which can be used to deserialize configuration json strings.
@@ -61,6 +62,23 @@ public class ConfigurationParser {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
 
         return (T)parseValueInternal(classOfT, config, key, user);
+    }
+
+    /**
+     * Gets all setting keys from the config json.
+     *
+     * @param config the json config.
+     * @return a collection of the setting keys.
+     */
+    public Collection<String> getAllKeys(String config) throws ParsingFailedException {
+        try {
+            JsonObject root = this.parser.parse(config).getAsJsonObject();
+            return root.keySet();
+
+        } catch (Exception e) {
+            LOGGER.error("Parsing of the json ("+ config +") failed", e);
+            throw new ParsingFailedException("Parsing failed.", config, e);
+        }
     }
 
     private Object parseValueInternal(Class<?> classOfT, String config, String key, User user) throws ParsingFailedException, IllegalArgumentException {
