@@ -11,9 +11,9 @@ stages:
 - test
 - coverage
 - name: snapshot
-  if: branch != master
+  if: tag IS blank
 - name: release
-  if: branch = master
+  if: tag =~ /^v([0-9.]+)$/
 jobs:
   include:
   - stage: coverage
