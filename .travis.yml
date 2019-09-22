@@ -14,7 +14,7 @@ stages:
 - name: snapshot
   if: tag IS blank
 - name: release
-  if: tag =~ /^v([0-9.]+)$/
+  if: tag =~ /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/
 jobs:
   include:
   - stage: coverage
