@@ -66,7 +66,7 @@ client.getValueAsync(Boolean.class, "isMyAwesomeFeatureEnabled", false)
 ## Getting user specific setting values with Targeting
 Using this feature, you will be able to get different setting values for different users in your application by passing a `User Object` to the `getValue()` function.
 
-Read more about [Targeting here](https://docs.configcat.com/docs/advanced/targeting/).
+Read more about [Targeting here](https://configcat.com/docs/advanced/targeting/).
 
 
 ## User object
@@ -89,7 +89,7 @@ if(isMyAwesomeFeatureEnabled) {
 * [Sample Web app](https://github.com/ConfigCat/java-sdk/tree/master/samples/web)
 
 ## Polling Modes
-The ConfigCat SDK supports 3 different polling mechanisms to acquire the setting values from ConfigCat. After latest setting values are downloaded, they are stored in the internal cache then all requests are served from there. Read more about Polling Modes and how to use them at [ConfigCat Java Docs](https://docs.configcat.com/docs/sdk-reference/java/) or [ConfigCat Android Docs](https://docs.configcat.com/docs/sdk-reference/android/).
+The ConfigCat SDK supports 3 different polling mechanisms to acquire the setting values from ConfigCat. After latest setting values are downloaded, they are stored in the internal cache then all requests are served from there. Read more about Polling Modes and how to use them at [ConfigCat Java Docs](https://configcat.com/docs/sdk-reference/java/) or [ConfigCat Android Docs](https://configcat.com/docs/sdk-reference/android/).
 
 ## Support
 If you need help how to use this SDK feel free to to contact the ConfigCat Staff on https://configcat.com. We're happy to help.
@@ -98,6 +98,6 @@ If you need help how to use this SDK feel free to to contact the ConfigCat Staff
 Contributions are welcome.
 
 ## About ConfigCat
-- [Official ConfigCat SDK's for other platforms](https://github.com/configcat)
-- [Documentation](https://docs.configcat.com)
-- [Blog](https://blog.configcat.com)
+- [Official ConfigCat SDKs for other platforms](https://github.com/configcat)
+- [Documentation](https://configcat.com/docs)
+- [Blog](https://configcat.com/blog)

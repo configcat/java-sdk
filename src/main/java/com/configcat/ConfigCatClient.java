@@ -83,7 +83,7 @@ public class ConfigCatClient implements ConfigurationProvider {
                     ? this.getValueAsync(classOfT, key, user, defaultValue).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
                     : this.getValueAsync(classOfT, key, user, defaultValue).get();
         } catch (Exception e) {
-            LOGGER.error("An error occurred during the reading of the value for key '"+key+"'.", e);
+            LOGGER.error("Evaluating getValue('"+key+"') failed. Returning default value.", e);
             return this.getDefaultJsonValue(classOfT, key, user, defaultValue);
         }
     }
@@ -112,7 +112,7 @@ public class ConfigCatClient implements ConfigurationProvider {
                     try {
                         return parser.parseValue(classOfT, config, key, user);
                     } catch (Exception e) {
-                        LOGGER.error("An error occurred during the deserialization of the value for key '"+key+"'.", e);
+                        LOGGER.error("Evaluating getValue('"+key+"') failed. Returning default value.", e);
                         return this.getDefaultJsonValue(classOfT, key, user, defaultValue);
                     }
                 });
@@ -137,7 +137,7 @@ public class ConfigCatClient implements ConfigurationProvider {
                    try {
                        return parser.getAllKeys(config);
                    } catch (Exception e) {
-                       LOGGER.error("An error occurred during the deserialization.", e);
+                       LOGGER.error("An error occurred during the deserialization. Returning empty array.", e);
                        return new ArrayList<String>();
                    }
                 });
@@ -169,7 +169,7 @@ public class ConfigCatClient implements ConfigurationProvider {
         try {
             return parser.parseValue(classOfT, config, key, user);
         } catch (Exception e) {
-            LOGGER.error("An error occurred during the deserialization of the value for key '"+key+"'.", e);
+            LOGGER.error("Evaluating getValue('"+key+"') failed. Returning default value.", e);
             return defaultValue;
         }
     }

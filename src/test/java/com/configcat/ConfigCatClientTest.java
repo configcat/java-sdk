@@ -14,7 +14,7 @@ public class ConfigCatClientTest {
 
     private static final String APIKEY = "TEST_KEY";
 
-    private static final String TEST_JSON = "{ fakeKey: { Value: fakeValue, SettingType: 0, RolloutPercentageItems: [] ,RolloutRules: [] } }";
+    private static final String TEST_JSON = "{ fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } }";
 
     @Test
     public void ensuresApiKeyIsNotNull() {

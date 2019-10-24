@@ -54,7 +54,7 @@ public class AutoPollingPolicy extends RefreshPolicy {
                     initFuture.complete(null);
 
             } catch (Exception e){
-                LOGGER.error("An error occurred during the scheduler poll execution", e);
+                LOGGER.error("Exception in AutoPollingCachePolicy", e);
             }
         }, 0, builder.autoPollIntervalInSeconds, TimeUnit.SECONDS);
     }

@@ -1,8 +1,9 @@
 package com.configcat;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,19 +13,27 @@ import java.util.*;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@RunWith(Parameterized.class)
 public class RolloutIntegrationTests {
-    private static final String APIKEY = "PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A";
-
     private ConfigCatClient client;
     private Scanner csvScanner;
 
-    @BeforeEach
-    public void setUp() throws FileNotFoundException {
+    @Parameterized.Parameters(name
+            = "{index}: Test with File={0}, ApiKey={1}")
+    public static Iterable<Object[]> data() {
+        return Arrays.asList(new Object[][] {
+                {"testmatrix.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A"},
+                {"testmatrix_semantic.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA"},
+                {"testmatrix_number.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw"},
+        });
+    }
+
+    public RolloutIntegrationTests(String fileName, String apiKey) throws FileNotFoundException {
         this.client = ConfigCatClient.newBuilder()
-                .build(APIKEY);
+                .build(apiKey);
 
         ClassLoader classLoader = getClass().getClassLoader();
-        this.csvScanner = new Scanner(new File(classLoader.getResource("testmatrix.csv").getFile()));
+        this.csvScanner = new Scanner(new File(classLoader.getResource(fileName).getFile()));
     }
 
     @AfterEach

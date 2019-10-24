@@ -31,7 +31,7 @@ public class ConfigFetcher implements Closeable {
     ConfigFetcher(OkHttpClient httpClient, String apiKey, String baseUrl) {
         baseUrl = baseUrl == null || baseUrl.isEmpty() ? "https://cdn.configcat.com" : baseUrl;
         this.httpClient = httpClient;
-        this.url = baseUrl + "/configuration-files/" + apiKey + "/config_v2.json";
+        this.url = baseUrl + "/configuration-files/" + apiKey + "/config_v3.json";
         this.version = this.getClass().getPackage().getImplementationVersion();
     }
 
@@ -55,18 +55,18 @@ public class ConfigFetcher implements Closeable {
             public void onResponse(Call call, Response response) {
                 try {
                     if (response.isSuccessful()) {
-                        LOGGER.debug("Fetch was successful: new config fetched");
+                        LOGGER.debug("Fetch was successful: new config fetched.");
                         eTag = response.header("ETag");
                         future.complete(new FetchResponse(FetchResponse.Status.FETCHED, response.body().string()));
                     } else if (response.code() == 304) {
-                        LOGGER.debug("Fetch was successful: config not modified");
+                        LOGGER.debug("Fetch was successful: config not modified.");
                         future.complete(new FetchResponse(FetchResponse.Status.NOTMODIFIED, null));
                     } else {
-                        LOGGER.debug("Non success status code:" + response.code());
+                        LOGGER.error("Double-check your API KEY at https://app.configcat.com/apikey. Received unexpected response: " + response.code());
                         future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
                     }
                 } catch (Exception e) {
-                    LOGGER.error("An error occurred during fetching the latest configuration.", e);
+                    LOGGER.error("Exception in ConfigFetcher.getConfigurationJsonStringAsync", e);
                     future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
                 }
             }

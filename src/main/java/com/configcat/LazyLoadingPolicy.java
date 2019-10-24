@@ -48,7 +48,7 @@ public class LazyLoadingPolicy extends RefreshPolicy {
                         ? CompletableFuture.completedFuture(super.cache().get())
                         : this.fetchingFuture;
 
-            LOGGER.debug("Cache expired, refreshing");
+            LOGGER.debug("Cache expired, refreshing.");
             if(isInitialized) {
                 this.fetchingFuture = this.fetch();
                 if(this.asyncRefresh) {

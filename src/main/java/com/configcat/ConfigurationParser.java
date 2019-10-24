@@ -76,7 +76,7 @@ public class ConfigurationParser {
             return root.keySet();
 
         } catch (Exception e) {
-            LOGGER.error("Parsing of the json ("+ config +") failed", e);
+            LOGGER.error("Parsing of json ("+ config +") failed.", e);
             throw new ParsingFailedException("Parsing failed.", config, e);
         }
     }
@@ -94,7 +94,7 @@ public class ConfigurationParser {
             else
                 return element.getAsBoolean();
         } catch (Exception e) {
-            LOGGER.error("Parsing of the json ("+ config +") failed", e);
+            LOGGER.error("Parsing of json ("+ config +") failed.", e);
             throw new ParsingFailedException("Parsing failed.", config, e);
         }
     }
