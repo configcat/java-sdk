@@ -37,4 +37,15 @@ public class ParsingFailedException extends Exception {
         this.json = json;
         this.innerException = exception;
     }
+
+    /**
+     * Constructs a parse exception object.
+     *
+     * @param message the message of the exception.
+     * @param json the json string which was failed to parse.
+     */
+    public ParsingFailedException(String message, String json) {
+        super(message);
+        this.json = json;
+    }
 }

@@ -83,7 +83,14 @@ public class ConfigurationParser {
 
     private Object parseValueInternal(Class<?> classOfT, String config, String key, User user) throws ParsingFailedException, IllegalArgumentException {
         try {
+            LOGGER.info("Evaluating getValue("+key+").");
             JsonObject root = this.parser.parse(config).getAsJsonObject();
+
+            JsonObject node = root.getAsJsonObject(key);
+            if(node == null) {
+                LOGGER.error("Evaluating getValue("+key+") failed. Value not found for key "+key+".");
+                throw new ParsingFailedException("Parsing failed. Value not found for key "+key+".", config);
+            }
             JsonElement element = this.rolloutEvaluator.evaluate(root.getAsJsonObject(key), key, user);
             if (classOfT == String.class)
                 return element.getAsString();
@@ -93,6 +100,8 @@ public class ConfigurationParser {
                 return element.getAsDouble();
             else
                 return element.getAsBoolean();
+        } catch (ParsingFailedException e) {
+            throw e;
         } catch (Exception e) {
             LOGGER.error("Parsing of json ("+ config +") failed.", e);
             throw new ParsingFailedException("Parsing failed.", config, e);
