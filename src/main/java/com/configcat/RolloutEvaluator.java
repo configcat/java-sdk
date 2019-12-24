@@ -1,10 +1,9 @@
 package com.configcat;
 
-import com.github.zafarkhaja.semver.ParseException;
-import com.github.zafarkhaja.semver.Version;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import de.skuzzle.semantic.Version;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
@@ -99,17 +98,17 @@ class RolloutEvaluator {
                     inSemVerValues.replaceAll(String::trim);
                     inSemVerValues.removeAll(Arrays.asList(null, ""));
                     try {
-                        Version userVersion = Version.valueOf(userValue);
+                        Version userVersion = Version.parseVersion(userValue, true);
                         boolean matched = false;
                         for (String semVer : inSemVerValues) {
-                            matched = userVersion.equals(Version.valueOf(semVer)) || matched;
+                            matched = userVersion.compareTo(Version.parseVersion(semVer, true)) == 0 || matched;
                         }
 
                         if ((matched && comparator == 4) || (!matched && comparator == 5)) {
                             this.logMatch(comparisonAttribute, comparator, comparisonValue, value);
                             return value;
                         }
-                    } catch (ParseException e) {
+                    } catch (Exception e) {
                         this.logFormatError(comparisonAttribute, comparator, comparisonValue, e);
                         continue;
                     }
@@ -120,16 +119,16 @@ class RolloutEvaluator {
                 case 8:
                 case 9:
                     try {
-                        Version cmpUserVersion = Version.valueOf(userValue);
-                        Version matchValue = Version.valueOf(comparisonValue.trim());
-                        if( (comparator == 6 && cmpUserVersion.lessThan(matchValue)) ||
-                                (comparator == 7 && cmpUserVersion.lessThanOrEqualTo(matchValue)) ||
-                                (comparator == 8 && cmpUserVersion.greaterThan(matchValue)) ||
-                                (comparator == 9 && cmpUserVersion.greaterThanOrEqualTo(matchValue))) {
+                        Version cmpUserVersion = Version.parseVersion(userValue, true);
+                        Version matchValue = Version.parseVersion(comparisonValue.trim(), true);
+                        if( (comparator == 6 && cmpUserVersion.isLowerThan(matchValue)) ||
+                                (comparator == 7 && cmpUserVersion.compareTo(matchValue) <= 0) ||
+                                (comparator == 8 && cmpUserVersion.isGreaterThan(matchValue)) ||
+                                (comparator == 9 && cmpUserVersion.compareTo(matchValue) >= 0)) {
                             this.logMatch(comparisonAttribute, comparator, comparisonValue, value);
                             return value;
                         }
-                    } catch (ParseException e) {
+                    } catch (Exception e) {
                         this.logFormatError(comparisonAttribute, comparator, comparisonValue, e);
                         continue;
                     }

@@ -25,6 +25,7 @@ public class RolloutIntegrationTests {
                 {"testmatrix.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A"},
                 {"testmatrix_semantic.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA"},
                 {"testmatrix_number.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw"},
+                {"testmatrix_semantic_2.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w"},
         });
     }
 
@@ -48,8 +49,11 @@ public class RolloutIntegrationTests {
         if(!this.csvScanner.hasNext())
             fail();
 
-        String[] settingKeys = Arrays.stream(this.csvScanner.nextLine().split(";")).skip(4).toArray(String[]::new);
-        StringBuilder errors = new StringBuilder();
+        String[] header = this.csvScanner.nextLine().split(";");
+        String customKey = header[3];
+
+        String[] settingKeys = Arrays.stream(header).skip(4).toArray(String[]::new);
+        ArrayList<String> errors = new ArrayList<>();
         while (this.csvScanner.hasNext()) {
             String[] testObject = this.csvScanner.nextLine().split(";");
 
@@ -69,7 +73,7 @@ public class RolloutIntegrationTests {
 
                 Map<String, String> customAttributes = new HashMap<>();
                 if(!testObject[3].isEmpty() && !testObject[3].equals("##null##"))
-                    customAttributes.put("Custom1", testObject[3]);
+                    customAttributes.put(customKey, testObject[3]);
 
                 user = User.newBuilder()
                         .email(email)
@@ -82,12 +86,12 @@ public class RolloutIntegrationTests {
             for (String settingKey: settingKeys) {
                 String value = this.client.getValue(String.class, settingKey, user, null);
                 if(!value.toLowerCase().equals(testObject[i + 4].toLowerCase())) {
-                    errors.append(String.format("Identifier: %s, Key: %s. Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[i + 4], value));
+                    errors.add(String.format("Identifier: %s, Key: %s. UV: %s Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[3], testObject[i + 4], value));
                 }
                 i++;
             }
         }
 
-        assertTrue(errors.length() == 0);
+        assertTrue("Errors found: " + errors.size(), errors.size() == 0);
     }
 }
