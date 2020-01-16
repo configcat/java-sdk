@@ -194,7 +194,7 @@ class RolloutEvaluator {
 
         JsonElement result = json.get("v");
         LOGGER.info("Returning "+ result +".");
-        return json.get("v");
+        return result;
     }
 
     private void logMatch(String comparisonAttribute, String userValue, int comparator, String comparisonValue, JsonElement value) {
