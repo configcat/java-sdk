@@ -42,9 +42,11 @@ public class ManualPollingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
+        this.policy.refreshAsync().get();
         assertEquals("test", this.policy.getConfigurationJsonAsync().get());
 
         //next call will get the new value
+        this.policy.refreshAsync().get();
         assertEquals("test2", this.policy.getConfigurationJsonAsync().get());
     }
 
@@ -58,9 +60,11 @@ public class ManualPollingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
+        lPolicy.refreshAsync().get();
         assertEquals("test", lPolicy.getConfigurationJsonAsync().get());
 
         //next call will get the new value
+        lPolicy.refreshAsync().get();
         assertEquals("test2", lPolicy.getConfigurationJsonAsync().get());
     }
 
@@ -70,9 +74,11 @@ public class ManualPollingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
+        this.policy.refreshAsync().get();
         assertEquals("test", this.policy.getConfigurationJsonAsync().get());
 
         //previous value returned because of the refresh failure
+        this.policy.refreshAsync().get();
         assertEquals("test", this.policy.getConfigurationJsonAsync().get());
     }
 
@@ -89,7 +95,7 @@ public class ManualPollingPolicyTest {
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
         ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, cache);
-
+        policy.refreshAsync().get();
         assertEquals("test", policy.getConfigurationJsonAsync().get());
 
         verify(cache, never()).write(result);

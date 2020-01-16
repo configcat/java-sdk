@@ -83,8 +83,7 @@ public class ConfigCatClient implements ConfigurationProvider {
                     ? this.getValueAsync(classOfT, key, user, defaultValue).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
                     : this.getValueAsync(classOfT, key, user, defaultValue).get();
         } catch (Exception e) {
-            LOGGER.error("Evaluating getValue('"+key+"') failed. Returning default value.", e);
-            return this.getDefaultJsonValue(classOfT, key, user, defaultValue);
+            return this.getJsonValue(classOfT, this.refreshPolicy.getLatestCachedValue(), key, user, defaultValue);
         }
     }
 
@@ -110,10 +109,13 @@ public class ConfigCatClient implements ConfigurationProvider {
         return this.refreshPolicy.getConfigurationJsonAsync()
                 .thenApply(config -> {
                     try {
-                        return parser.parseValue(classOfT, config, key, user);
+                        return this.getJsonValue(classOfT, config, key, user, defaultValue);
                     } catch (Exception e) {
-                        LOGGER.error("Evaluating getValue('"+key+"') failed. Returning default value.", e);
-                        return this.getDefaultJsonValue(classOfT, key, user, defaultValue);
+                        return this.getJsonValue(classOfT,
+                                this.refreshPolicy.getLatestCachedValue(),
+                                key,
+                                user,
+                                defaultValue);
                     }
                 });
     }
@@ -169,14 +171,10 @@ public class ConfigCatClient implements ConfigurationProvider {
         try {
             return parser.parseValue(classOfT, config, key, user);
         } catch (Exception e) {
-            LOGGER.error("Evaluating getValue('"+key+"') failed. Returning default value.", e);
+            LOGGER.error("Evaluating getValue('"+key+"') failed. Returning defaultValue: ["+ defaultValue +"]. "
+                    + e.getMessage(), e);
             return defaultValue;
         }
-    }
-
-    private <T> T getDefaultJsonValue(Class<T> classOfT, String key, User user, T defaultValue) {
-        String latest = this.refreshPolicy.getLatestCachedValue();
-        return latest != null ? this.getJsonValue(classOfT, latest, key, user, defaultValue) : defaultValue;
     }
 
     /**

@@ -83,7 +83,7 @@ public class ConfigCatClientTest {
 
         String result = TEST_JSON;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
-
+        cl.forceRefresh();
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
 
         server.close();
@@ -170,7 +170,9 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(5, TimeUnit.SECONDS));
 
+        cl.forceRefresh();
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
+        cl.forceRefresh();
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
 
         server.close();
@@ -193,7 +195,9 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         server.enqueue(new MockResponse().setResponseCode(500));
 
+        cl.forceRefresh();
         assertEquals("fakeValue", cl.getValueAsync(String.class, "fakeKey", null).get());
+        cl.forceRefresh();
         assertEquals("fakeValue", cl.getValueAsync(String.class, "fakeKey", null).get());
 
         server.close();
@@ -215,7 +219,9 @@ public class ConfigCatClientTest {
 
         String badJson = "{ test: test] }";
         String def = "def";
+        cl.forceRefresh();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson));
+        cl.forceRefresh();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(5, TimeUnit.SECONDS));
 
         assertSame(def, cl.getValue(String.class, "test", def));

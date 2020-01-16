@@ -36,12 +36,20 @@ class RolloutEvaluator {
     };
 
     public JsonElement evaluate(JsonObject json, String key, User user) {
+        JsonArray rolloutRules = json.getAsJsonArray("r");
+        JsonArray percentageRules = json.getAsJsonArray("p");
+
+        LOGGER.info("Evaluating getValue("+ key +").");
+
         if(user == null) {
-            LOGGER.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
+            if(rolloutRules.size() > 0 || percentageRules.size() > 0) {
+                LOGGER.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
+            }
+
+            JsonElement result = json.get("v");
+            LOGGER.info("Returning "+ result +".");
             return json.get("v");
         }
-
-        JsonArray rolloutRules = json.getAsJsonArray("r");
 
         for (JsonElement rule: rolloutRules) {
             JsonObject ruleObject = rule.getAsJsonObject();
@@ -53,8 +61,10 @@ class RolloutEvaluator {
             String userValue = user.getAttribute(comparisonAttribute);
 
             if(comparisonValue == null || comparisonValue.isEmpty() ||
-                    userValue == null || userValue.isEmpty())
+                    userValue == null || userValue.isEmpty()) {
+                this.logNoMatch(comparisonAttribute, userValue, comparator, comparisonValue);
                 continue;
+            }
 
             switch (comparator) {
                 //IS ONE OF
@@ -63,7 +73,7 @@ class RolloutEvaluator {
                     inValues.replaceAll(String::trim);
                     inValues.removeAll(Arrays.asList(null, ""));
                     if(inValues.contains(userValue)) {
-                        this.logMatch(comparisonAttribute, comparator, comparisonValue, value);
+                        this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                         return value;
                     }
                     break;
@@ -73,21 +83,21 @@ class RolloutEvaluator {
                     notInValues.replaceAll(String::trim);
                     notInValues.removeAll(Arrays.asList(null, ""));
                     if(!notInValues.contains(userValue)) {
-                        this.logMatch(comparisonAttribute, comparator, comparisonValue, value);
+                        this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                         return value;
                     }
                     break;
                 //CONTAINS
                 case 2:
                     if(userValue.contains(comparisonValue)) {
-                        this.logMatch(comparisonAttribute, comparator, comparisonValue, value);
+                        this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                         return value;
                     }
                     break;
                 //DOES NOT CONTAIN
                 case 3:
                     if(!userValue.contains(comparisonValue)) {
-                        this.logMatch(comparisonAttribute, comparator, comparisonValue, value);
+                        this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                         return value;
                     }
                     break;
@@ -105,11 +115,11 @@ class RolloutEvaluator {
                         }
 
                         if ((matched && comparator == 4) || (!matched && comparator == 5)) {
-                            this.logMatch(comparisonAttribute, comparator, comparisonValue, value);
+                            this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                             return value;
                         }
                     } catch (Exception e) {
-                        this.logFormatError(comparisonAttribute, comparator, comparisonValue, e);
+                        this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
                         continue;
                     }
                     break;
@@ -125,11 +135,11 @@ class RolloutEvaluator {
                                 (comparator == 7 && cmpUserVersion.compareTo(matchValue) <= 0) ||
                                 (comparator == 8 && cmpUserVersion.isGreaterThan(matchValue)) ||
                                 (comparator == 9 && cmpUserVersion.compareTo(matchValue) >= 0)) {
-                            this.logMatch(comparisonAttribute, comparator, comparisonValue, value);
+                            this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                             return value;
                         }
                     } catch (Exception e) {
-                        this.logFormatError(comparisonAttribute, comparator, comparisonValue, e);
+                        this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
                         continue;
                     }
                     break;
@@ -150,18 +160,17 @@ class RolloutEvaluator {
                                 (comparator == 13 && userDoubleValue <= comparisonDoubleValue) ||
                                 (comparator == 14 && userDoubleValue > comparisonDoubleValue) ||
                                 (comparator == 15 && userDoubleValue >= comparisonDoubleValue)) {
-                            this.logMatch(comparisonAttribute, comparator, comparisonValue, value);
+                            this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                             return value;
                         }
                     } catch (NumberFormatException e) {
-                        this.logFormatError(comparisonAttribute, comparator, comparisonValue, e);
+                        this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
                         continue;
                     }
                     break;
             }
+            this.logNoMatch(comparisonAttribute, userValue, comparator, comparisonValue);
         }
-
-        JsonArray percentageRules = json.getAsJsonArray("p");
 
         if(percentageRules.size() > 0){
             String hashCandidate = key + user.getIdentifier();
@@ -175,19 +184,28 @@ class RolloutEvaluator {
                 JsonObject ruleObject = rule.getAsJsonObject();
 
                 bucket += ruleObject.get("p").getAsInt();
-                if(scaled < bucket)
-                    return ruleObject.get("v");
+                if(scaled < bucket) {
+                    JsonElement result = ruleObject.get("v");
+                    LOGGER.info("Evaluating %% options. Returning "+ result +".");
+                    return result;
+                }
             }
         }
 
+        JsonElement result = json.get("v");
+        LOGGER.info("Returning "+ result +".");
         return json.get("v");
     }
 
-    private void logMatch(String comparisonAttribute, int comparator, String comparisonValue, JsonElement value) {
-        LOGGER.info("Evaluating rule: ["+comparisonAttribute+"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => match, returning: "+value+"");
+    private void logMatch(String comparisonAttribute, String userValue, int comparator, String comparisonValue, JsonElement value) {
+        LOGGER.info("Evaluating rule: ["+comparisonAttribute+":"+ userValue +"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => match, returning: "+value+"");
     }
 
-    private void logFormatError(String comparisonAttribute, int comparator, String comparisonValue, Exception exception) {
-        LOGGER.warn("Evaluating rule: ["+comparisonAttribute+"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => SKIP rule. Validation error: "+exception+"");
+    private void logNoMatch(String comparisonAttribute, String userValue, int comparator, String comparisonValue) {
+        LOGGER.info("Evaluating rule: ["+comparisonAttribute+":"+ userValue +"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => no match");
+    }
+
+    private void logFormatError(String comparisonAttribute, String userValue, int comparator, String comparisonValue, Exception exception) {
+        LOGGER.warn("Evaluating rule: ["+comparisonAttribute+":"+ userValue +"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => SKIP rule. Validation error: "+exception+"");
     }
 }

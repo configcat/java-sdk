@@ -20,15 +20,6 @@ public class ManualPollingPolicy extends RefreshPolicy {
 
     @Override
     public CompletableFuture<String> getConfigurationJsonAsync() {
-        return super.fetcher().getConfigurationJsonStringAsync()
-                .thenApply(response -> {
-                    String cached = super.cache().get();
-                    String config = response.config();
-                    if (response.isFetched() && !config.equals(cached)) {
-                        super.cache().set(response.config());
-                    }
-
-                    return response.isFetched() ? config : cached;
-                });
+        return CompletableFuture.completedFuture(super.cache().get());
     }
 }
