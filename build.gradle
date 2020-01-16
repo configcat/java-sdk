@@ -43,7 +43,7 @@ dependencies {
     compile group: "commons-codec", name: "commons-codec", version:"1.11"
     compile 'de.skuzzle:semantic-version:2.1.0'
     testCompile group: "org.junit.jupiter", name: "junit-jupiter-api", version:"5.1.0"
-    testCompile group: "org.slf4j", name: "slf4j-simple", version:"1.7.25"
+    testCompile group: "org.slf4j", name: "slf4j-nop", version:"1.7.25"
     testCompile group: "com.squareup.okhttp3", name: "mockwebserver", version:"3.7.0"
     testCompile "org.mockito:mockito-core:2.+"
     testRuntime group: "org.junit.jupiter", name: "junit-jupiter-engine", version:"5.1.0"
