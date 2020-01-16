@@ -186,7 +186,7 @@ class RolloutEvaluator {
                 bucket += ruleObject.get("p").getAsInt();
                 if(scaled < bucket) {
                     JsonElement result = ruleObject.get("v");
-                    LOGGER.info("Evaluating %% options. Returning "+ result +".");
+                    LOGGER.info("Evaluating % options. Returning "+ result +".");
                     return result;
                 }
             }
