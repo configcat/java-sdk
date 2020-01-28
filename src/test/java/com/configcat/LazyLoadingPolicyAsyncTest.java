@@ -22,13 +22,12 @@ public class LazyLoadingPolicyAsyncTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
+        PollingMode mode = PollingModes
+                .LazyLoad(5, true);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), mode);
         ConfigCache cache = new InMemoryConfigCache();
-        fetcher.setUrl(this.server.url("/").toString());
-        this.policy = LazyLoadingPolicy.newBuilder()
-                .cacheRefreshIntervalInSeconds(5)
-                .asyncRefresh(true)
-                .build(fetcher,cache);
+        this.policy = mode.accept(new RefreshPolicyFactory(cache, fetcher));
     }
 
     @AfterEach
@@ -61,12 +60,10 @@ public class LazyLoadingPolicyAsyncTest {
 
     @Test
     public void getCacheFails() throws InterruptedException, ExecutionException {
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
-        fetcher.setUrl(this.server.url("/").toString());
-        LazyLoadingPolicy lPolicy = LazyLoadingPolicy.newBuilder()
-                .cacheRefreshIntervalInSeconds(5)
-                .asyncRefresh(true)
-                .build(fetcher, new FailingCache());
+        PollingMode mode = PollingModes
+                .LazyLoad(5, true);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), mode);
+        RefreshPolicy lPolicy = mode.accept(new RefreshPolicyFactory(new FailingCache(), fetcher));
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(2, TimeUnit.SECONDS));

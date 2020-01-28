@@ -30,13 +30,8 @@ public class ConfigCatClientIntegrationTest {
 
         this.client = ConfigCatClient.newBuilder()
                 .httpClient(new OkHttpClient.Builder().build())
-                .refreshPolicy((configFetcher, cache) -> {
-                    configFetcher.setUrl(this.server.url("/").toString());
-                    return LazyLoadingPolicy.newBuilder()
-                            .cacheRefreshIntervalInSeconds(2)
-                            .asyncRefresh(true)
-                            .build(configFetcher, cache);
-                })
+                .mode(PollingModes.LazyLoad(2, true))
+                .baseUrl(this.server.url("/").toString())
                 .build(APIKEY);
     }
 

@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Describes a {@link RefreshPolicy} which uses an expiring cache
  * to maintain the internally stored configuration.
  */
-public class LazyLoadingPolicy extends RefreshPolicy {
+class LazyLoadingPolicy extends RefreshPolicy {
     private static final Logger LOGGER = LoggerFactory.getLogger(LazyLoadingPolicy.class);
     private Instant lastRefreshedTime;
     private int cacheRefreshIntervalInSeconds;
@@ -27,11 +27,10 @@ public class LazyLoadingPolicy extends RefreshPolicy {
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
      */
-    private LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, Builder builder) {
+    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, LazyLoadingMode config) {
         super(configFetcher, cache);
-        super.fetcher().setMode("l");
-        this.asyncRefresh = builder.asyncRefresh;
-        this.cacheRefreshIntervalInSeconds = builder.cacheRefreshIntervalInSeconds;
+        this.asyncRefresh = config.isAsyncRefresh();
+        this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
         this.isFetching = new AtomicBoolean(false);
         this.initialized = new AtomicBoolean(false);
         this.lastRefreshedTime = Instant.MIN;
@@ -85,60 +84,5 @@ public class LazyLoadingPolicy extends RefreshPolicy {
 
                     return response.isFetched() ? response.config() : cached;
                 });
-    }
-
-    /**
-     * Creates a new builder instance.
-     *
-     * @return the new builder.
-     */
-    public static Builder newBuilder() {
-        return new Builder();
-    }
-
-    /**
-     * A builder that helps construct a {@link LazyLoadingPolicy} instance.
-     */
-    public static class Builder {
-        private int cacheRefreshIntervalInSeconds = 60;
-        private boolean asyncRefresh;
-
-        /**
-         * Sets how long the cache will store its value before fetching the
-         * latest from the network again.
-         *
-         * @param cacheRefreshIntervalInSeconds the refresh interval value in seconds.
-         * @return the builder.
-         */
-        public Builder cacheRefreshIntervalInSeconds(int cacheRefreshIntervalInSeconds) {
-            this.cacheRefreshIntervalInSeconds = cacheRefreshIntervalInSeconds;
-            return this;
-        }
-
-        /**
-         * Sets whether the cache should refresh itself asynchronously or synchronously.
-         * <p>If it's set to {@code true} reading from the policy will not wait for the refresh to be finished,
-         * instead it returns immediately with the previous stored value.</p>
-         * <p>If it's set to {@code false} the policy will wait until the expired
-         * value is being refreshed with the latest configuration.</p>
-         *
-         * @param asyncRefresh the refresh behavior.
-         * @return the builder.
-         */
-        public Builder asyncRefresh(boolean asyncRefresh) {
-            this.asyncRefresh = asyncRefresh;
-            return this;
-        }
-
-        /**
-         * Builds the configured {@link LazyLoadingPolicy} instance.
-         *
-         * @param configFetcher the internal config fetcher.
-         * @param cache the internal cache.
-         * @return the configured {@link LazyLoadingPolicy} instance
-         */
-        public LazyLoadingPolicy build(ConfigFetcher configFetcher, ConfigCache cache) {
-            return new LazyLoadingPolicy(configFetcher, cache, this);
-        }
     }
 }

@@ -24,10 +24,10 @@ public class ManualPollingPolicyTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
+        PollingMode mode = PollingModes.ManualPoll();
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), mode);
         ConfigCache cache = new InMemoryConfigCache();
-        fetcher.setUrl(this.server.url("/").toString());
-        this.policy = new ManualPollingPolicy(fetcher,cache);
+        this.policy = mode.accept(new RefreshPolicyFactory(cache, fetcher));
     }
 
     @AfterEach
@@ -52,9 +52,9 @@ public class ManualPollingPolicyTest {
 
     @Test
     public void getCacheFails() throws InterruptedException, ExecutionException {
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
-        fetcher.setUrl(this.server.url("/").toString());
-        ManualPollingPolicy lPolicy = new ManualPollingPolicy(fetcher, new FailingCache());
+        PollingMode mode = PollingModes.ManualPoll();
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), mode);
+        RefreshPolicy lPolicy = mode.accept(new RefreshPolicyFactory(new FailingCache(), fetcher));
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));

@@ -10,7 +10,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 public class AutoPollingPolicyTest {
@@ -30,9 +29,7 @@ public class AutoPollingPolicyTest {
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
-        AutoPollingPolicy policy = AutoPollingPolicy.newBuilder()
-                .autoPollIntervalInSeconds(2)
-                .build(fetcher,cache);
+        RefreshPolicy policy = PollingModes.AutoPoll(2).accept(new RefreshPolicyFactory(cache, fetcher));
 
         assertEquals(result, policy.getConfigurationJsonAsync().get());
     }
@@ -49,9 +46,7 @@ public class AutoPollingPolicyTest {
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
-        AutoPollingPolicy policy = AutoPollingPolicy.newBuilder()
-                .autoPollIntervalInSeconds(2)
-                .build(fetcher,cache);
+        RefreshPolicy policy = PollingModes.AutoPoll(2).accept(new RefreshPolicyFactory(cache, fetcher));
 
         assertEquals("test", policy.getConfigurationJsonAsync().get());
 
@@ -63,16 +58,13 @@ public class AutoPollingPolicyTest {
         MockWebServer server = new MockWebServer();
         server.start();
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
-        ConfigCache cache = new InMemoryConfigCache();
-        fetcher.setUrl(server.url("/").toString());
-
         AtomicReference<String> newConfig  = new AtomicReference<>();
+        PollingMode mode = PollingModes
+                .AutoPoll(2, (parser, newConfiguration) -> newConfig.set(newConfiguration));
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", server.url("/").toString(), mode);
+        ConfigCache cache = new InMemoryConfigCache();
 
-        AutoPollingPolicy policy = AutoPollingPolicy.newBuilder()
-                .autoPollIntervalInSeconds(2)
-                .configurationChangeListener((parser, newConfiguration) -> newConfig.set(newConfiguration))
-                .build(fetcher, cache);
+        RefreshPolicy policy = mode.accept(new RefreshPolicyFactory(cache, fetcher));
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test2"));
@@ -87,14 +79,5 @@ public class AutoPollingPolicyTest {
 
         server.close();
         policy.close();
-    }
-
-    @Test
-    public void throwsWhenListenerNull() {
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
-        ConfigCache cache = new InMemoryConfigCache();
-        assertThrows(IllegalArgumentException.class, ()-> AutoPollingPolicy.newBuilder()
-                .configurationChangeListener(null)
-                .build(fetcher, cache));
     }
 }

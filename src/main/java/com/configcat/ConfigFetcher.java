@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * This class is used by the internal {@link ConfigCache} implementation to fetch the latest configuration.
  */
-public class ConfigFetcher implements Closeable {
+class ConfigFetcher implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFetcher.class);
     private final OkHttpClient httpClient;
     private String url;
@@ -19,20 +19,16 @@ public class ConfigFetcher implements Closeable {
     private String mode;
     private final String version;
 
-    void setUrl(String url) {
-        this.url = url;
-    }
-    void setMode(String mode) { this.mode = mode; }
-
-    ConfigFetcher(OkHttpClient httpClient, String apiKey) {
-        this(httpClient, apiKey, null);
+    ConfigFetcher(OkHttpClient httpClient, String apiKey, PollingMode mode) {
+        this(httpClient, apiKey, null, mode);
     }
 
-    ConfigFetcher(OkHttpClient httpClient, String apiKey, String baseUrl) {
+    ConfigFetcher(OkHttpClient httpClient, String apiKey, String baseUrl, PollingMode mode) {
         baseUrl = baseUrl == null || baseUrl.isEmpty() ? "https://cdn.configcat.com" : baseUrl;
         this.httpClient = httpClient;
         this.url = baseUrl + "/configuration-files/" + apiKey + "/config_v3.json";
         this.version = this.getClass().getPackage().getImplementationVersion();
+        this.mode = mode.getPollingIdentifier();
     }
 
     /**

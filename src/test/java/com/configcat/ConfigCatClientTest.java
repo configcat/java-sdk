@@ -75,10 +75,8 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f,c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
         String result = TEST_JSON;
@@ -97,10 +95,8 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return AutoPollingPolicy.newBuilder().autoPollIntervalInSeconds(5).build(f, c);
-                })
+                .mode(PollingModes.AutoPoll(5))
+                .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
@@ -118,10 +114,8 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return LazyLoadingPolicy.newBuilder().cacheRefreshIntervalInSeconds(5).build(f, c);
-                })
+                .mode(PollingModes.LazyLoad(5))
+                .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
@@ -139,10 +133,8 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f, c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
@@ -159,10 +151,8 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f,c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .maxWaitTimeForSyncCallsInSeconds(2)
                 .build(APIKEY);
 
@@ -185,10 +175,8 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f,c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
         String result = TEST_JSON;
@@ -210,10 +198,8 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f,c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .maxWaitTimeForSyncCallsInSeconds(2)
                 .build(APIKEY);
 
@@ -238,10 +224,8 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f,c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .maxWaitTimeForSyncCallsInSeconds(2)
                 .build(APIKEY);
 

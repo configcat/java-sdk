@@ -24,13 +24,12 @@ public class LazyLoadingPolicySyncTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
+        PollingMode mode = PollingModes
+                .LazyLoad(5);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), mode);
         ConfigCache cache = new InMemoryConfigCache();
-        fetcher.setUrl(this.server.url("/").toString());
-        this.policy = LazyLoadingPolicy.newBuilder()
-                .cacheRefreshIntervalInSeconds(5)
-                .asyncRefresh(false)
-                .build(fetcher,cache);
+        this.policy = mode.accept(new RefreshPolicyFactory(cache, fetcher));
     }
 
     @AfterEach
@@ -56,12 +55,11 @@ public class LazyLoadingPolicySyncTest {
 
     @Test
     public void getCacheFails() throws InterruptedException, ExecutionException {
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
-        fetcher.setUrl(this.server.url("/").toString());
-        LazyLoadingPolicy lPolicy = LazyLoadingPolicy.newBuilder()
-                .cacheRefreshIntervalInSeconds(5)
-                .asyncRefresh(false)
-                .build(fetcher, new FailingCache());
+        PollingMode mode = PollingModes
+                .LazyLoad(5);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), mode);
+        RefreshPolicy lPolicy = mode.accept(new RefreshPolicyFactory(new FailingCache(), fetcher));
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));
@@ -103,8 +101,8 @@ public class LazyLoadingPolicySyncTest {
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
-        LazyLoadingPolicy policy = LazyLoadingPolicy.newBuilder()
-                .build(fetcher, cache);
+        RefreshPolicy policy = PollingModes
+                .LazyLoad(60).accept(new RefreshPolicyFactory(cache, fetcher));
 
         assertEquals("test", policy.getConfigurationJsonAsync().get());
 

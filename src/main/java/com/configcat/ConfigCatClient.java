@@ -14,7 +14,7 @@ import java.util.function.BiFunction;
 /**
  * A client for handling configurations provided by ConfigCat.
  */
-public class ConfigCatClient implements ConfigurationProvider {
+public final class ConfigCatClient implements ConfigurationProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigCatClient.class);
     private static final ConfigurationParser parser = new ConfigurationParser();
     private final RefreshPolicy refreshPolicy;
@@ -26,6 +26,10 @@ public class ConfigCatClient implements ConfigurationProvider {
 
         this.maxWaitTimeForSyncCallsInSeconds = builder.maxWaitTimeForSyncCallsInSeconds;
 
+        PollingMode pollingMode = builder.pollingMode == null
+                ? PollingModes.AutoPoll(60)
+                : builder.pollingMode;
+
         ConfigFetcher fetcher = new ConfigFetcher(builder.httpClient == null
                 ? new OkHttpClient
                     .Builder()
@@ -33,16 +37,14 @@ public class ConfigCatClient implements ConfigurationProvider {
                     .build()
                 : builder.httpClient,
                 apiKey,
-                builder.baseUrl);
+                builder.baseUrl,
+                pollingMode);
 
         ConfigCache cache = builder.cache == null
                 ? new InMemoryConfigCache()
                 : builder.cache;
 
-        this.refreshPolicy = builder.refreshPolicy == null
-                ? AutoPollingPolicy.newBuilder()
-                    .build(fetcher, cache)
-                : builder.refreshPolicy.apply(fetcher, cache);
+        this.refreshPolicy = pollingMode.accept(new RefreshPolicyFactory(cache, fetcher));
     }
 
     /**
@@ -194,7 +196,7 @@ public class ConfigCatClient implements ConfigurationProvider {
         private ConfigCache cache;
         private int maxWaitTimeForSyncCallsInSeconds;
         private String baseUrl;
-        private BiFunction<ConfigFetcher, ConfigCache, RefreshPolicy> refreshPolicy;
+        private PollingMode pollingMode;
 
         /**
          * Sets the underlying http client which will be used to fetch the latest configuration.
@@ -232,11 +234,11 @@ public class ConfigCatClient implements ConfigurationProvider {
         /**
          * Sets the internal refresh policy implementation.
          *
-         * @param refreshPolicy a function used to create the a {@link RefreshPolicy} implementation with the given {@link ConfigFetcher} and {@link ConfigCache}.
+         * @param pollingMode the polling mode.
          * @return the builder.
          */
-        public Builder refreshPolicy(BiFunction<ConfigFetcher, ConfigCache, RefreshPolicy> refreshPolicy) {
-            this.refreshPolicy = refreshPolicy;
+        public Builder mode(PollingMode pollingMode) {
+            this.pollingMode = pollingMode;
             return this;
         }
 

@@ -3,7 +3,7 @@ package com.configcat;
 /**
  * An in-memory cache implementation used to store the fetched configurations.
  */
-public class InMemoryConfigCache extends ConfigCache {
+class InMemoryConfigCache extends ConfigCache {
 
     @Override
     protected String read() {

@@ -69,6 +69,7 @@ public class ConfigurationParser {
      *
      * @param config the json config.
      * @return a collection of the setting keys.
+     * @throws ParsingFailedException when the parsing failed.
      */
     public Collection<String> getAllKeys(String config) throws ParsingFailedException {
         try {

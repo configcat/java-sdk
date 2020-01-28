@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture;
  * The public interface of a refresh policy which's implementors
  * should describe the configuration update rules.
  */
-public abstract class RefreshPolicy implements Closeable {
+abstract class RefreshPolicy implements Closeable {
     private final ConfigCache cache;
     private final ConfigFetcher configFetcher;
 
@@ -38,7 +38,7 @@ public abstract class RefreshPolicy implements Closeable {
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
      */
-    protected RefreshPolicy(ConfigFetcher configFetcher, ConfigCache cache) {
+    RefreshPolicy(ConfigFetcher configFetcher, ConfigCache cache) {
         this.configFetcher = configFetcher;
         this.cache = cache;
     }

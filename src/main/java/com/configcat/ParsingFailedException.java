@@ -3,7 +3,7 @@ package com.configcat;
 /**
  * Represents an exception which is being thrown when the parsing of a given json fails.
  */
-public class ParsingFailedException extends Exception {
+class ParsingFailedException extends Exception {
     private String json;
     private Exception innerException;
 
@@ -32,7 +32,7 @@ public class ParsingFailedException extends Exception {
      * @param json the json string which was failed to parse.
      * @param exception the inner exception.
      */
-    public ParsingFailedException(String message, String json, Exception exception) {
+    ParsingFailedException(String message, String json, Exception exception) {
         super(message);
         this.json = json;
         this.innerException = exception;
@@ -44,7 +44,7 @@ public class ParsingFailedException extends Exception {
      * @param message the message of the exception.
      * @param json the json string which was failed to parse.
      */
-    public ParsingFailedException(String message, String json) {
+    ParsingFailedException(String message, String json) {
         super(message);
         this.json = json;
     }

@@ -23,12 +23,13 @@ public class AutoPollingPolicyIntegrationTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
+        PollingMode pollingMode = PollingModes.AutoPoll(2);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                "",
+                this.server.url("/").toString(),
+                PollingModes.AutoPoll(2));
         ConfigCache cache = new InMemoryConfigCache();
-        fetcher.setUrl(this.server.url("/").toString());
-        this.policy = AutoPollingPolicy.newBuilder()
-                .autoPollIntervalInSeconds(2)
-                .build(fetcher,cache);
+        this.policy = (AutoPollingPolicy)pollingMode.accept(new RefreshPolicyFactory(cache, fetcher));
     }
 
     @AfterEach
@@ -39,9 +40,7 @@ public class AutoPollingPolicyIntegrationTest {
 
     @Test
     public void ensuresPollingIntervalGreaterThanTwoSeconds() {
-        assertThrows(IllegalArgumentException.class, ()-> AutoPollingPolicy.newBuilder()
-                .autoPollIntervalInSeconds(1)
-                .build(new ConfigFetcher(new OkHttpClient.Builder().build(), ""), new InMemoryConfigCache()));
+        assertThrows(IllegalArgumentException.class, ()-> PollingModes.AutoPoll(1));
     }
 
     @Test

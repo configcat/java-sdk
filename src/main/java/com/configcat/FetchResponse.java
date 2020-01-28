@@ -3,7 +3,7 @@ package com.configcat;
 /**
  * This class represents a fetch response object.
  */
-public class FetchResponse {
+class FetchResponse {
     /**
      * The response status, can be {@code FETCHED}, {@code NOTMODIFIED} or {@code FAILED}.
      */

@@ -23,8 +23,7 @@ public class ConfigFetcherTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "");
-        this.fetcher.setUrl(this.server.url("/").toString());
+        this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), PollingModes.ManualPoll());
     }
 
     @AfterEach
@@ -58,8 +57,12 @@ public class ConfigFetcherTest {
     @Test
     public void getConfigurationException() throws IOException, ExecutionException, InterruptedException {
 
-        ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build(), "");
-        fetch.setUrl(this.server.url("/").toString());
+        ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
+                    .readTimeout(1, TimeUnit.SECONDS)
+                    .build(),
+                "",
+                this.server.url("/").toString(),
+                PollingModes.ManualPoll());
 
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(5, TimeUnit.SECONDS));
 

@@ -10,7 +10,7 @@ import java.io.IOException;
  * A cache API used to make custom cache implementations for {@link ConfigCatClient}.
  */
 public abstract class ConfigCache {
-    protected static final Logger LOGGER = LoggerFactory.getLogger(ConfigCache.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigCache.class);
     private String inMemoryValue;
 
     public String get() {

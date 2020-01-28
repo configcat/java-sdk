@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Describes a {@link RefreshPolicy} which polls the latest configuration
  * over HTTP and updates the local cache repeatedly.
  */
-public class AutoPollingPolicy extends RefreshPolicy {
+class AutoPollingPolicy extends RefreshPolicy {
     private static final Logger LOGGER = LoggerFactory.getLogger(AutoPollingPolicy.class);
     private static final ConfigurationParser parser = new ConfigurationParser();
     private final ScheduledExecutorService scheduler;
@@ -29,13 +29,12 @@ public class AutoPollingPolicy extends RefreshPolicy {
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
      */
-    private AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, Builder builder) {
+    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, AutoPollingMode modeConfig) {
         super(configFetcher, cache);
-        super.fetcher().setMode("p");
         this.listeners = new ArrayList<>();
 
-        if(builder.listener != null)
-            this.listeners.add(builder.listener);
+        if(modeConfig.getListener() != null)
+            this.listeners.add(modeConfig.getListener());
 
         this.initialized = new AtomicBoolean(false);
         this.initFuture = new CompletableFuture<>();
@@ -56,7 +55,7 @@ public class AutoPollingPolicy extends RefreshPolicy {
             } catch (Exception e){
                 LOGGER.error("Exception in AutoPollingCachePolicy", e);
             }
-        }, 0, builder.autoPollIntervalInSeconds, TimeUnit.SECONDS);
+        }, 0, modeConfig.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
     }
 
     @Override
@@ -95,63 +94,5 @@ public class AutoPollingPolicy extends RefreshPolicy {
     private synchronized void broadcastConfigurationChanged(String newConfiguration) {
         for (ConfigurationChangeListener listener : this.listeners)
             listener.onConfigurationChanged(parser, newConfiguration);
-    }
-
-    /**
-     * Creates a new builder instance.
-     *
-     * @return the new builder.
-     */
-    public static Builder newBuilder() {
-        return new Builder();
-    }
-
-    /**
-     * A builder that helps construct a {@link AutoPollingPolicy} instance.
-     */
-    public static class Builder {
-        private int autoPollIntervalInSeconds = 60;
-        private ConfigurationChangeListener listener;
-
-        /**
-         * Sets at least how often this policy should fetch the latest configuration and refresh the cache.
-         *
-         * @param autoPollIntervalInSeconds the poll interval in seconds.
-         * @return the builder.
-         * @throws IllegalArgumentException when the given value is less than 2 seconds.
-         */
-        public Builder autoPollIntervalInSeconds(int autoPollIntervalInSeconds) {
-            if(autoPollIntervalInSeconds < 2)
-                throw new IllegalArgumentException("autoPollRateInSeconds cannot be less than 2 seconds");
-
-            this.autoPollIntervalInSeconds = autoPollIntervalInSeconds;
-            return this;
-        }
-
-        /**
-         * Sets a configuration changed listener.
-         *
-         * @param listener the listener.
-         * @return the builder.
-         * @throws IllegalArgumentException when the given listener is null.
-         */
-        public Builder configurationChangeListener(ConfigurationChangeListener listener) {
-            if(listener == null)
-                throw new IllegalArgumentException("listener cannot be null");
-
-            this.listener = listener;
-            return this;
-        }
-
-        /**
-         * Builds the configured {@link AutoPollingPolicy} instance.
-         *
-         * @param configFetcher the internal config fetcher.
-         * @param cache the internal cache.
-         * @return the configured {@link AutoPollingPolicy} instance
-         */
-        public AutoPollingPolicy build(ConfigFetcher configFetcher, ConfigCache cache) {
-            return new AutoPollingPolicy(configFetcher, cache, this);
-        }
     }
 }
