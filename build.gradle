@@ -69,8 +69,8 @@ jacoco {
 }
 
 test {
+    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'warn'
     useJUnitPlatform()
-    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'warning'
 }
 
 task junit5CodeCoverageReport(type:JacocoReport){
