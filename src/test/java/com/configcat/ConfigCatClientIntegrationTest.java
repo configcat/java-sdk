@@ -47,7 +47,7 @@ public class ConfigCatClientIntegrationTest {
         String result = String.format(TEST_JSON, sValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         String config = this.client.getValue(String.class,"fakeKey", null);
-        assertEquals(sValue, config);
+        assertEquals("", config);
     }
 
     @Test
