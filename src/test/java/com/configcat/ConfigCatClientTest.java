@@ -205,13 +205,13 @@ public class ConfigCatClientTest {
 
         String badJson = "{ test: test] }";
         String def = "def";
-        cl.forceRefresh();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson));
-        cl.forceRefresh();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(5, TimeUnit.SECONDS));
 
+        cl.forceRefresh();
         assertSame(def, cl.getValue(String.class, "test", def));
 
+        cl.forceRefresh();
         assertSame(def, cl.getValue(String.class, "test", def));
 
         server.shutdown();
