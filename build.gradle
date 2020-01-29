@@ -1,7 +1,6 @@
 apply plugin: "java"
 apply plugin: "maven-publish"
 apply plugin: "jacoco"
-apply plugin: "org.junit.platform.gradle.plugin"
 apply plugin: "com.jfrog.artifactory"
 apply plugin: "com.jfrog.bintray"
 
@@ -25,7 +24,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath ("org.junit.platform:junit-platform-gradle-plugin:1.1.0")
         classpath "org.jfrog.buildinfo:build-info-extractor-gradle:latest.release"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
     }
@@ -68,12 +66,15 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 
 jacoco {
     toolVersion = "0.8.2"
-    applyTo junitPlatformTest
+}
+
+test {
+    useJUnitPlatform()
 }
 
 task junit5CodeCoverageReport(type:JacocoReport){
-    dependsOn junitPlatformTest
-    executionData junitPlatformTest
+    dependsOn test
+    executionData test
     sourceSets sourceSets.main
     sourceDirectories = files(project.sourceSets.main.allSource.srcDirs)
     classDirectories = files(project.sourceSets.main.output)
