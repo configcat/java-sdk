@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -68,8 +68,8 @@ public class AutoPollingPolicyIntegrationTest {
 
     @Test
     public void configChanged() throws InterruptedException {
-        AtomicReference<String> newConfig  = new AtomicReference<>();
-        ConfigurationChangeListener listener = (parser, newConfiguration) -> newConfig.set(newConfiguration);
+        AtomicBoolean isCalled  = new AtomicBoolean();
+        ConfigurationChangeListener listener = () -> isCalled.set(true);
         this.policy.addConfigurationChangeListener(listener);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
@@ -77,11 +77,7 @@ public class AutoPollingPolicyIntegrationTest {
 
         Thread.sleep(1000);
 
-        assertEquals("test", newConfig.get());
-
-        Thread.sleep(2000);
-
-        assertEquals("test2", newConfig.get());
+        assertTrue(isCalled.get());
 
         this.policy.removeConfigurationChangeListener(listener);
     }

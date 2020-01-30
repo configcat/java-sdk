@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 class AutoPollingPolicy extends RefreshPolicy {
     private static final Logger LOGGER = LoggerFactory.getLogger(AutoPollingPolicy.class);
-    private static final ConfigurationParser parser = new ConfigurationParser();
     private final ScheduledExecutorService scheduler;
     private final CompletableFuture<Void> initFuture;
     private final AtomicBoolean initialized;
@@ -46,7 +45,7 @@ class AutoPollingPolicy extends RefreshPolicy {
                 String config = response.config();
                 if (response.isFetched() && !config.equals(cached)) {
                     super.cache().set(config);
-                    this.broadcastConfigurationChanged(config);
+                    this.broadcastConfigurationChanged();
                 }
 
                 if(!initialized.getAndSet(true))
@@ -91,8 +90,8 @@ class AutoPollingPolicy extends RefreshPolicy {
         listeners.remove(listener);
     }
 
-    private synchronized void broadcastConfigurationChanged(String newConfiguration) {
+    private synchronized void broadcastConfigurationChanged() {
         for (ConfigurationChangeListener listener : this.listeners)
-            listener.onConfigurationChanged(parser, newConfiguration);
+            listener.onConfigurationChanged();
     }
 }

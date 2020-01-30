@@ -7,9 +7,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class AutoPollingPolicyTest {
@@ -58,24 +59,19 @@ public class AutoPollingPolicyTest {
         MockWebServer server = new MockWebServer();
         server.start();
 
-        AtomicReference<String> newConfig  = new AtomicReference<>();
+        AtomicBoolean isCalled  = new AtomicBoolean();
         PollingMode mode = PollingModes
-                .AutoPoll(2, (parser, newConfiguration) -> newConfig.set(newConfiguration));
+                .AutoPoll(2, () -> isCalled.set(true));
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", server.url("/").toString(), mode);
         ConfigCache cache = new InMemoryConfigCache();
 
         RefreshPolicy policy = mode.accept(new RefreshPolicyFactory(cache, fetcher));
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("test2"));
 
         Thread.sleep(1000);
 
-        assertEquals("test", newConfig.get());
-
-        Thread.sleep(2000);
-
-        assertEquals("test2", newConfig.get());
+        assertTrue(isCalled.get());
 
         server.close();
         policy.close();
