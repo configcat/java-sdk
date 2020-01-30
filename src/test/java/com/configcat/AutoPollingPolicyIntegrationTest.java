@@ -67,22 +67,6 @@ public class AutoPollingPolicyIntegrationTest {
     }
 
     @Test
-    public void configChanged() throws InterruptedException {
-        AtomicBoolean isCalled  = new AtomicBoolean();
-        ConfigurationChangeListener listener = () -> isCalled.set(true);
-        this.policy.addConfigurationChangeListener(listener);
-
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2"));
-
-        Thread.sleep(1000);
-
-        assertTrue(isCalled.get());
-
-        this.policy.removeConfigurationChangeListener(listener);
-    }
-
-    @Test
     public void getMany() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2"));

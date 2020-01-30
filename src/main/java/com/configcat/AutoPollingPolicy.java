@@ -72,24 +72,6 @@ class AutoPollingPolicy extends RefreshPolicy {
         this.listeners.clear();
     }
 
-    /**
-     * Subscribes a new listener to the configuration changed event.
-     *
-     * @param listener the listener.
-     */
-    public synchronized void addConfigurationChangeListener(ConfigurationChangeListener listener) {
-        listeners.add(listener);
-    }
-
-    /**
-     * Removes a given listener from the configuration changed event.
-     *
-     * @param listener the listener.
-     */
-    public synchronized void removeConfigurationChangeListener(ConfigurationChangeListener listener) {
-        listeners.remove(listener);
-    }
-
     private synchronized void broadcastConfigurationChanged() {
         for (ConfigurationChangeListener listener : this.listeners)
             listener.onConfigurationChanged();

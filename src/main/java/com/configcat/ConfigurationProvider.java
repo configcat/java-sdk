@@ -10,15 +10,6 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface ConfigurationProvider extends Closeable {
     /**
-     * Gets the internal refresh policy.
-     *
-     * @param classOfT the class of T.
-     * @param <T> the type of the desired policy.
-     * @return the internal policy.
-     */
-    <T extends RefreshPolicy> T getRefreshPolicy(Class<T> classOfT);
-
-    /**
      * Gets a value synchronously as T from the configuration identified by the given {@code key}.
      *
      * @param classOfT the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.

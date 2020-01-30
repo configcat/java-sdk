@@ -63,12 +63,6 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getPolicy() {
-        ConfigCatClient cl = new ConfigCatClient(APIKEY);
-        assertNotNull(cl.getRefreshPolicy(AutoPollingPolicy.class));
-    }
-
-    @Test
     public void getConfigurationWithFailingCache() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
