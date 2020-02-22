@@ -170,12 +170,13 @@ class RolloutEvaluator {
                         continue;
                     }
                     break;
-                //IS NOT ONE OF (Sensitive)
+                //IS ONE OF (Sensitive)
                 case 16:
                     List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
                     inValuesSensitive.replaceAll(String::trim);
                     inValuesSensitive.removeAll(Arrays.asList(null, ""));
-                    if(inValuesSensitive.contains(DigestUtils.sha1(userValue))) {
+                    String hashValueOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
+                    if(inValuesSensitive.contains(hashValueOne)) {
                         this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                         return value;
                     }
@@ -185,7 +186,8 @@ class RolloutEvaluator {
                     List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
                     notInValuesSensitive.replaceAll(String::trim);
                     notInValuesSensitive.removeAll(Arrays.asList(null, ""));
-                    if(!notInValuesSensitive.contains(DigestUtils.sha1(userValue))) {
+                    String hashValueNotOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
+                    if(!notInValuesSensitive.contains(hashValueNotOne) {
                         this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                         return value;
                     }
