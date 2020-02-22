@@ -32,7 +32,9 @@ class RolloutEvaluator {
             "< (Number)",
             "<= (Number)",
             "> (Number)",
-            ">= (Number)"
+            ">= (Number)",
+            "IS ONE OF (Sensitive)",
+            "IS NOT ONE OF (Sensitive)"
     };
 
     public JsonElement evaluate(JsonObject json, String key, User user) {
@@ -166,6 +168,26 @@ class RolloutEvaluator {
                     } catch (NumberFormatException e) {
                         this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
                         continue;
+                    }
+                    break;
+                //IS NOT ONE OF (Sensitive)
+                case 16:
+                    List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
+                    inValuesSensitive.replaceAll(String::trim);
+                    inValuesSensitive.removeAll(Arrays.asList(null, ""));
+                    if(inValuesSensitive.contains(DigestUtils.sha1(userValue))) {
+                        this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
+                        return value;
+                    }
+                    break;
+                //IS NOT ONE OF (Sensitive)
+                case 17:
+                    List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
+                    notInValuesSensitive.replaceAll(String::trim);
+                    notInValuesSensitive.removeAll(Arrays.asList(null, ""));
+                    if(!notInValuesSensitive.contains(DigestUtils.sha1(userValue))) {
+                        this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
+                        return value;
                     }
                     break;
             }
