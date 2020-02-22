@@ -187,7 +187,7 @@ class RolloutEvaluator {
                     notInValuesSensitive.replaceAll(String::trim);
                     notInValuesSensitive.removeAll(Arrays.asList(null, ""));
                     String hashValueNotOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
-                    if(!notInValuesSensitive.contains(hashValueNotOne) {
+                    if(!notInValuesSensitive.contains(hashValueNotOne)) {
                         this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                         return value;
                     }
