@@ -1,7 +1,8 @@
 # Steps to deploy
 ## Preparation
 1. Run tests
-3. Increase the version in the gradle.properties file.
+3. Increase the version in the `gradle.properties` file.
+4. Commit & Push
 ## Publish
 Use the **same version** for the git tag as in the properties file.
 - Via git tag
@@ -22,3 +23,6 @@ Use the **same version** for the git tag as in the properties file.
 1. Log in to bintray.com and sync the new package to Maven Central.
 2. Make sure the new version is available on [jcenter](https://bintray.com/configcat/releases/configcat-java-client).
 2. Make sure the new version is available on [Maven Central](https://search.maven.org/artifact/com.configcat/configcat-java-client).
+
+## Update samples
+Update and test sample apps with the new SDK version.
