@@ -26,7 +26,7 @@ class ConfigFetcher implements Closeable {
     ConfigFetcher(OkHttpClient httpClient, String apiKey, String baseUrl, PollingMode mode) {
         baseUrl = baseUrl == null || baseUrl.isEmpty() ? "https://cdn.configcat.com" : baseUrl;
         this.httpClient = httpClient;
-        this.url = baseUrl + "/configuration-files/" + apiKey + "/config_v3.json";
+        this.url = baseUrl + "/configuration-files/" + apiKey + "/config_v4.json";
         this.version = this.getClass().getPackage().getImplementationVersion();
         this.mode = mode.getPollingIdentifier();
     }

@@ -20,7 +20,7 @@ Use the **same version** for the git tag as in the properties file.
   Create a new [Github release](https://github.com/configcat/java-sdk/releases) with a new version tag and release notes.
 
 ## Sync
-1. Log in to bintray.com and sync the new package to Maven Central.
+1. Log in to bintray.com and sync the new package to Maven Central. (https://bintray.com/configcat/releases/configcat-java-client#central)
 2. Make sure the new version is available on [jcenter](https://bintray.com/configcat/releases/configcat-java-client).
 2. Make sure the new version is available on [Maven Central](https://search.maven.org/artifact/com.configcat/configcat-java-client).
 
