@@ -24,5 +24,9 @@ Use the **same version** for the git tag as in the properties file.
 2. Make sure the new version is available on [jcenter](https://bintray.com/configcat/releases/configcat-java-client).
 2. Make sure the new version is available on [Maven Central](https://search.maven.org/artifact/com.configcat/configcat-java-client).
 
+## Update code examples in ConfigCat Dashboard project's `steps to connect your application`
+1. Update Maven import examples.
+2. Update Gradle import examples.
+
 ## Update samples
 Update and test sample apps with the new SDK version.
