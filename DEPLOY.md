@@ -26,7 +26,8 @@ Use the **same version** for the git tag as in the properties file.
 
 ## Update import examples in local README.md
 
-## Update code examples in ConfigCat Dashboard project's `steps to connect your application`
+## Update code examples in ConfigCat Dashboard project's 
+`steps to connect your application`
 1. Update Maven import examples.
 2. Update Gradle import examples.
 
