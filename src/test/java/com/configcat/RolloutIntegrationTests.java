@@ -19,7 +19,7 @@ public class RolloutIntegrationTests {
     private Scanner csvScanner;
 
     @Parameterized.Parameters(name
-            = "{index}: Test with File={0}, ApiKey={1}")
+            = "{index}: Test with File={0}, SdkKey={1}")
     public static Iterable<Object[]> data() {
         return Arrays.asList(new Object[][] {
                 {"testmatrix.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A"},
@@ -30,9 +30,9 @@ public class RolloutIntegrationTests {
         });
     }
 
-    public RolloutIntegrationTests(String fileName, String apiKey) throws FileNotFoundException {
+    public RolloutIntegrationTests(String fileName, String sdkKey) throws FileNotFoundException {
         this.client = ConfigCatClient.newBuilder()
-                .build(apiKey);
+                .build(sdkKey);
 
         ClassLoader classLoader = getClass().getClassLoader();
         this.csvScanner = new Scanner(new File(classLoader.getResource(fileName).getFile()));

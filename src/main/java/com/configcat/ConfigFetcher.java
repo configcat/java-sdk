@@ -19,14 +19,14 @@ class ConfigFetcher implements Closeable {
     private String mode;
     private final String version;
 
-    ConfigFetcher(OkHttpClient httpClient, String apiKey, PollingMode mode) {
-        this(httpClient, apiKey, null, mode);
+    ConfigFetcher(OkHttpClient httpClient, String sdkKey, PollingMode mode) {
+        this(httpClient, sdkKey, null, mode);
     }
 
-    ConfigFetcher(OkHttpClient httpClient, String apiKey, String baseUrl, PollingMode mode) {
+    ConfigFetcher(OkHttpClient httpClient, String sdkKey, String baseUrl, PollingMode mode) {
         baseUrl = baseUrl == null || baseUrl.isEmpty() ? "https://cdn.configcat.com" : baseUrl;
         this.httpClient = httpClient;
-        this.url = baseUrl + "/configuration-files/" + apiKey + "/config_v4.json";
+        this.url = baseUrl + "/configuration-files/" + sdkKey + "/config_v4.json";
         this.version = this.getClass().getPackage().getImplementationVersion();
         this.mode = mode.getPollingIdentifier();
     }
@@ -58,7 +58,7 @@ class ConfigFetcher implements Closeable {
                         LOGGER.debug("Fetch was successful: config not modified.");
                         future.complete(new FetchResponse(FetchResponse.Status.NOTMODIFIED, null));
                     } else {
-                        LOGGER.error("Double-check your API KEY at https://app.configcat.com/apikey. Received unexpected response: " + response.code());
+                        LOGGER.error("Double-check your SDK Key at https://app.configcat.com/apikey. Received unexpected response: " + response.code());
                         future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
                     }
                 } catch (Exception e) {

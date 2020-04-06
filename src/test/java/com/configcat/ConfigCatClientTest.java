@@ -12,34 +12,34 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigCatClientTest {
 
-    private static final String APIKEY = "TEST_KEY";
+    private static final String SDKKEY = "TEST_KEY";
 
     private static final String TEST_JSON = "{ fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } }";
 
     @Test
-    public void ensuresApiKeyIsNotNull() {
+    public void ensuresSdkKeyIsNotNull() {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(null));
 
-        assertEquals("apiKey is null or empty", exception.getMessage());
+        assertEquals("sdkKey is null or empty", exception.getMessage());
 
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.newBuilder().build(null));
 
-        assertEquals("apiKey is null or empty", builderException.getMessage());
+        assertEquals("sdkKey is null or empty", builderException.getMessage());
     }
 
     @Test
-    public void ensuresApiKeyIsNotEmpty() {
+    public void ensuresSdkKeyIsNotEmpty() {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(""));
 
-        assertEquals("apiKey is null or empty", exception.getMessage());
+        assertEquals("sdkKey is null or empty", exception.getMessage());
 
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.newBuilder().build(""));
 
-        assertEquals("apiKey is null or empty", builderException.getMessage());
+        assertEquals("sdkKey is null or empty", builderException.getMessage());
     }
 
     @Test
@@ -53,7 +53,7 @@ public class ConfigCatClientTest {
     public void getValueWithDefaultConfigTimeout() throws IOException {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(APIKEY);
+                .build(SDKKEY);
 
         // makes a call to a real url which would fail, default expected
         boolean config = cl.getValue(Boolean.class, "key", true);
@@ -71,7 +71,7 @@ public class ConfigCatClientTest {
                 .cache(new FailingCache())
                 .mode(PollingModes.ManualPoll())
                 .baseUrl(server.url("/").toString())
-                .build(APIKEY);
+                .build(SDKKEY);
 
         String result = TEST_JSON;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -91,7 +91,7 @@ public class ConfigCatClientTest {
                 .cache(new FailingCache())
                 .mode(PollingModes.AutoPoll(5))
                 .baseUrl(server.url("/").toString())
-                .build(APIKEY);
+                .build(SDKKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
@@ -110,7 +110,7 @@ public class ConfigCatClientTest {
                 .cache(new FailingCache())
                 .mode(PollingModes.LazyLoad(5))
                 .baseUrl(server.url("/").toString())
-                .build(APIKEY);
+                .build(SDKKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
@@ -129,7 +129,7 @@ public class ConfigCatClientTest {
                 .cache(new FailingCache())
                 .mode(PollingModes.ManualPoll())
                 .baseUrl(server.url("/").toString())
-                .build(APIKEY);
+                .build(SDKKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
@@ -148,7 +148,7 @@ public class ConfigCatClientTest {
                 .mode(PollingModes.ManualPoll())
                 .baseUrl(server.url("/").toString())
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(APIKEY);
+                .build(SDKKEY);
 
         String result = TEST_JSON;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -171,7 +171,7 @@ public class ConfigCatClientTest {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .mode(PollingModes.ManualPoll())
                 .baseUrl(server.url("/").toString())
-                .build(APIKEY);
+                .build(SDKKEY);
 
         String result = TEST_JSON;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -195,7 +195,7 @@ public class ConfigCatClientTest {
                 .mode(PollingModes.ManualPoll())
                 .baseUrl(server.url("/").toString())
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(APIKEY);
+                .build(SDKKEY);
 
         String badJson = "{ test: test] }";
         String def = "def";
@@ -221,7 +221,7 @@ public class ConfigCatClientTest {
                 .mode(PollingModes.ManualPoll())
                 .baseUrl(server.url("/").toString())
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(APIKEY);
+                .build(SDKKEY);
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(5, TimeUnit.SECONDS));
 

@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigCatClientIntegrationTest {
 
-    private static final String APIKEY = "TEST_KEY";
+    private static final String SDKKEY = "TEST_KEY";
     private ConfigCatClient client;
     private MockWebServer server;
 
@@ -32,7 +32,7 @@ public class ConfigCatClientIntegrationTest {
                 .httpClient(new OkHttpClient.Builder().build())
                 .mode(PollingModes.LazyLoad(2, true))
                 .baseUrl(this.server.url("/").toString())
-                .build(APIKEY);
+                .build(SDKKEY);
     }
 
     @AfterEach
@@ -192,7 +192,7 @@ public class ConfigCatClientIntegrationTest {
     public void getConfigurationJsonStringWithDefaultConfigTimeout() {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(APIKEY);
+                .build(SDKKEY);
 
         // makes a call to a real url which would fail, null expected
         String config = cl.getValue(String.class, "test", null);
@@ -201,7 +201,7 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getConfigurationJsonStringWithDefaultConfig() throws InterruptedException, ExecutionException, TimeoutException {
-        ConfigCatClient cl = new ConfigCatClient(APIKEY);
+        ConfigCatClient cl = new ConfigCatClient(SDKKEY);
         assertEquals(null, cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
     }
 

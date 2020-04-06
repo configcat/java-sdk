@@ -29,8 +29,8 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 compile group: 'com.configcat', name: 'configcat-java-client', version: '4.+'
 ```
 
-### 2. Go to <a href="https://app.configcat.com/connect" target="_blank">Connect your application</a> tab to get your *API Key*:
-![API-KEY](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "API-KEY")
+### 2. Go to <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your application</a> tab to get your *SDK Key*:
+![SDK-KEY](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "SDK-KEY")
 
 ### 3. Import *com.configcat.** to your application
 ```java
@@ -39,7 +39,7 @@ import com.configcat.*;
 
 ### 4. Create the *ConfigCat* client instance
 ```java
-ConfigCatClient client = new ConfigCatClient("#YOUR-API-KEY#");
+ConfigCatClient client = new ConfigCatClient("#YOUR-SDK-KEY#");
 ```
 
 ### 5. Get your setting value:
