@@ -14,10 +14,10 @@ import java.util.concurrent.CompletableFuture;
 class ConfigFetcher implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFetcher.class);
     private final OkHttpClient httpClient;
-    private String url;
-    private String eTag;
-    private String mode;
+    private final String url;
+    private final String mode;
     private final String version;
+    private String eTag;
 
     ConfigFetcher(OkHttpClient httpClient, String apiKey, PollingMode mode) {
         this(httpClient, apiKey, null, mode);
