@@ -8,9 +8,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * This class is used by the internal {@link ConfigCache} implementation to fetch the latest configuration.
- */
 class ConfigFetcher implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFetcher.class);
     private final OkHttpClient httpClient;
@@ -31,11 +28,6 @@ class ConfigFetcher implements Closeable {
         this.mode = mode.getPollingIdentifier();
     }
 
-    /**
-     * Gets the latest configuration from the network asynchronously.
-     *
-     * @return a {@link FetchResponse} instance which holds the result of the fetch.
-     */
     public CompletableFuture<FetchResponse> getConfigurationJsonStringAsync() {
         Request request = this.getRequest();
 
