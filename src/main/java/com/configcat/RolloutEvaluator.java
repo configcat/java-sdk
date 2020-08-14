@@ -9,14 +9,12 @@ import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 class RolloutEvaluator {
     private static final Logger LOGGER = LoggerFactory.getLogger(RolloutEvaluator.class);
 
-    private String[] COMPARATOR_TEXTS = new String[]{
+    private static final String[] COMPARATOR_TEXTS = new String[]{
             "IS ONE OF",
             "IS NOT ONE OF",
             "CONTAINS",
@@ -37,9 +35,9 @@ class RolloutEvaluator {
             "IS NOT ONE OF (Sensitive)"
     };
 
-    public JsonElement evaluate(JsonObject json, String key, User user) {
-        JsonArray rolloutRules = json.getAsJsonArray("r");
-        JsonArray percentageRules = json.getAsJsonArray("p");
+    public Map.Entry<JsonElement, JsonElement> evaluate(JsonObject json, String key, User user) {
+        JsonArray rolloutRules = json.getAsJsonArray(Setting.RolloutRules);
+        JsonArray percentageRules = json.getAsJsonArray(Setting.RolloutPercentageItems);
 
         LOGGER.info("Evaluating getValue("+ key +").");
 
@@ -48,18 +46,19 @@ class RolloutEvaluator {
                 LOGGER.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
             }
 
-            JsonElement result = json.get("v");
+            JsonElement result = json.get(Setting.Value);
             LOGGER.info("Returning "+ result +".");
-            return json.get("v");
+            return new AbstractMap.SimpleEntry<>(result, json.get(Setting.VariationId));
         }
 
         for (JsonElement rule: rolloutRules) {
             JsonObject ruleObject = rule.getAsJsonObject();
 
-            String comparisonAttribute = ruleObject.get("a").getAsString();
-            String comparisonValue = ruleObject.get("c").getAsString();
-            int comparator = ruleObject.get("t").getAsInt();
-            JsonElement value = ruleObject.get("v");
+            String comparisonAttribute = ruleObject.get(RolloutRules.ComparisonAttribute).getAsString();
+            String comparisonValue = ruleObject.get(RolloutRules.ComparisonValue).getAsString();
+            int comparator = ruleObject.get(RolloutRules.Comparator).getAsInt();
+            JsonElement value = ruleObject.get(RolloutRules.Value);
+            JsonElement variationId = ruleObject.get(RolloutRules.VariationId);
             String userValue = user.getAttribute(comparisonAttribute);
 
             if(comparisonValue == null || comparisonValue.isEmpty() ||
@@ -76,7 +75,7 @@ class RolloutEvaluator {
                     inValues.removeAll(Arrays.asList(null, ""));
                     if(inValues.contains(userValue)) {
                         this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                        return value;
+                        return new AbstractMap.SimpleEntry<>(value, variationId);
                     }
                     break;
                 //IS NOT ONE OF
@@ -86,21 +85,21 @@ class RolloutEvaluator {
                     notInValues.removeAll(Arrays.asList(null, ""));
                     if(!notInValues.contains(userValue)) {
                         this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                        return value;
+                        return new AbstractMap.SimpleEntry<>(value, variationId);
                     }
                     break;
                 //CONTAINS
                 case 2:
                     if(userValue.contains(comparisonValue)) {
                         this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                        return value;
+                        return new AbstractMap.SimpleEntry<>(value, variationId);
                     }
                     break;
                 //DOES NOT CONTAIN
                 case 3:
                     if(!userValue.contains(comparisonValue)) {
                         this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                        return value;
+                        return new AbstractMap.SimpleEntry<>(value, variationId);
                     }
                     break;
                 //IS ONE OF, IS NOT ONE OF (SemVer)
@@ -118,7 +117,7 @@ class RolloutEvaluator {
 
                         if ((matched && comparator == 4) || (!matched && comparator == 5)) {
                             this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                            return value;
+                            return new AbstractMap.SimpleEntry<>(value, variationId);
                         }
                     } catch (Exception e) {
                         this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
@@ -138,7 +137,7 @@ class RolloutEvaluator {
                                 (comparator == 8 && cmpUserVersion.isGreaterThan(matchValue)) ||
                                 (comparator == 9 && cmpUserVersion.compareTo(matchValue) >= 0)) {
                             this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                            return value;
+                            return new AbstractMap.SimpleEntry<>(value, variationId);
                         }
                     } catch (Exception e) {
                         this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
@@ -163,7 +162,7 @@ class RolloutEvaluator {
                                 (comparator == 14 && userDoubleValue > comparisonDoubleValue) ||
                                 (comparator == 15 && userDoubleValue >= comparisonDoubleValue)) {
                             this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                            return value;
+                            return new AbstractMap.SimpleEntry<>(value, variationId);
                         }
                     } catch (NumberFormatException e) {
                         this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
@@ -178,7 +177,7 @@ class RolloutEvaluator {
                     String hashValueOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                     if(inValuesSensitive.contains(hashValueOne)) {
                         this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                        return value;
+                        return new AbstractMap.SimpleEntry<>(value, variationId);
                     }
                     break;
                 //IS NOT ONE OF (Sensitive)
@@ -189,7 +188,7 @@ class RolloutEvaluator {
                     String hashValueNotOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                     if(!notInValuesSensitive.contains(hashValueNotOne)) {
                         this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                        return value;
+                        return new AbstractMap.SimpleEntry<>(value, variationId);
                     }
                     break;
             }
@@ -207,18 +206,18 @@ class RolloutEvaluator {
             for (JsonElement rule: percentageRules) {
                 JsonObject ruleObject = rule.getAsJsonObject();
 
-                bucket += ruleObject.get("p").getAsInt();
+                bucket += ruleObject.get(RolloutPercentageItems.Percentage).getAsInt();
                 if(scaled < bucket) {
-                    JsonElement result = ruleObject.get("v");
+                    JsonElement result = ruleObject.get(RolloutPercentageItems.Value);
                     LOGGER.info("Evaluating % options. Returning "+ result +".");
-                    return result;
+                    return new AbstractMap.SimpleEntry<>(result, ruleObject.get(RolloutPercentageItems.VariationId));
                 }
             }
         }
 
-        JsonElement result = json.get("v");
+        JsonElement result = json.get(Setting.Value);
         LOGGER.info("Returning "+ result +".");
-        return result;
+        return new AbstractMap.SimpleEntry<>(result, json.get(Setting.VariationId));
     }
 
     private void logMatch(String comparisonAttribute, String userValue, int comparator, String comparisonValue, JsonElement value) {

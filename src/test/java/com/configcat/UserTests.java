@@ -2,22 +2,23 @@ package com.configcat;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class UserTests {
 
     @Test
-    public void builderThrowsWhenArgumentInvalid() {
-        assertThrows(IllegalArgumentException.class, () -> User.newBuilder().build(null));
-        assertThrows(IllegalArgumentException.class, () -> User.newBuilder().build(""));
+    public void builderWorksWithEmptyOrNullId() {
+        User u1 = User.newBuilder().build(null);
+        assertEquals("", u1.getIdentifier());
+        User u2 = User.newBuilder().build("");
+        assertEquals("", u2.getIdentifier());
     }
 
     @Test
     public void getAttributeThrowsWhenArgumentInvalid() {
         User user = User.newBuilder().build("a");
         assertThrows(IllegalArgumentException.class, () -> user.getAttribute(null));
-        assertThrows(IllegalArgumentException.class, () -> user.getAttribute(""));
+        assertNull(user.getAttribute(""));
     }
 
     @Test
@@ -26,11 +27,11 @@ public class UserTests {
         String country = "b";
         User user = User.newBuilder().email(email).country("b").build("a");
         assertEquals(email, user.getAttribute("Email"));
-        assertEquals(email, user.getAttribute("EMAIL"));
-        assertEquals(email, user.getAttribute("email"));
+        assertNotEquals(email, user.getAttribute("EMAIL"));
+        assertNotEquals(email, user.getAttribute("email"));
 
         assertEquals(country, user.getAttribute("Country"));
-        assertEquals(country, user.getAttribute("COUNTRY"));
-        assertEquals(country, user.getAttribute("country"));
+        assertNotEquals(country, user.getAttribute("COUNTRY"));
+        assertNotEquals(country, user.getAttribute("country"));
     }
 }

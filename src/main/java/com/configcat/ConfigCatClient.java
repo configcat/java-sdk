@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -80,7 +81,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     ? this.getValueAsync(classOfT, key, user, defaultValue).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
                     : this.getValueAsync(classOfT, key, user, defaultValue).get();
         } catch (Exception e) {
-            return this.getJsonValue(classOfT, this.refreshPolicy.getLatestCachedValue(), key, user, defaultValue);
+            return this.getValueFromJson(classOfT, this.refreshPolicy.getLatestCachedValue(), key, user, defaultValue);
         }
     }
 
@@ -104,17 +105,105 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
 
         return this.refreshPolicy.getConfigurationJsonAsync()
+                .thenApply(config -> this.getValueFromJson(classOfT, config, key, user, defaultValue));
+    }
+
+    @Override
+    public String getVariationId(String key, String defaultVariationId) {
+        return this.getVariationId(key, null, defaultVariationId);
+    }
+
+    @Override
+    public String getVariationId(String key, User user, String defaultVariationId) {
+        if(key == null || key.isEmpty())
+            throw new IllegalArgumentException("key is null or empty");
+
+        try {
+            return this.maxWaitTimeForSyncCallsInSeconds > 0
+                    ? this.getVariationIdAsync(key, user, defaultVariationId).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
+                    : this.getVariationIdAsync(key, user, defaultVariationId).get();
+        } catch (Exception e) {
+            return this.getVariationIdFromJson(this.refreshPolicy.getLatestCachedValue(), key, user, defaultVariationId);
+        }
+    }
+
+    @Override
+    public CompletableFuture<String> getVariationIdAsync(String key, String defaultVariationId) {
+        return this.getVariationIdAsync(key, null, defaultVariationId);
+    }
+
+    @Override
+    public CompletableFuture<String> getVariationIdAsync(String key, User user, String defaultVariationId) {
+        if(key == null || key.isEmpty())
+            throw new IllegalArgumentException("key is null or empty");
+
+        return this.refreshPolicy.getConfigurationJsonAsync()
+                .thenApply(config -> this.getVariationIdFromJson(config, key, user, defaultVariationId));
+    }
+
+    @Override
+    public Collection<String> getAllVariationIds() {
+        return this.getAllVariationIds(null);
+    }
+
+    @Override
+    public CompletableFuture<Collection<String>> getAllVariationIdsAsync() {
+        return this.getAllVariationIdsAsync(null);
+    }
+
+    @Override
+    public Collection<String> getAllVariationIds(User user) {
+        try {
+            return this.maxWaitTimeForSyncCallsInSeconds > 0
+                    ? this.getAllVariationIdsAsync(user).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
+                    : this.getAllVariationIdsAsync(user).get();
+        } catch (Exception e) {
+            LOGGER.error("An error occurred during getting all the variation ids.", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public CompletableFuture<Collection<String>> getAllVariationIdsAsync(User user) {
+        return this.refreshPolicy.getConfigurationJsonAsync()
                 .thenApply(config -> {
                     try {
-                        return this.getJsonValue(classOfT, config, key, user, defaultValue);
+                        Collection<String> keys = parser.getAllKeys(config);
+                        ArrayList<String> result = new ArrayList<>();
+
+                        for (String key : keys) {
+                            result.add(this.getVariationIdFromJson(config, key, user, null));
+                        }
+
+                        return result;
                     } catch (Exception e) {
-                        return this.getJsonValue(classOfT,
-                                this.refreshPolicy.getLatestCachedValue(),
-                                key,
-                                user,
-                                defaultValue);
+                        LOGGER.error("An error occurred during the deserialization. Returning empty array.", e);
+                        return new ArrayList<>();
                     }
                 });
+    }
+
+    @Override
+    public <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId) {
+        if(variationId == null || variationId.isEmpty())
+            throw new IllegalArgumentException("variationId is null or empty");
+
+        try {
+            return this.maxWaitTimeForSyncCallsInSeconds > 0
+                    ? this.getKeyAndValueAsync(classOfT, variationId).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
+                    : this.getKeyAndValueAsync(classOfT, variationId).get();
+        } catch (Exception e) {
+            return this.getKeyAndValueFromJson(classOfT, this.refreshPolicy.getLatestCachedValue(), variationId);
+        }
+    }
+
+    @Override
+    public <T> CompletableFuture<Map.Entry<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId) {
+        if(variationId == null || variationId.isEmpty())
+            throw new IllegalArgumentException("variationId is null or empty");
+
+        return this.refreshPolicy.getConfigurationJsonAsync()
+                .thenApply(config -> this.getKeyAndValueFromJson(classOfT, config, variationId));
     }
 
     @Override
@@ -137,7 +226,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                        return parser.getAllKeys(config);
                    } catch (Exception e) {
                        LOGGER.error("An error occurred during the deserialization. Returning empty array.", e);
-                       return new ArrayList<String>();
+                       return new ArrayList<>();
                    }
                 });
     }
@@ -164,13 +253,32 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.refreshPolicy.close();
     }
 
-    private <T> T getJsonValue(Class<T> classOfT, String config, String key, User user, T defaultValue) {
+    private <T> T getValueFromJson(Class<T> classOfT, String config, String key, User user, T defaultValue) {
         try {
             return parser.parseValue(classOfT, config, key, user);
         } catch (Exception e) {
             LOGGER.error("Evaluating getValue('"+key+"') failed. Returning defaultValue: ["+ defaultValue +"]. "
                     + e.getMessage(), e);
             return defaultValue;
+        }
+    }
+
+    private String getVariationIdFromJson(String config, String key, User user, String defaultVariationId) {
+        try {
+            return parser.parseVariationId(config, key, user);
+        } catch (Exception e) {
+            LOGGER.error("Evaluating getVariationId('"+key+"') failed. Returning defaultVariationId: ["+ defaultVariationId +"]. "
+                    + e.getMessage(), e);
+            return defaultVariationId;
+        }
+    }
+
+    private <T> Map.Entry<String, T> getKeyAndValueFromJson(Class<T> classOfT, String config, String variationId) {
+        try {
+            return parser.parseKeyValue(classOfT, config, variationId);
+        } catch (Exception e) {
+            LOGGER.error("Could not find the setting for the given variation ID: " + variationId);
+            return null;
         }
     }
 
