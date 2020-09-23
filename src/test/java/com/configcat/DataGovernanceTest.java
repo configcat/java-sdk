@@ -168,8 +168,6 @@ public class DataGovernanceTest {
         String firstBody = String.format(JsonTemplate, secondServer.url("/"), 1);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
-        String secondBody = String.format(JsonTemplate, secondServer.url("/"), 0);
-
         // Act
         FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
 
