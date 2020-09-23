@@ -21,12 +21,12 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 <dependency>
   <groupId>com.configcat</groupId>
   <artifactId>configcat-java-client</artifactId>
-  <version>[5.1.0,)</version>
+  <version>[6.0.0,)</version>
 </dependency>
 ```
 *Gradle:*
 ```groovy
-compile group: 'com.configcat', name: 'configcat-java-client', version: '5.+'
+compile group: 'com.configcat', name: 'configcat-java-client', version: '6.+'
 ```
 
 ### 2. Go to <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your application</a> tab to get your *API Key*:
