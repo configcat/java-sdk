@@ -27,7 +27,8 @@ public class AutoPollingPolicyIntegrationTest {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
                 "",
                 this.server.url("/").toString(),
-                PollingModes.AutoPoll(2));
+                false,
+                PollingModes.AutoPoll(2).getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
         this.policy = (AutoPollingPolicy)pollingMode.accept(new RefreshPolicyFactory(cache, fetcher));
     }

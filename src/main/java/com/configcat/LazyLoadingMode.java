@@ -4,8 +4,8 @@ package com.configcat;
  * The lazy loading polling mode configuration.
  */
 class LazyLoadingMode extends PollingMode {
-    private int cacheRefreshIntervalInSeconds;
-    private boolean asyncRefresh;
+    private final int cacheRefreshIntervalInSeconds;
+    private final boolean asyncRefresh;
 
     LazyLoadingMode(int cacheRefreshIntervalInSeconds, boolean asyncRefresh) {
         this.cacheRefreshIntervalInSeconds = cacheRefreshIntervalInSeconds;

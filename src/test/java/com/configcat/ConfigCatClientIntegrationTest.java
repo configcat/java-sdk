@@ -21,7 +21,7 @@ public class ConfigCatClientIntegrationTest {
     private ConfigCatClient client;
     private MockWebServer server;
 
-    private static final String TEST_JSON = "{ fakeKey: { v: %s, p: [] ,r: [] } }";
+    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {

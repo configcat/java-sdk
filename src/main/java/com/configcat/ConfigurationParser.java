@@ -47,7 +47,7 @@ class ConfigurationParser {
     public String parseVariationId(String config, String key, User user) throws ParsingFailedException {
         try {
             LOGGER.info("Evaluating getVariationId("+key+").");
-            JsonObject root = this.parser.parse(config).getAsJsonObject();
+            JsonObject root = this.parseConfigSection(config);
 
             JsonObject node = root.getAsJsonObject(key);
             if(node == null) {
@@ -64,7 +64,7 @@ class ConfigurationParser {
 
     public <T> Map.Entry<String, T> parseKeyValue(Class<T> classOfT, String config, String variationId) throws ParsingFailedException {
         try {
-            Set<Map.Entry<String, JsonElement>> root = this.parser.parse(config).getAsJsonObject().entrySet();
+            Set<Map.Entry<String, JsonElement>> root = this.parseConfigSection(config).entrySet();
             for (Map.Entry<String, JsonElement> node: root) {
                 String settingKey = node.getKey();
                 JsonObject setting = node.getValue().getAsJsonObject();
@@ -97,7 +97,7 @@ class ConfigurationParser {
 
     public Collection<String> getAllKeys(String config) throws ParsingFailedException {
         try {
-            JsonObject root = this.parser.parse(config).getAsJsonObject();
+            JsonObject root = this.parseConfigSection(config);
             return root.keySet();
 
         } catch (Exception e) {
@@ -107,7 +107,7 @@ class ConfigurationParser {
 
     private Object parseValueInternal(Class<?> classOfT, String config, String key, User user) throws ParsingFailedException, IllegalArgumentException {
         try {
-            JsonObject root = this.parser.parse(config).getAsJsonObject();
+            JsonObject root = this.parseConfigSection(config);
 
             JsonObject node = root.getAsJsonObject(key);
             if(node == null) {
@@ -131,5 +131,10 @@ class ConfigurationParser {
             return element.getAsDouble();
         else
             return element.getAsBoolean();
+    }
+
+    private JsonObject parseConfigSection(String json) {
+        JsonObject root = this.parser.parse(json).getAsJsonObject();
+        return root.getAsJsonObject(Config.Entries);
     }
 }

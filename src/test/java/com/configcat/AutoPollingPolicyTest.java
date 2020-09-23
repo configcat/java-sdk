@@ -21,11 +21,8 @@ public class AutoPollingPolicyTest {
         ConfigFetcher fetcher = mock(ConfigFetcher.class);
         ConfigCache cache = mock(ConfigCache.class);
 
-        doThrow(new Exception()).when(cache).read();
-        doThrow(new Exception()).when(cache).write(anyString());
-
-        when(cache.get()).thenCallRealMethod();
-        doCallRealMethod().when(cache).set(anyString());
+        doThrow(new Exception()).when(cache).read(anyString());
+        doThrow(new Exception()).when(cache).write(anyString(), anyString());
 
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
@@ -42,7 +39,7 @@ public class AutoPollingPolicyTest {
         ConfigFetcher fetcher = mock(ConfigFetcher.class);
         ConfigCache cache = mock(ConfigCache.class);
 
-        when(cache.get()).thenReturn(result);
+        when(cache.read(anyString())).thenReturn(result);
 
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
@@ -51,7 +48,7 @@ public class AutoPollingPolicyTest {
 
         assertEquals("test", policy.getConfigurationJsonAsync().get());
 
-        verify(cache, never()).write(result);
+        verify(cache, never()).write(anyString(), eq(result));
     }
 
     @Test
@@ -62,7 +59,7 @@ public class AutoPollingPolicyTest {
         AtomicBoolean isCalled  = new AtomicBoolean();
         PollingMode mode = PollingModes
                 .AutoPoll(2, () -> isCalled.set(true));
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", server.url("/").toString(), mode);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
 
         RefreshPolicy policy = mode.accept(new RefreshPolicyFactory(cache, fetcher));

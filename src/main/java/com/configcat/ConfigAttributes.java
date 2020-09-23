@@ -1,5 +1,15 @@
 package com.configcat;
 
+class Config {
+    static final String Preferences = "p";
+    static final String Entries = "f";
+}
+
+class Preferences {
+    static final String BaseUrl = "u";
+    static final String Redirect = "r";
+}
+
 class Setting {
     static final String Value = "v";
     static final String Type = "t";

@@ -23,7 +23,7 @@ public class ConfigFetcherTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), PollingModes.ManualPoll());
+        this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, PollingModes.ManualPoll().getPollingIdentifier());
     }
 
     @AfterEach
@@ -62,7 +62,8 @@ public class ConfigFetcherTest {
                     .build(),
                 "",
                 this.server.url("/").toString(),
-                PollingModes.ManualPoll());
+                false,
+                PollingModes.ManualPoll().getPollingIdentifier());
 
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(5, TimeUnit.SECONDS));
 
