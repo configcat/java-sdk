@@ -7,7 +7,7 @@ import java.util.Map;
  * An in-memory cache implementation used to store the fetched configurations.
  */
 class InMemoryConfigCache extends ConfigCache {
-    private final Map<String, String> map = new HashMap();
+    private final Map<String, String> map = new HashMap<>();
 
     @Override
     protected String read(String key) {

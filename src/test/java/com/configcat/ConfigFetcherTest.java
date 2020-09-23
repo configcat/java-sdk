@@ -68,7 +68,7 @@ public class ConfigFetcherTest {
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(5, TimeUnit.SECONDS));
 
         assertTrue(fetch.getConfigurationJsonStringAsync().get().isFailed());
-        assertEquals(null, fetch.getConfigurationJsonStringAsync().get().config());
+        assertNull(fetch.getConfigurationJsonStringAsync().get().config());
 
         fetch.close();
     }

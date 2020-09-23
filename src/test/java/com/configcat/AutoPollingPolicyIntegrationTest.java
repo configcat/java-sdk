@@ -64,7 +64,7 @@ public class AutoPollingPolicyIntegrationTest {
         this.server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         //first call
-        assertEquals(null, this.policy.getConfigurationJsonAsync().get());
+        assertNull(this.policy.getConfigurationJsonAsync().get());
     }
 
     @Test
