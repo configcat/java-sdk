@@ -24,8 +24,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private final RefreshPolicy refreshPolicy;
     private final int maxWaitTimeForSyncCallsInSeconds;
 
-    private ConfigCatClient(String apiKey,
-                            Builder builder) throws IllegalArgumentException {
+    private ConfigCatClient(String apiKey, Builder builder) throws IllegalArgumentException {
         if(apiKey == null || apiKey.isEmpty())
             throw new IllegalArgumentException("apiKey is null or empty");
 
@@ -35,7 +34,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 ? PollingModes.AutoPoll(60)
                 : builder.pollingMode;
 
-        boolean hasCustomBaseUrl = builder.baseUrl == null || builder.baseUrl.isEmpty();
+        boolean hasCustomBaseUrl = builder.baseUrl != null && !builder.baseUrl.isEmpty();
         ConfigFetcher fetcher = new ConfigFetcher(builder.httpClient == null
                 ? new OkHttpClient
                     .Builder()
@@ -43,7 +42,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     .build()
                 : builder.httpClient,
                 apiKey,
-                hasCustomBaseUrl
+                !hasCustomBaseUrl
                     ? builder.dataGovernance == DataGovernance.GLOBAL
                         ? BASE_URL_GLOBAL
                         : BASE_URL_EU
