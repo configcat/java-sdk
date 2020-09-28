@@ -356,7 +356,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         /**
-         * Sets the preferred data governance.
+         * Set this parameter to restrict the location of your feature flag and setting data within the ConfigCat CDN.
+         * This parameter must be in sync with the preferences on: https://app.configcat.com/organization/data-governance
+         * (Only Organization Admins can set this preference.)
          *
          * @param dataGovernance the {@link DataGovernance} parameter.
          * @return the builder.
