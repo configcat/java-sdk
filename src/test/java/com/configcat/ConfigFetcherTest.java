@@ -72,4 +72,21 @@ public class ConfigFetcherTest {
 
         fetch.close();
     }
+
+    @Test
+    public void testIntegration() throws IOException, ExecutionException, InterruptedException {
+
+        ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
+                .readTimeout(1, TimeUnit.SECONDS)
+                .build(),
+                "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA",
+                "https://cdn-global.configcat.com",
+                false,
+                PollingModes.ManualPoll().getPollingIdentifier());
+
+        assertTrue(fetch.getConfigurationJsonStringAsync().get().isFetched());
+        assertTrue(fetch.getConfigurationJsonStringAsync().get().isNotModified());
+
+        fetch.close();
+    }
 }
