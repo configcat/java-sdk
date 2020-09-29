@@ -27,7 +27,7 @@ public class AutoPollingPolicyTest {
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
-        RefreshPolicy policy = PollingModes.AutoPoll(2).accept(new RefreshPolicyFactory(cache, fetcher));
+        RefreshPolicy policy = PollingModes.AutoPoll(2).accept(new RefreshPolicyFactory(cache, fetcher, ""));
 
         assertEquals(result, policy.getConfigurationJsonAsync().get());
     }
@@ -44,7 +44,7 @@ public class AutoPollingPolicyTest {
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
-        RefreshPolicy policy = PollingModes.AutoPoll(2).accept(new RefreshPolicyFactory(cache, fetcher));
+        RefreshPolicy policy = PollingModes.AutoPoll(2).accept(new RefreshPolicyFactory(cache, fetcher, ""));
 
         assertEquals("test", policy.getConfigurationJsonAsync().get());
 
@@ -62,7 +62,7 @@ public class AutoPollingPolicyTest {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
 
-        RefreshPolicy policy = mode.accept(new RefreshPolicyFactory(cache, fetcher));
+        RefreshPolicy policy = mode.accept(new RefreshPolicyFactory(cache, fetcher, ""));
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
 

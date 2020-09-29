@@ -26,13 +26,15 @@ class AutoPollingPolicy extends RefreshPolicy {
      *
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
+     * @param sdkKey the sdk key.
+     * @param config the polling mode configuration.
      */
-    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, AutoPollingMode modeConfig) {
-        super(configFetcher, cache);
+    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey, AutoPollingMode config) {
+        super(configFetcher, cache, sdkKey);
         this.listeners = new ArrayList<>();
 
-        if(modeConfig.getListener() != null)
-            this.listeners.add(modeConfig.getListener());
+        if(config.getListener() != null)
+            this.listeners.add(config.getListener());
 
         this.initialized = new AtomicBoolean(false);
         this.initFuture = new CompletableFuture<>();
@@ -41,9 +43,9 @@ class AutoPollingPolicy extends RefreshPolicy {
             try {
                 FetchResponse response = super.fetcher().getConfigurationJsonStringAsync().get();
                 String cached = super.readConfigCache();
-                String config = response.config();
-                if (response.isFetched() && !config.equals(cached)) {
-                    super.writeConfigCache(config);
+                String configJson = response.config();
+                if (response.isFetched() && !configJson.equals(cached)) {
+                    super.writeConfigCache(configJson);
                     this.broadcastConfigurationChanged();
                 }
 
@@ -53,7 +55,7 @@ class AutoPollingPolicy extends RefreshPolicy {
             } catch (Exception e){
                 LOGGER.error("Exception in AutoPollingCachePolicy", e);
             }
-        }, 0, modeConfig.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
+        }, 0, config.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
     }
 
     @Override

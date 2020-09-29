@@ -26,9 +26,11 @@ class LazyLoadingPolicy extends RefreshPolicy {
      *
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
+     * @param sdkKey the sdk key.
+     * @param config the polling mode configuration.
      */
-    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, LazyLoadingMode config) {
-        super(configFetcher, cache);
+    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey, LazyLoadingMode config) {
+        super(configFetcher, cache, sdkKey);
         this.asyncRefresh = config.isAsyncRefresh();
         this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
         this.isFetching = new AtomicBoolean(false);

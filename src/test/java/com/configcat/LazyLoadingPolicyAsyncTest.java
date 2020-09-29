@@ -27,7 +27,7 @@ public class LazyLoadingPolicyAsyncTest {
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
-        this.policy = mode.accept(new RefreshPolicyFactory(cache, fetcher));
+        this.policy = mode.accept(new RefreshPolicyFactory(cache, fetcher, ""));
     }
 
     @AfterEach
@@ -63,7 +63,7 @@ public class LazyLoadingPolicyAsyncTest {
         PollingMode mode = PollingModes
                 .LazyLoad(5, true);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        RefreshPolicy lPolicy = mode.accept(new RefreshPolicyFactory(new FailingCache(), fetcher));
+        RefreshPolicy lPolicy = mode.accept(new RefreshPolicyFactory(new FailingCache(), fetcher, ""));
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(2, TimeUnit.SECONDS));

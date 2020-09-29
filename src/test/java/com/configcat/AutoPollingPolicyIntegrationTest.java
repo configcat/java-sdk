@@ -30,7 +30,7 @@ public class AutoPollingPolicyIntegrationTest {
                 false,
                 PollingModes.AutoPoll(2).getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
-        this.policy = (AutoPollingPolicy)pollingMode.accept(new RefreshPolicyFactory(cache, fetcher));
+        this.policy = (AutoPollingPolicy)pollingMode.accept(new RefreshPolicyFactory(cache, fetcher, ""));
     }
 
     @AfterEach

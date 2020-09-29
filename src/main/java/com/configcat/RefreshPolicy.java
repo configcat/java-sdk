@@ -1,5 +1,6 @@
 package com.configcat;
 
+import org.apache.commons.codec.digest.MurmurHash3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,9 +14,10 @@ import java.util.concurrent.CompletableFuture;
  */
 abstract class RefreshPolicy implements Closeable {
     protected static final Logger LOGGER = LoggerFactory.getLogger(RefreshPolicy.class);
-    private static final String CacheKey = "config_v5";
+    private static final String CacheBase = "config-v5-%s";
     private final ConfigCache cache;
     private final ConfigFetcher configFetcher;
+    private final String CacheKey;
 
     private String inMemoryConfig;
 
@@ -52,10 +54,12 @@ abstract class RefreshPolicy implements Closeable {
      *
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
+     * @param sdkKey the sdk key.
      */
-    RefreshPolicy(ConfigFetcher configFetcher, ConfigCache cache) {
+    RefreshPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey) {
         this.configFetcher = configFetcher;
         this.cache = cache;
+        this.CacheKey = String.format(CacheBase, Integer.toString(MurmurHash3.hash32(sdkKey.getBytes()), 32));
     }
 
     /**

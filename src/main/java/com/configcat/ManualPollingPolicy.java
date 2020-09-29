@@ -12,9 +12,10 @@ class ManualPollingPolicy extends RefreshPolicy {
      *
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
+     * @param sdkKey the sdk key.
      */
-    ManualPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache) {
-        super(configFetcher, cache);
+    ManualPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey) {
+        super(configFetcher, cache, sdkKey);
     }
 
     @Override

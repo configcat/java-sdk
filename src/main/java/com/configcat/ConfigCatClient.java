@@ -24,9 +24,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private final RefreshPolicy refreshPolicy;
     private final int maxWaitTimeForSyncCallsInSeconds;
 
-    private ConfigCatClient(String apiKey, Builder builder) throws IllegalArgumentException {
-        if(apiKey == null || apiKey.isEmpty())
-            throw new IllegalArgumentException("apiKey is null or empty");
+    private ConfigCatClient(String sdkKey, Builder builder) throws IllegalArgumentException {
+        if(sdkKey == null || sdkKey.isEmpty())
+            throw new IllegalArgumentException("sdkKey is null or empty");
 
         this.maxWaitTimeForSyncCallsInSeconds = builder.maxWaitTimeForSyncCallsInSeconds;
 
@@ -41,7 +41,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     .retryOnConnectionFailure(true)
                     .build()
                 : builder.httpClient,
-                apiKey,
+                sdkKey,
                 !hasCustomBaseUrl
                     ? builder.dataGovernance == DataGovernance.GLOBAL
                         ? BASE_URL_GLOBAL
@@ -54,16 +54,16 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 ? new InMemoryConfigCache()
                 : builder.cache;
 
-        this.refreshPolicy = pollingMode.accept(new RefreshPolicyFactory(cache, fetcher));
+        this.refreshPolicy = pollingMode.accept(new RefreshPolicyFactory(cache, fetcher, sdkKey));
     }
 
     /**
      * Constructs a new client instance with the default configuration.
      *
-     * @param apiKey the token which identifies your project configuration.
+     * @param sdkKey the token which identifies your project configuration.
      */
-    public ConfigCatClient(String apiKey) {
-        this(apiKey, newBuilder());
+    public ConfigCatClient(String sdkKey) {
+        this(sdkKey, newBuilder());
     }
 
     @Override
@@ -388,11 +388,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
         /**
          * Builds the configured {@link ConfigCatClient} instance.
          *
-         * @param apiKey the project token.
+         * @param sdkKey the project token.
          * @return the configured {@link ConfigCatClient} instance.
          */
-        public ConfigCatClient build(String apiKey) {
-            return new ConfigCatClient(apiKey, this);
+        public ConfigCatClient build(String sdkKey) {
+            return new ConfigCatClient(sdkKey, this);
         }
     }
 }
