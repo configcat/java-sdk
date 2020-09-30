@@ -240,16 +240,4 @@ public class ConfigCatClientTest {
         assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,null, false).get());
         assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,"", false).get());
     }
-
-    @Test
-    public void ensureCacheKeyHashProducesTheSameOnEveryPlatform() throws Exception {
-        ConfigCache cache = mock(ConfigCache.class);
-        ConfigCatClient client = ConfigCatClient.newBuilder()
-                .cache(cache)
-                .build("PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA");
-
-        client.forceRefresh();
-
-        verify(cache, atLeastOnce()).write(eq("config-v5-1oi96ci"), anyString());
-    }
 }

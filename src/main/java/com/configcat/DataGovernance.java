@@ -5,11 +5,11 @@ package com.configcat;
  */
 public enum DataGovernance {
     /**
-     * Your data will be published to all ConfigCat CDN nodes to guarantee lowest response times.
+     * Select this if your feature flags are published to all global CDN nodes.
      */
     GLOBAL,
     /**
-     * Your data will be published to CDN nodes only in the EU.
+     * Select this if your feature flags are published to CDN nodes only in the EU.
      */
     EU_ONLY
 }

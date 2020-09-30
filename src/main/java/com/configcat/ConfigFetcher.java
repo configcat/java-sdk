@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 
 class ConfigFetcher implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFetcher.class);
-    private static final String CONFIG_JSON_NAME = "config_v5.json";
+    public static final String CONFIG_JSON_NAME = "config_v5";
 
     private final JsonParser parser = new JsonParser();
     private final OkHttpClient httpClient;
@@ -75,7 +75,7 @@ class ConfigFetcher implements Closeable {
                         LOGGER.warn("Your builder.dataGovernance() parameter at ConfigCatClient " +
                                 "initialization is not in sync with your preferences on the ConfigCat " +
                                 "Dashboard: https://app.configcat.com/organization/data-governance. " +
-                                "Only Organization Admins can set this preference.");
+                                "Only Organization Admins can access this preference.");
                     }
 
                     if(executionCount > 0) {
@@ -142,7 +142,7 @@ class ConfigFetcher implements Closeable {
     }
 
     Request getRequest() {
-        String url = this.url + "/configuration-files/" + this.sdkKey + "/" + CONFIG_JSON_NAME;
+        String url = this.url + "/configuration-files/" + this.sdkKey + "/" + CONFIG_JSON_NAME + ".json";
         Request.Builder builder =  new Request.Builder()
                 .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/"+ this.mode + "-" + this.version);
 
