@@ -25,6 +25,12 @@ class ConfigFetcher implements Closeable {
     private String url;
     private String eTag;
 
+    enum RedirectMode {
+        NoRedirect,
+        ShouldRedirect,
+        ForceRedirect
+    }
+
     ConfigFetcher(OkHttpClient httpClient,
                   String sdkKey,
                   String url,
@@ -62,16 +68,16 @@ class ConfigFetcher implements Closeable {
                 int redirect = preferences.get(Preferences.Redirect).getAsInt();
 
                 // we have a custom url set and we didn't get a forced redirect
-                if(this.urlIsCustom && redirect != 2) {
+                if(this.urlIsCustom && redirect != RedirectMode.ForceRedirect.ordinal()) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
                 this.url = newUrl;
 
-                if(redirect == 0) { // no redirect
+                if(redirect == RedirectMode.NoRedirect.ordinal()) { // no redirect
                     return CompletableFuture.completedFuture(fetchResponse);
                 } else { // redirect
-                    if (redirect == 1) {
+                    if (redirect == RedirectMode.ShouldRedirect.ordinal()) {
                         LOGGER.warn("Your builder.dataGovernance() parameter at ConfigCatClient " +
                                 "initialization is not in sync with your preferences on the ConfigCat " +
                                 "Dashboard: https://app.configcat.com/organization/data-governance. " +
