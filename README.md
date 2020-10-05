@@ -3,9 +3,9 @@ https://configcat.com
 
 ConfigCat SDK for Java provides easy integration for your application to ConfigCat.
 
-ConfigCat is a feature flag and configuration management service that lets you separate releases from deployments. You can turn your features ON/OFF using <a href="http://app.configcat.com" target="_blank">ConfigCat Dashboard</a> even after they are deployed. ConfigCat lets you target specific groups of users based on region, email or any other custom user attribute.
+ConfigCat is a feature flag and configuration management service that lets you separate code releases from deployments. You can turn features ON or OFF using the <a href="http://app.configcat.com" target="_blank">ConfigCat Dashboard</a> even after they are deployed. ConfigCat lets you target specific groups of users based on region, email, or any other custom user attribute.
 
-ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature flag service</a>. Manage feature toggles across frontend, backend, mobile, desktop apps. <a href="https://configcat.com" target="_blank">Alternative to LaunchDarkly</a>. Management app + feature flag SDKs.
+ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature flag service</a> that lets you manage feature toggles across frontend, backend, mobile, and desktop apps. <a href="https://configcat.com" target="_blank">Alternative to LaunchDarkly</a>. Management app + feature flag SDKs.
 
 [![Build Status](https://travis-ci.com/configcat/java-sdk.svg?branch=master)](https://travis-ci.com/configcat/java-sdk)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-java-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-java-client)
@@ -15,7 +15,7 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 
 ## Getting started
 
-### 1. Install the package
+### 1. Install the Java client
 *Maven:*
 ```xml
 <dependency>
@@ -29,20 +29,20 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 compile group: 'com.configcat', name: 'configcat-java-client', version: '5.+'
 ```
 
-### 2. Go to <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your application</a> tab to get your *API Key*:
+### 2. Go to the <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your applications</a> tab to get your *API Key*:
 ![API-KEY](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "API-KEY")
 
-### 3. Import *com.configcat.** to your application
+### 3. Import *com.configcat.** in your application code
 ```java
 import com.configcat.*;
 ```
 
-### 4. Create the *ConfigCat* client instance
+### 4. Create a *ConfigCat* client instance
 ```java
 ConfigCatClient client = new ConfigCatClient("#YOUR-API-KEY#");
 ```
 
-### 5. Get your setting value:
+### 5. Get the setting's value:
 ```java
 boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "isMyAwesomeFeatureEnabled", false);
 if(isMyAwesomeFeatureEnabled) {
@@ -63,15 +63,15 @@ client.getValueAsync(Boolean.class, "isMyAwesomeFeatureEnabled", false)
     });
 ```
 
-## Getting user specific setting values with Targeting
+## Getting user-specific setting values with Targeting
 Using this feature, you will be able to get different setting values for different users in your application by passing a `User Object` to the `getValue()` function.
 
-Read more about [Targeting here](https://configcat.com/docs/advanced/targeting/).
+Read more about Targeting [here](https://configcat.com/docs/advanced/targeting/).
 
 
-## User object
-Percentage and targeted rollouts are calculated by the user object you can optionally pass to the configuration requests.
-The user object must be created with a **mandatory** identifier parameter which should uniquely identify each user:
+## User Object
+Percentage and targeted rollouts are calculated by the user object passed to the configuration requests.
+The user object must be created with a **mandatory** identifier parameter which uniquely identifies each user:
 ```java
 User user = User.newBuilder()
         .build("#USER-IDENTIFIER#"); // mandatory
@@ -89,10 +89,10 @@ if(isMyAwesomeFeatureEnabled) {
 * [Sample Web app](https://github.com/ConfigCat/java-sdk/tree/master/samples/web)
 
 ## Polling Modes
-The ConfigCat SDK supports 3 different polling mechanisms to acquire the setting values from ConfigCat. After latest setting values are downloaded, they are stored in the internal cache then all requests are served from there. Read more about Polling Modes and how to use them at [ConfigCat Java Docs](https://configcat.com/docs/sdk-reference/java/) or [ConfigCat Android Docs](https://configcat.com/docs/sdk-reference/android/).
+The ConfigCat SDK supports three different polling mechanisms to acquire the setting values from ConfigCat. After the latest setting values are downloaded, they are stored in an internal cache . After that, all requests are served from the cache. Read more about Polling Modes and how to use them at [ConfigCat Java Docs](https://configcat.com/docs/sdk-reference/java/) or [ConfigCat Android Docs](https://configcat.com/docs/sdk-reference/android/).
 
 ## Support
-If you need help how to use this SDK feel free to to contact the ConfigCat Staff on https://configcat.com. We're happy to help.
+If you need help using this SDK, feel free to contact the ConfigCat Staff at [https://configcat.com](https://configcat.com). We're happy to help.
 
 ## Contributing
 Contributions are welcome.
