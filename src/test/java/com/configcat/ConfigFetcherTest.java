@@ -23,7 +23,7 @@ public class ConfigFetcherTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), PollingModes.ManualPoll());
+        this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, PollingModes.ManualPoll().getPollingIdentifier());
     }
 
     @AfterEach
@@ -62,12 +62,30 @@ public class ConfigFetcherTest {
                     .build(),
                 "",
                 this.server.url("/").toString(),
-                PollingModes.ManualPoll());
+                false,
+                PollingModes.ManualPoll().getPollingIdentifier());
 
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(5, TimeUnit.SECONDS));
 
         assertTrue(fetch.getConfigurationJsonStringAsync().get().isFailed());
-        assertEquals(null, fetch.getConfigurationJsonStringAsync().get().config());
+        assertNull(fetch.getConfigurationJsonStringAsync().get().config());
+
+        fetch.close();
+    }
+
+    @Test
+    public void testIntegration() throws IOException, ExecutionException, InterruptedException {
+
+        ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
+                .readTimeout(1, TimeUnit.SECONDS)
+                .build(),
+                "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA",
+                "https://cdn-global.configcat.com",
+                false,
+                PollingModes.ManualPoll().getPollingIdentifier());
+
+        assertTrue(fetch.getConfigurationJsonStringAsync().get().isFetched());
+        assertTrue(fetch.getConfigurationJsonStringAsync().get().isNotModified());
 
         fetch.close();
     }

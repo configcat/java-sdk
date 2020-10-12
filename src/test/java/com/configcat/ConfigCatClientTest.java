@@ -9,24 +9,27 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 public class ConfigCatClientTest {
 
     private static final String APIKEY = "TEST_KEY";
 
-    private static final String TEST_JSON = "{ fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } }";
+    private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
 
     @Test
     public void ensuresApiKeyIsNotNull() {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(null));
 
-        assertEquals("apiKey is null or empty", exception.getMessage());
+        assertEquals("sdkKey is null or empty", exception.getMessage());
 
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.newBuilder().build(null));
 
-        assertEquals("apiKey is null or empty", builderException.getMessage());
+        assertEquals("sdkKey is null or empty", builderException.getMessage());
     }
 
     @Test
@@ -34,12 +37,12 @@ public class ConfigCatClientTest {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(""));
 
-        assertEquals("apiKey is null or empty", exception.getMessage());
+        assertEquals("sdkKey is null or empty", exception.getMessage());
 
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.newBuilder().build(""));
 
-        assertEquals("apiKey is null or empty", builderException.getMessage());
+        assertEquals("sdkKey is null or empty", builderException.getMessage());
     }
 
     @Test
@@ -73,8 +76,7 @@ public class ConfigCatClientTest {
                 .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
-        String result = TEST_JSON;
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         cl.forceRefresh();
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
 
@@ -150,8 +152,7 @@ public class ConfigCatClientTest {
                 .maxWaitTimeForSyncCallsInSeconds(2)
                 .build(APIKEY);
 
-        String result = TEST_JSON;
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(5, TimeUnit.SECONDS));
 
         cl.forceRefresh();
@@ -173,8 +174,7 @@ public class ConfigCatClientTest {
                 .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
-        String result = TEST_JSON;
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         server.enqueue(new MockResponse().setResponseCode(500));
 
         cl.forceRefresh();
@@ -240,5 +240,4 @@ public class ConfigCatClientTest {
         assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,null, false).get());
         assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,"", false).get());
     }
-
 }

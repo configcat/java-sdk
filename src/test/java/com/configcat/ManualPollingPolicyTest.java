@@ -25,9 +25,9 @@ public class ManualPollingPolicyTest {
         this.server.start();
 
         PollingMode mode = PollingModes.ManualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), mode);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
-        this.policy = mode.accept(new RefreshPolicyFactory(cache, fetcher));
+        this.policy = mode.accept(new RefreshPolicyFactory(cache, fetcher, ""));
     }
 
     @AfterEach
@@ -53,8 +53,8 @@ public class ManualPollingPolicyTest {
     @Test
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes.ManualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), mode);
-        RefreshPolicy lPolicy = mode.accept(new RefreshPolicyFactory(new FailingCache(), fetcher));
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        RefreshPolicy lPolicy = mode.accept(new RefreshPolicyFactory(new FailingCache(), fetcher, ""));
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));
@@ -83,21 +83,21 @@ public class ManualPollingPolicyTest {
     }
 
     @Test
-    public void getFetchedSameResponseNotUpdatesCache() throws Exception {
+    public void getFetchedSameResponseUpdatesCache() throws Exception {
         String result = "test";
 
         ConfigFetcher fetcher = mock(ConfigFetcher.class);
         ConfigCache cache = mock(ConfigCache.class);
 
-        when(cache.get()).thenReturn(result);
+        when(cache.read(anyString())).thenReturn(result);
 
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
-        ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, cache);
+        ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, cache, "");
         policy.refreshAsync().get();
         assertEquals("test", policy.getConfigurationJsonAsync().get());
 
-        verify(cache, never()).write(result);
+        verify(cache, atMostOnce()).write(anyString(), eq(result));
     }
 }

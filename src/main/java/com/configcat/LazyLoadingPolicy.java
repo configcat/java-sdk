@@ -14,21 +14,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class LazyLoadingPolicy extends RefreshPolicy {
     private static final Logger LOGGER = LoggerFactory.getLogger(LazyLoadingPolicy.class);
     private Instant lastRefreshedTime;
-    private int cacheRefreshIntervalInSeconds;
-    private boolean asyncRefresh;
+    private final int cacheRefreshIntervalInSeconds;
+    private final boolean asyncRefresh;
     private final AtomicBoolean isFetching;
     private final AtomicBoolean initialized;
     private CompletableFuture<String> fetchingFuture;
-    private CompletableFuture<Void> init;
+    private final CompletableFuture<Void> init;
 
     /**
      * Constructor used by the child classes.
      *
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
+     * @param sdkKey the sdk key.
+     * @param config the polling mode configuration.
      */
-    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, LazyLoadingMode config) {
-        super(configFetcher, cache);
+    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey, LazyLoadingMode config) {
+        super(configFetcher, cache, sdkKey);
         this.asyncRefresh = config.isAsyncRefresh();
         this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
         this.isFetching = new AtomicBoolean(false);
@@ -44,33 +46,33 @@ class LazyLoadingPolicy extends RefreshPolicy {
 
             if(isInitialized && !this.isFetching.compareAndSet(false, true))
                 return this.asyncRefresh && this.initialized.get()
-                        ? CompletableFuture.completedFuture(super.cache().get())
+                        ? CompletableFuture.completedFuture(super.readConfigCache())
                         : this.fetchingFuture;
 
             LOGGER.debug("Cache expired, refreshing.");
             if(isInitialized) {
                 this.fetchingFuture = this.fetch();
                 if(this.asyncRefresh) {
-                    return CompletableFuture.completedFuture(super.cache().get());
+                    return CompletableFuture.completedFuture(super.readConfigCache());
                 }
                 return this.fetchingFuture;
             } else {
                 if(this.isFetching.compareAndSet(false, true)) {
                     this.fetchingFuture = this.fetch();
                 }
-                return this.init.thenApplyAsync(v -> super.cache().get());
+                return this.init.thenApplyAsync(v -> super.readConfigCache());
             }
         }
 
-        return CompletableFuture.completedFuture(super.cache().get());
+        return CompletableFuture.completedFuture(super.readConfigCache());
     }
 
     private CompletableFuture<String> fetch() {
         return super.fetcher().getConfigurationJsonStringAsync()
                 .thenApplyAsync(response -> {
-                    String cached = super.cache().get();
+                    String cached = super.readConfigCache();
                     if (response.isFetched() && !response.config().equals(cached)) {
-                        super.cache().set(response.config());
+                        super.writeConfigCache(response.config());
                     }
 
                     if(!response.isFailed())

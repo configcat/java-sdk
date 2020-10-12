@@ -1,5 +1,10 @@
 package com.configcat;
 
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -9,8 +14,31 @@ import java.util.concurrent.CompletableFuture;
  * should describe the configuration update rules.
  */
 abstract class RefreshPolicy implements Closeable {
+    protected static final Logger LOGGER = LoggerFactory.getLogger(RefreshPolicy.class);
+    private static final String CacheBase = "java_"+ ConfigFetcher.CONFIG_JSON_NAME +"_%s";
     private final ConfigCache cache;
     private final ConfigFetcher configFetcher;
+    private final String CacheKey;
+
+    private String inMemoryConfig;
+
+    protected String readConfigCache() {
+        try {
+            return this.cache.read(CacheKey);
+        } catch (Exception e) {
+            LOGGER.error("An error occurred during the cache read.", e);
+            return this.inMemoryConfig;
+        }
+    }
+
+    protected void writeConfigCache(String value) {
+        try {
+            this.inMemoryConfig = value;
+            this.cache.write(CacheKey, value);
+        } catch (Exception e) {
+            LOGGER.error("An error occurred during the cache write.", e);
+        }
+    }
 
     /**
      * Through this getter, child classes can use the fetcher to
@@ -23,24 +51,16 @@ abstract class RefreshPolicy implements Closeable {
     }
 
     /**
-     * Through this getter, child classes can use the cache to
-     * control the cached configuration.
-     *
-     * @return the config cache.
-     */
-    protected ConfigCache cache() {
-        return cache;
-    }
-
-    /**
      * Constructor used by the child classes.
      *
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
+     * @param sdkKey the sdk key.
      */
-    RefreshPolicy(ConfigFetcher configFetcher, ConfigCache cache) {
+    RefreshPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey) {
         this.configFetcher = configFetcher;
         this.cache = cache;
+        this.CacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CacheBase, sdkKey))));
     }
 
     /**
@@ -60,12 +80,12 @@ abstract class RefreshPolicy implements Closeable {
         return this.fetcher().getConfigurationJsonStringAsync()
                 .thenAcceptAsync(response -> {
                     if(response.isFetched())
-                        this.cache().set(response.config());
+                        this.writeConfigCache(response.config());
                 });
     }
 
     String getLatestCachedValue() {
-        return this.cache.inMemoryValue();
+        return this.inMemoryConfig;
     }
 
     @Override

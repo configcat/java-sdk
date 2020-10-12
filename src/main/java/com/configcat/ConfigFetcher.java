@@ -1,5 +1,8 @@
 package com.configcat;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,25 +13,93 @@ import java.util.concurrent.CompletableFuture;
 
 class ConfigFetcher implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFetcher.class);
+    public static final String CONFIG_JSON_NAME = "config_v5";
+
+    private final JsonParser parser = new JsonParser();
     private final OkHttpClient httpClient;
-    private final String url;
     private final String mode;
     private final String version;
+    private final String sdkKey;
+    private final boolean urlIsCustom;
+
+    private String url;
     private String eTag;
 
-    ConfigFetcher(OkHttpClient httpClient, String apiKey, PollingMode mode) {
-        this(httpClient, apiKey, null, mode);
+    enum RedirectMode {
+        NoRedirect,
+        ShouldRedirect,
+        ForceRedirect
     }
 
-    ConfigFetcher(OkHttpClient httpClient, String apiKey, String baseUrl, PollingMode mode) {
-        baseUrl = baseUrl == null || baseUrl.isEmpty() ? "https://cdn.configcat.com" : baseUrl;
+    ConfigFetcher(OkHttpClient httpClient,
+                  String sdkKey,
+                  String url,
+                  boolean urlIsCustom,
+                  String pollingIdentifier) {
+        this.sdkKey = sdkKey;
+        this.urlIsCustom = urlIsCustom;
+        this.url = url;
         this.httpClient = httpClient;
-        this.url = baseUrl + "/configuration-files/" + apiKey + "/config_v4.json";
         this.version = this.getClass().getPackage().getImplementationVersion();
-        this.mode = mode.getPollingIdentifier();
+        this.mode = pollingIdentifier;
     }
 
     public CompletableFuture<FetchResponse> getConfigurationJsonStringAsync() {
+        return this.executeFetchAsync(2);
+    }
+
+    private CompletableFuture<FetchResponse> executeFetchAsync(int executionCount) {
+        return this.getResponseAsync().thenComposeAsync(fetchResponse -> {
+            if(!fetchResponse.isFetched()) {
+                return CompletableFuture.completedFuture(fetchResponse);
+            }
+            try {
+                JsonObject json = parser.parse(fetchResponse.config()).getAsJsonObject();
+                JsonObject preferences = json.getAsJsonObject(Config.Preferences);
+                if(preferences == null) {
+                    return CompletableFuture.completedFuture(fetchResponse);
+                }
+
+                String newUrl = preferences.get(Preferences.BaseUrl).getAsString();
+                if(newUrl == null || newUrl.isEmpty() || newUrl.equals(this.url)) {
+                    return CompletableFuture.completedFuture(fetchResponse);
+                }
+
+                int redirect = preferences.get(Preferences.Redirect).getAsInt();
+
+                // we have a custom url set and we didn't get a forced redirect
+                if(this.urlIsCustom && redirect != RedirectMode.ForceRedirect.ordinal()) {
+                    return CompletableFuture.completedFuture(fetchResponse);
+                }
+
+                this.url = newUrl;
+
+                if(redirect == RedirectMode.NoRedirect.ordinal()) { // no redirect
+                    return CompletableFuture.completedFuture(fetchResponse);
+                } else { // redirect
+                    if (redirect == RedirectMode.ShouldRedirect.ordinal()) {
+                        LOGGER.warn("Your builder.dataGovernance() parameter at ConfigCatClient " +
+                                "initialization is not in sync with your preferences on the ConfigCat " +
+                                "Dashboard: https://app.configcat.com/organization/data-governance. " +
+                                "Only Organization Admins can access this preference.");
+                    }
+
+                    if(executionCount > 0) {
+                        return this.executeFetchAsync(executionCount - 1);
+                    }
+                }
+
+            } catch (Exception exception) {
+                LOGGER.error("Exception in ConfigFetcher.executeFetchAsync", exception);
+                return CompletableFuture.completedFuture(fetchResponse);
+            }
+
+            LOGGER.error("Redirect loop during config.json fetch. Please contact support@configcat.com.");
+            return CompletableFuture.completedFuture(fetchResponse);
+        });
+    }
+
+    private CompletableFuture<FetchResponse> getResponseAsync() {
         Request request = this.getRequest();
 
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
@@ -54,7 +125,7 @@ class ConfigFetcher implements Closeable {
                         future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Exception in ConfigFetcher.getConfigurationJsonStringAsync", e);
+                    LOGGER.error("Exception in ConfigFetcher.getResponseAsync", e);
                     future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
                 }
             }
@@ -79,13 +150,14 @@ class ConfigFetcher implements Closeable {
     }
 
     Request getRequest() {
+        String url = this.url + "/configuration-files/" + this.sdkKey + "/" + CONFIG_JSON_NAME + ".json";
         Request.Builder builder =  new Request.Builder()
                 .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/"+ this.mode + "-" + this.version);
 
         if(this.eTag != null)
             builder.addHeader("If-None-Match", this.eTag);
 
-        return builder.url(this.url).build();
+        return builder.url(url).build();
     }
 }
 

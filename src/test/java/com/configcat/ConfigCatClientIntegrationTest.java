@@ -21,7 +21,7 @@ public class ConfigCatClientIntegrationTest {
     private ConfigCatClient client;
     private MockWebServer server;
 
-    private static final String TEST_JSON = "{ fakeKey: { v: %s, p: [] ,r: [] } }";
+    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -196,13 +196,13 @@ public class ConfigCatClientIntegrationTest {
 
         // makes a call to a real url which would fail, null expected
         String config = cl.getValue(String.class, "test", null);
-        assertEquals(null, config);
+        assertNull(config);
     }
 
     @Test
     public void getConfigurationJsonStringWithDefaultConfig() throws InterruptedException, ExecutionException, TimeoutException {
         ConfigCatClient cl = new ConfigCatClient(APIKEY);
-        assertEquals(null, cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
+        assertNull(cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
     }
 
     @Test

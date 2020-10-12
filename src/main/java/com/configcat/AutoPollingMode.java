@@ -4,8 +4,8 @@ package com.configcat;
  * The auto polling mode configuration.
  */
 public class AutoPollingMode extends PollingMode {
-    private int autoPollRateInSeconds;
-    private ConfigurationChangeListener listener;
+    private final int autoPollRateInSeconds;
+    private final ConfigurationChangeListener listener;
 
     AutoPollingMode(int autoPollRateInSeconds, ConfigurationChangeListener listener) {
         if(autoPollRateInSeconds < 2)
