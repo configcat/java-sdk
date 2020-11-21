@@ -3,7 +3,7 @@ https://configcat.com
 
 ConfigCat SDK for Java provides easy integration for your application to ConfigCat.
 
-ConfigCat is a feature flag and configuration management service that lets you separate code releases from deployments. You can turn features ON or OFF using the <a href="http://app.configcat.com" target="_blank">ConfigCat Dashboard</a> even after they are deployed. ConfigCat lets you target specific groups of users based on region, email, or any other custom user attribute.
+ConfigCat is a feature flag and configuration management service that lets you separate feature releases from code deployments. You can turn features ON or OFF using the <a href="http://app.configcat.com" target="_blank">ConfigCat Dashboard</a> even after they are deployed. ConfigCat lets you target specific groups of users based on region, email, or any other custom user attribute.
 
 ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature flag service</a> that lets you manage feature toggles across frontend, backend, mobile, and desktop apps. <a href="https://configcat.com" target="_blank">Alternative to LaunchDarkly</a>. Management app + feature flag SDKs.
 
@@ -15,7 +15,7 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 
 ## Getting started
 
-### 1. Install the Java client
+### 1. Install the ConfigCat SDK
 *Maven:*
 ```xml
 <dependency>
@@ -29,8 +29,8 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 compile group: 'com.configcat', name: 'configcat-java-client', version: '5.+'
 ```
 
-### 2. Go to the <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your applications</a> tab to get your *API Key*:
-![API-KEY](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "API-KEY")
+### 2. Go to the <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your applications</a> tab to get your *SDK Key*:
+![SDK-KEY](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "SDK-KEY")
 
 ### 3. Import *com.configcat.** in your application code
 ```java
@@ -39,7 +39,7 @@ import com.configcat.*;
 
 ### 4. Create a *ConfigCat* client instance
 ```java
-ConfigCatClient client = new ConfigCatClient("#YOUR-API-KEY#");
+ConfigCatClient client = new ConfigCatClient("#YOUR-SDK-KEY#");
 ```
 
 ### 5. Get the setting's value:
