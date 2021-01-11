@@ -4,6 +4,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -14,6 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class AutoPollingPolicyTest {
+    private final Logger logger = LoggerFactory.getLogger(AutoPollingPolicyTest.class);
+
     @Test
     public void getCacheFails() throws Exception {
         String result = "test";
@@ -27,7 +31,7 @@ public class AutoPollingPolicyTest {
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
-        RefreshPolicy policy = PollingModes.AutoPoll(2).accept(new RefreshPolicyFactory(cache, fetcher, ""));
+        RefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, "", (AutoPollingMode)PollingModes.AutoPoll(2));
 
         assertEquals(result, policy.getConfigurationJsonAsync().get());
     }
@@ -44,8 +48,7 @@ public class AutoPollingPolicyTest {
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
-        RefreshPolicy policy = PollingModes.AutoPoll(2).accept(new RefreshPolicyFactory(cache, fetcher, ""));
-
+        RefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, "", (AutoPollingMode)PollingModes.AutoPoll(2));
         assertEquals("test", policy.getConfigurationJsonAsync().get());
 
         verify(cache, never()).write(anyString(), eq(result));
@@ -59,10 +62,10 @@ public class AutoPollingPolicyTest {
         AtomicBoolean isCalled  = new AtomicBoolean();
         PollingMode mode = PollingModes
                 .AutoPoll(2, () -> isCalled.set(true));
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
 
-        RefreshPolicy policy = mode.accept(new RefreshPolicyFactory(cache, fetcher, ""));
+        RefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, "", (AutoPollingMode)mode);
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
 

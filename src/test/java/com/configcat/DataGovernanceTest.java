@@ -4,6 +4,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -12,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class DataGovernanceTest {
     private static final String JsonTemplate = "{ p: { u: \"%s\", r: %d }, f: {} }";
+    private final Logger logger = LoggerFactory.getLogger(DataGovernanceTest.class);
 
     @Test
     public void shouldStayOnGivenUrl() throws IOException, ExecutionException, InterruptedException {
@@ -217,6 +220,6 @@ public class DataGovernanceTest {
     }
 
     private ConfigFetcher createFetcher(String url, boolean isCustomUrl) {
-        return new ConfigFetcher(new OkHttpClient.Builder().build(), "", url, isCustomUrl, "m");
+        return new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", url, isCustomUrl, "m");
     }
 }

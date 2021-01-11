@@ -6,6 +6,8 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -16,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class LazyLoadingPolicyAsyncTest {
     private RefreshPolicy policy;
     private MockWebServer server;
+    private final Logger logger = LoggerFactory.getLogger(LazyLoadingPolicyAsyncTest.class);
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -25,9 +28,9 @@ public class LazyLoadingPolicyAsyncTest {
         PollingMode mode = PollingModes
                 .LazyLoad(5, true);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
-        this.policy = mode.accept(new RefreshPolicyFactory(cache, fetcher, ""));
+        this.policy = new LazyLoadingPolicy(fetcher, cache, logger, "", (LazyLoadingMode)mode);
     }
 
     @AfterEach
@@ -62,8 +65,8 @@ public class LazyLoadingPolicyAsyncTest {
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes
                 .LazyLoad(5, true);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        RefreshPolicy lPolicy = mode.accept(new RefreshPolicyFactory(new FailingCache(), fetcher, ""));
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        RefreshPolicy lPolicy = new LazyLoadingPolicy(fetcher, new FailingCache(), logger, "", (LazyLoadingMode)mode);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(2, TimeUnit.SECONDS));

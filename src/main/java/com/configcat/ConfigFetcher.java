@@ -1,20 +1,17 @@
 package com.configcat;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import okhttp3.*;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 class ConfigFetcher implements Closeable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFetcher.class);
     public static final String CONFIG_JSON_NAME = "config_v5";
-
+    private final Logger logger;
     private final JsonParser parser = new JsonParser();
     private final OkHttpClient httpClient;
     private final String mode;
@@ -32,10 +29,12 @@ class ConfigFetcher implements Closeable {
     }
 
     ConfigFetcher(OkHttpClient httpClient,
+                  Logger logger,
                   String sdkKey,
                   String url,
                   boolean urlIsCustom,
                   String pollingIdentifier) {
+        this.logger = logger;
         this.sdkKey = sdkKey;
         this.urlIsCustom = urlIsCustom;
         this.url = url;
@@ -78,7 +77,7 @@ class ConfigFetcher implements Closeable {
                     return CompletableFuture.completedFuture(fetchResponse);
                 } else { // redirect
                     if (redirect == RedirectMode.ShouldRedirect.ordinal()) {
-                        LOGGER.warn("Your builder.dataGovernance() parameter at ConfigCatClient " +
+                        this.logger.warn("Your builder.dataGovernance() parameter at ConfigCatClient " +
                                 "initialization is not in sync with your preferences on the ConfigCat " +
                                 "Dashboard: https://app.configcat.com/organization/data-governance. " +
                                 "Only Organization Admins can access this preference.");
@@ -90,11 +89,11 @@ class ConfigFetcher implements Closeable {
                 }
 
             } catch (Exception exception) {
-                LOGGER.error("Exception in ConfigFetcher.executeFetchAsync", exception);
+                this.logger.error("Exception in ConfigFetcher.executeFetchAsync", exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
 
-            LOGGER.error("Redirect loop during config.json fetch. Please contact support@configcat.com.");
+            this.logger.error("Redirect loop during config.json fetch. Please contact support@configcat.com.");
             return CompletableFuture.completedFuture(fetchResponse);
         });
     }
@@ -106,26 +105,26 @@ class ConfigFetcher implements Closeable {
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                LOGGER.error("An error occurred during fetching the latest configuration.", e);
+                logger.error("An error occurred during fetching the latest configuration.", e);
                 future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
             }
 
             @Override
             public void onResponse(Call call, Response response) {
-                try {
-                    if (response.isSuccessful()) {
-                        LOGGER.debug("Fetch was successful: new config fetched.");
+                try (ResponseBody body = response.body()) {
+                    if (response.isSuccessful() && body != null) {
+                        logger.debug("Fetch was successful: new config fetched.");
                         eTag = response.header("ETag");
-                        future.complete(new FetchResponse(FetchResponse.Status.FETCHED, response.body().string()));
+                        future.complete(new FetchResponse(FetchResponse.Status.FETCHED, body.string()));
                     } else if (response.code() == 304) {
-                        LOGGER.debug("Fetch was successful: config not modified.");
+                        logger.debug("Fetch was successful: config not modified.");
                         future.complete(new FetchResponse(FetchResponse.Status.NOTMODIFIED, null));
                     } else {
-                        LOGGER.error("Double-check your API KEY at https://app.configcat.com/apikey. Received unexpected response: " + response.code());
+                        logger.error("Double-check your API KEY at https://app.configcat.com/apikey. Received unexpected response: " + response.code());
                         future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Exception in ConfigFetcher.getResponseAsync", e);
+                    logger.error("Exception in ConfigFetcher.getResponseAsync", e);
                     future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
                 }
             }
@@ -145,7 +144,6 @@ class ConfigFetcher implements Closeable {
 
             if (this.httpClient.cache() != null)
                 this.httpClient.cache().close();
-
         }
     }
 

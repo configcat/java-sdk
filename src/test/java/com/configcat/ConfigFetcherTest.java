@@ -6,6 +6,8 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -17,13 +19,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ConfigFetcherTest {
     private MockWebServer server;
     private ConfigFetcher fetcher;
+    private final Logger logger = LoggerFactory.getLogger(ConfigFetcherTest.class);
 
     @BeforeEach
     public void setUp() throws IOException {
         this.server = new MockWebServer();
         this.server.start();
 
-        this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, PollingModes.ManualPoll().getPollingIdentifier());
+        this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, PollingModes.ManualPoll().getPollingIdentifier());
     }
 
     @AfterEach
@@ -60,6 +63,7 @@ public class ConfigFetcherTest {
         ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
                     .readTimeout(1, TimeUnit.SECONDS)
                     .build(),
+                logger,
                 "",
                 this.server.url("/").toString(),
                 false,
@@ -79,6 +83,7 @@ public class ConfigFetcherTest {
         ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
                 .readTimeout(1, TimeUnit.SECONDS)
                 .build(),
+                logger,
                 "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA",
                 "https://cdn-global.configcat.com",
                 false,

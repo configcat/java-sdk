@@ -1,8 +1,5 @@
 import com.configcat.ConfigCatClient;
-import com.configcat.DataGovernance;
 import com.configcat.User;
-import com.sun.media.jfxmedia.logging.Logger;
-
 import java.io.IOException;
 
 public class Main {

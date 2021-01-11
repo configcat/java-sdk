@@ -2,13 +2,14 @@ package com.configcat;
 
 import com.google.gson.JsonSyntaxException;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ConfigurationParserTest {
-    private final static ConfigurationParser parser = new ConfigurationParser();
+    private final static ConfigurationParser parser = new ConfigurationParser(LoggerFactory.getLogger(ConfigurationParserTest.class));
 
     @Test
     public void parseValueThrowsArgumentInvalid() {

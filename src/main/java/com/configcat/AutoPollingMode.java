@@ -1,9 +1,6 @@
 package com.configcat;
 
-/**
- * The auto polling mode configuration.
- */
-public class AutoPollingMode extends PollingMode {
+class AutoPollingMode extends PollingMode {
     private final int autoPollRateInSeconds;
     private final ConfigurationChangeListener listener;
 
@@ -26,10 +23,5 @@ public class AutoPollingMode extends PollingMode {
     @Override
     String getPollingIdentifier() {
         return "a";
-    }
-
-    @Override
-    RefreshPolicy accept(PollingModeVisitor visitor) {
-        return visitor.visit(this);
     }
 }

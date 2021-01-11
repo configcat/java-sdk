@@ -6,6 +6,8 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +20,7 @@ import static org.mockito.Mockito.*;
 public class ManualPollingPolicyTest {
     private RefreshPolicy policy;
     private MockWebServer server;
+    private final Logger logger = LoggerFactory.getLogger(ManualPollingPolicyTest.class);
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -25,9 +28,9 @@ public class ManualPollingPolicyTest {
         this.server.start();
 
         PollingMode mode = PollingModes.ManualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
-        this.policy = mode.accept(new RefreshPolicyFactory(cache, fetcher, ""));
+        this.policy = new ManualPollingPolicy(fetcher, cache, logger,"");
     }
 
     @AfterEach
@@ -53,8 +56,8 @@ public class ManualPollingPolicyTest {
     @Test
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes.ManualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        RefreshPolicy lPolicy = mode.accept(new RefreshPolicyFactory(new FailingCache(), fetcher, ""));
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,"", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        RefreshPolicy lPolicy = new ManualPollingPolicy(fetcher, new FailingCache(), logger,"");
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));
@@ -94,7 +97,7 @@ public class ManualPollingPolicyTest {
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
-        ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, cache, "");
+        ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, cache, logger,"");
         policy.refreshAsync().get();
         assertEquals("test", policy.getConfigurationJsonAsync().get());
 

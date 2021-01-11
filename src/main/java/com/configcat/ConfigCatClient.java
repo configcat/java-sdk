@@ -5,29 +5,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 
 /**
  * A client for handling configurations provided by ConfigCat.
  */
 public final class ConfigCatClient implements ConfigurationProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigCatClient.class);
-    private static final ConfigurationParser parser = new ConfigurationParser();
     private static final String BASE_URL_GLOBAL = "https://cdn-global.configcat.com";
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
 
     private final RefreshPolicy refreshPolicy;
     private final int maxWaitTimeForSyncCallsInSeconds;
+    private final Logger logger;
+    private final ConfigurationParser parser;
 
     private ConfigCatClient(String sdkKey, Builder builder) throws IllegalArgumentException {
         if(sdkKey == null || sdkKey.isEmpty())
             throw new IllegalArgumentException("sdkKey is null or empty");
 
+        this.logger = LoggerFactory.getLogger(ConfigCatClient.class);
+        this.parser = new ConfigurationParser(this.logger);
         this.maxWaitTimeForSyncCallsInSeconds = builder.maxWaitTimeForSyncCallsInSeconds;
 
         PollingMode pollingMode = builder.pollingMode == null
@@ -41,6 +43,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     .retryOnConnectionFailure(true)
                     .build()
                 : builder.httpClient,
+                this.logger,
                 sdkKey,
                 !hasCustomBaseUrl
                     ? builder.dataGovernance == DataGovernance.GLOBAL
@@ -54,7 +57,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 ? new InMemoryConfigCache()
                 : builder.cache;
 
-        this.refreshPolicy = pollingMode.accept(new RefreshPolicyFactory(cache, fetcher, sdkKey));
+        this.refreshPolicy = this.selectPolicy(pollingMode, cache, fetcher, this.logger, sdkKey);
     }
 
     /**
@@ -167,7 +170,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     ? this.getAllVariationIdsAsync(user).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
                     : this.getAllVariationIdsAsync(user).get();
         } catch (Exception e) {
-            LOGGER.error("An error occurred during getting all the variation ids.", e);
+            this.logger.error("An error occurred during getting all the variation ids.", e);
             return new ArrayList<>();
         }
     }
@@ -186,7 +189,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        LOGGER.error("An error occurred during the deserialization. Returning empty array.", e);
+                        this.logger.error("An error occurred during the deserialization. Returning empty array.", e);
                         return new ArrayList<>();
                     }
                 });
@@ -222,7 +225,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     ? this.getAllKeysAsync().get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
                     : this.getAllKeysAsync().get();
         } catch (Exception e) {
-            LOGGER.error("An error occurred during getting all the setting keys.", e);
+            this.logger.error("An error occurred during getting all the setting keys.", e);
             return new ArrayList<>();
         }
     }
@@ -234,7 +237,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                    try {
                        return parser.getAllKeys(config);
                    } catch (Exception e) {
-                       LOGGER.error("An error occurred during the deserialization. Returning empty array.", e);
+                       this.logger.error("An error occurred during the deserialization. Returning empty array.", e);
                        return new ArrayList<>();
                    }
                 });
@@ -248,7 +251,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             else
                 this.forceRefreshAsync().get();
         } catch (Exception e) {
-            LOGGER.error("An error occurred during the refresh.", e);
+            this.logger.error("An error occurred during the refresh.", e);
         }
     }
 
@@ -266,7 +269,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return parser.parseValue(classOfT, config, key, user);
         } catch (Exception e) {
-            LOGGER.error("Evaluating getValue('"+key+"') failed. Returning defaultValue: ["+ defaultValue +"]. "
+            this.logger.error("Evaluating getValue('"+key+"') failed. Returning defaultValue: ["+ defaultValue +"]. "
                     + e.getMessage(), e);
             return defaultValue;
         }
@@ -276,7 +279,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return parser.parseVariationId(config, key, user);
         } catch (Exception e) {
-            LOGGER.error("Evaluating getVariationId('"+key+"') failed. Returning defaultVariationId: ["+ defaultVariationId +"]. "
+            this.logger.error("Evaluating getVariationId('"+key+"') failed. Returning defaultVariationId: ["+ defaultVariationId +"]. "
                     + e.getMessage(), e);
             return defaultVariationId;
         }
@@ -286,8 +289,20 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return parser.parseKeyValue(classOfT, config, variationId);
         } catch (Exception e) {
-            LOGGER.error("Could not find the setting for the given variation ID: " + variationId);
+            this.logger.error("Could not find the setting for the given variation ID: " + variationId);
             return null;
+        }
+    }
+
+    private RefreshPolicy selectPolicy(PollingMode mode, ConfigCache cache, ConfigFetcher fetcher, Logger logger, String sdkKey) {
+        if (mode instanceof AutoPollingMode) {
+            return new AutoPollingPolicy(fetcher, cache, logger, sdkKey, (AutoPollingMode)mode);
+        } else if (mode instanceof LazyLoadingMode) {
+            return new LazyLoadingPolicy(fetcher, cache, logger, sdkKey, (LazyLoadingMode)mode);
+        } else if (mode instanceof ManualPollingMode) {
+            return new ManualPollingPolicy(fetcher, cache, logger, sdkKey);
+        } else {
+            throw new InvalidParameterException("The polling mode parameter is invalid.");
         }
     }
 

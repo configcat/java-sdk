@@ -5,5 +5,4 @@ package com.configcat;
  */
 public abstract class PollingMode {
     abstract String getPollingIdentifier();
-    abstract RefreshPolicy accept(PollingModeVisitor visitor);
 }

@@ -6,17 +6,19 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AutoPollingPolicyIntegrationTest {
     private AutoPollingPolicy policy;
     private MockWebServer server;
+    private final Logger logger = LoggerFactory.getLogger(AutoPollingPolicyIntegrationTest.class);
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -25,12 +27,13 @@ public class AutoPollingPolicyIntegrationTest {
 
         PollingMode pollingMode = PollingModes.AutoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                logger,
                 "",
                 this.server.url("/").toString(),
                 false,
-                PollingModes.AutoPoll(2).getPollingIdentifier());
+                pollingMode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
-        this.policy = (AutoPollingPolicy)pollingMode.accept(new RefreshPolicyFactory(cache, fetcher, ""));
+        this.policy = new AutoPollingPolicy(fetcher, cache, logger, "", (AutoPollingMode)pollingMode);
     }
 
     @AfterEach

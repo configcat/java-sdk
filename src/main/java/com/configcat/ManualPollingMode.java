@@ -8,9 +8,4 @@ class ManualPollingMode extends PollingMode {
     String getPollingIdentifier() {
         return "m";
     }
-
-    @Override
-    RefreshPolicy accept(PollingModeVisitor visitor) {
-        return visitor.visit(this);
-    }
 }

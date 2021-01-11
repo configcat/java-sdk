@@ -6,6 +6,8 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +20,7 @@ import static org.mockito.Mockito.*;
 public class LazyLoadingPolicySyncTest {
     private RefreshPolicy policy;
     private MockWebServer server;
+    private final Logger logger = LoggerFactory.getLogger(LazyLoadingPolicySyncTest.class);
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -27,9 +30,9 @@ public class LazyLoadingPolicySyncTest {
         PollingMode mode = PollingModes
                 .LazyLoad(5);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,"", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
-        this.policy = mode.accept(new RefreshPolicyFactory(cache, fetcher, ""));
+        this.policy = new LazyLoadingPolicy(fetcher, cache, logger, "", (LazyLoadingMode)mode);
     }
 
     @AfterEach
@@ -58,8 +61,8 @@ public class LazyLoadingPolicySyncTest {
         PollingMode mode = PollingModes
                 .LazyLoad(5);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        RefreshPolicy lPolicy = mode.accept(new RefreshPolicyFactory(new FailingCache(), fetcher, ""));
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        RefreshPolicy lPolicy = new LazyLoadingPolicy(fetcher, new FailingCache(), logger, "", (LazyLoadingMode)mode);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));
@@ -101,8 +104,8 @@ public class LazyLoadingPolicySyncTest {
         when(fetcher.getConfigurationJsonStringAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
 
-        RefreshPolicy policy = PollingModes
-                .LazyLoad(60).accept(new RefreshPolicyFactory(cache, fetcher, ""));
+        RefreshPolicy policy = new LazyLoadingPolicy(fetcher, cache, logger, "", (LazyLoadingMode)PollingModes
+                .LazyLoad(60));
 
         assertEquals("test", policy.getConfigurationJsonAsync().get());
 

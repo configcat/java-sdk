@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * to maintain the internally stored configuration.
  */
 class LazyLoadingPolicy extends RefreshPolicy {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LazyLoadingPolicy.class);
     private Instant lastRefreshedTime;
     private final int cacheRefreshIntervalInSeconds;
     private final boolean asyncRefresh;
@@ -29,8 +28,8 @@ class LazyLoadingPolicy extends RefreshPolicy {
      * @param sdkKey the sdk key.
      * @param config the polling mode configuration.
      */
-    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey, LazyLoadingMode config) {
-        super(configFetcher, cache, sdkKey);
+    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, Logger logger, String sdkKey, LazyLoadingMode config) {
+        super(configFetcher, cache, logger, sdkKey);
         this.asyncRefresh = config.isAsyncRefresh();
         this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
         this.isFetching = new AtomicBoolean(false);
@@ -49,7 +48,7 @@ class LazyLoadingPolicy extends RefreshPolicy {
                         ? CompletableFuture.completedFuture(super.readConfigCache())
                         : this.fetchingFuture;
 
-            LOGGER.debug("Cache expired, refreshing.");
+            logger.debug("Cache expired, refreshing.");
             if(isInitialized) {
                 this.fetchingFuture = this.fetch();
                 if(this.asyncRefresh) {

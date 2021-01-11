@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 class RolloutEvaluator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RolloutEvaluator.class);
-
     private static final String[] COMPARATOR_TEXTS = new String[]{
             "IS ONE OF",
             "IS NOT ONE OF",
@@ -35,19 +33,25 @@ class RolloutEvaluator {
             "IS NOT ONE OF (Sensitive)"
     };
 
+    private final Logger logger;
+
+    public RolloutEvaluator(Logger logger) {
+        this.logger = logger;
+    }
+
     public Map.Entry<JsonElement, JsonElement> evaluate(JsonObject json, String key, User user) {
         JsonArray rolloutRules = json.getAsJsonArray(Setting.RolloutRules);
         JsonArray percentageRules = json.getAsJsonArray(Setting.RolloutPercentageItems);
 
-        LOGGER.info("Evaluating getValue("+ key +").");
+        this.logger.info("Evaluating getValue("+ key +").");
 
         if(user == null) {
             if(rolloutRules.size() > 0 || percentageRules.size() > 0) {
-                LOGGER.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
+                this.logger.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
             }
 
             JsonElement result = json.get(Setting.Value);
-            LOGGER.info("Returning "+ result +".");
+            this.logger.info("Returning "+ result +".");
             return new AbstractMap.SimpleEntry<>(result, json.get(Setting.VariationId));
         }
 
@@ -209,26 +213,26 @@ class RolloutEvaluator {
                 bucket += ruleObject.get(RolloutPercentageItems.Percentage).getAsInt();
                 if(scaled < bucket) {
                     JsonElement result = ruleObject.get(RolloutPercentageItems.Value);
-                    LOGGER.info("Evaluating % options. Returning "+ result +".");
+                    this.logger.info("Evaluating % options. Returning "+ result +".");
                     return new AbstractMap.SimpleEntry<>(result, ruleObject.get(RolloutPercentageItems.VariationId));
                 }
             }
         }
 
         JsonElement result = json.get(Setting.Value);
-        LOGGER.info("Returning "+ result +".");
+        this.logger.info("Returning "+ result +".");
         return new AbstractMap.SimpleEntry<>(result, json.get(Setting.VariationId));
     }
 
     private void logMatch(String comparisonAttribute, String userValue, int comparator, String comparisonValue, JsonElement value) {
-        LOGGER.info("Evaluating rule: ["+comparisonAttribute+":"+ userValue +"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => match, returning: "+value+"");
+        this.logger.info("Evaluating rule: ["+comparisonAttribute+":"+ userValue +"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => match, returning: "+value+"");
     }
 
     private void logNoMatch(String comparisonAttribute, String userValue, int comparator, String comparisonValue) {
-        LOGGER.info("Evaluating rule: ["+comparisonAttribute+":"+ userValue +"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => no match");
+        this.logger.info("Evaluating rule: ["+comparisonAttribute+":"+ userValue +"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => no match");
     }
 
     private void logFormatError(String comparisonAttribute, String userValue, int comparator, String comparisonValue, Exception exception) {
-        LOGGER.warn("Evaluating rule: ["+comparisonAttribute+":"+ userValue +"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => SKIP rule. Validation error: "+exception+"");
+        this.logger.warn("Evaluating rule: ["+comparisonAttribute+":"+ userValue +"] ["+COMPARATOR_TEXTS[comparator]+"] ["+comparisonValue+"] => SKIP rule. Validation error: "+exception+"");
     }
 }
