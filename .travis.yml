@@ -1,20 +1,31 @@
 language: java
 dist: trusty
 sudo: false
+
 jdk:
 - oraclejdk8
 - oraclejdk9
 - openjdk8
+
+addons:
+  sonarcloud:
+    organization: "configcat"
+    token:
+      secure: "LU1S5sliPfPvJT0bP8/obDYhf0qckHtdcuDZ7NWHaQGOPV8zt1vaqRiIa0Rei+/V47p9xsniEWQjYRRZv+BHs86fU72NoVgH/6GJGz5B/FeHdyr1FC6bW8sguGxsKJKKNKu8JQwwDzys0S5J9eo8zmBl8Q30gwvhGlogTgSwvSKQOgM5l3jdZLU/E7I7sg45XxIsVZeb6Q/ZOyjoLRd2gHqLSz4buP3/Dl9MO8dJ0LhhhtuNbNpgw9T18as83GaHYkYReL1aXVusuqx3JXcg/uIEpi9cOujKgLuBez4VOFlCBiTm6N46l+onEslnnN5Sp9CXe7vDjx9ZnuyWF3yhN8hcfvaa+4MxJW90Z7kvhtBIr60hNlI0qiDuhWTIuhb3K0Fu/UPTAx7EZMADHPLxuLLg8wR16glzqehLoRZfdL1J+9mMb/NrnPVIL5yFwe4UgYTYUE33yreq4mUQ0ujOW9KqhBJRgj0IKtLU9rYVG5Z6Mw8rbfRDSdTeaSKV1B/sHmZefQvqSb1OnvpPGJbi8HA6+cDwhSy/ZbMCBhYAaVlw8jjTGOXr+k+nwkpiyZaE9f7Z7AO0TKH8a6S+7f3HcdlAPaNQBfuX6/7M+LVzb2ckDi6OwuJmxkwBLfibBxFkq+/5PkUlrriIr5Ji/y1m5vDdaRglg3D4njEGom4OLFI="
+
 before_install:
 - chmod +x gradlew
 script: "./gradlew test"
+
 stages:
 - test
 - coverage
+- sonar
 - name: snapshot
   if: tag IS blank
 - name: release
   if: tag =~ /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/
+
 jobs:
   include:
   - stage: coverage
@@ -22,19 +33,26 @@ jobs:
     - "./gradlew check"
     - bash <(curl -s https://codecov.io/bash)
     jdk: oraclejdk8
+  - stage: sonar
+    script:
+    - ./gradlew sonarqube
+    jdk: oraclejdk8
   - stage: snapshot
     script: "./gradlew artifactoryPublish -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER"
     jdk: oraclejdk8
   - stage: release
     script: "./gradlew bintrayUpload -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dsigning.pass=$SIGN_PASS -Dbuild.number=$TRAVIS_BUILD_NUMBER"
     jdk: oraclejdk8
+
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
 cache:
   directories:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
   - "$HOME/.m2/repositories/"
+
 env:
   global:
   - secure: PRZ2mCtos+dalxQWdbxnA7oTqOV4hAPuNJxHN6xgdfP+hJjfqw02M5hMFdTQ1Cq366d9pBUiwVT6U7uP+Y5UgrAdEMMLgendIvm+Uf+04YLUk1w+tRVHfBTPbZp5yG33+6s5aAPM30tPf6dGvoG+iJv3WyeNea45Exsjv39B5aoCzd/TpIcWDCaEmx+XL1RZDExh2AWIvDYW/PhXSvITQvzRAXh8IZY9EBL3A2hrecaQ+YAS7zzQjorZdOMwJNvLXVUV/SR/N8fptAVnHbpIgiw3peT62LHcetmxAoQqByJb03VJBeCZhv6l8PzXwK22wfhh7B7HumN+XmJl50uZiO8ng8mldctaAjlUha/y/o6g/NwHX6DDTT0UmljH1+9t/71dAt6bZMOQXFddrIzLLGQOkXwqY87hdqY7y3AoKl3O8LnJwpFcPE4QsrwWS3uL/7ntDaerD04gSnCSHV54rJaKYRV1CmkmTsPL3xXUqHkp5lp/3gRcBPXYvga9PbUSW68jX13IS5kbMFg+nXBHvznm8xnjpfxarMzGBFXxG5B8MUhNrCiJ+BHhtbl5wl4wOfPLJToQCLdI5EmcyjXE3dQMntZbbXlcoN0BkGKzWTtDm7VJ8LQWrdOLbpzFMENHuiz7IXl/c9IVLHtO3ls/sWZXzgfZgRCYLm7bZd2nq0M=
