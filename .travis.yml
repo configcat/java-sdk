@@ -10,8 +10,6 @@ jdk:
 addons:
   sonarcloud:
     organization: "configcat"
-    token:
-      secure: "LU1S5sliPfPvJT0bP8/obDYhf0qckHtdcuDZ7NWHaQGOPV8zt1vaqRiIa0Rei+/V47p9xsniEWQjYRRZv+BHs86fU72NoVgH/6GJGz5B/FeHdyr1FC6bW8sguGxsKJKKNKu8JQwwDzys0S5J9eo8zmBl8Q30gwvhGlogTgSwvSKQOgM5l3jdZLU/E7I7sg45XxIsVZeb6Q/ZOyjoLRd2gHqLSz4buP3/Dl9MO8dJ0LhhhtuNbNpgw9T18as83GaHYkYReL1aXVusuqx3JXcg/uIEpi9cOujKgLuBez4VOFlCBiTm6N46l+onEslnnN5Sp9CXe7vDjx9ZnuyWF3yhN8hcfvaa+4MxJW90Z7kvhtBIr60hNlI0qiDuhWTIuhb3K0Fu/UPTAx7EZMADHPLxuLLg8wR16glzqehLoRZfdL1J+9mMb/NrnPVIL5yFwe4UgYTYUE33yreq4mUQ0ujOW9KqhBJRgj0IKtLU9rYVG5Z6Mw8rbfRDSdTeaSKV1B/sHmZefQvqSb1OnvpPGJbi8HA6+cDwhSy/ZbMCBhYAaVlw8jjTGOXr+k+nwkpiyZaE9f7Z7AO0TKH8a6S+7f3HcdlAPaNQBfuX6/7M+LVzb2ckDi6OwuJmxkwBLfibBxFkq+/5PkUlrriIr5Ji/y1m5vDdaRglg3D4njEGom4OLFI="
 
 before_install:
 - chmod +x gradlew
