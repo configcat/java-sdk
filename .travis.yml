@@ -34,7 +34,7 @@ jobs:
   - stage: sonar
     script:
     - ./gradlew sonarqube
-    jdk: oraclejdk8
+    jdk: openjdk11
   - stage: snapshot
     script: "./gradlew artifactoryPublish -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER"
     jdk: oraclejdk8
