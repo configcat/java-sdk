@@ -17,8 +17,7 @@ script: "./gradlew test"
 
 stages:
 - test
-- coverage
-- sonar
+- analysis
 - name: snapshot
   if: tag IS blank
 - name: release
@@ -26,13 +25,10 @@ stages:
 
 jobs:
   include:
-  - stage: coverage
+  - stage: analysis
     script:
-    - "./gradlew check"
+    - ./gradlew check
     - bash <(curl -s https://codecov.io/bash)
-    jdk: oraclejdk8
-  - stage: sonar
-    script:
     - ./gradlew sonarqube
     jdk: openjdk11
   - stage: snapshot
