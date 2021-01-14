@@ -71,6 +71,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 sonarqube {
     properties {
         property "sonar.projectKey", "configcat_java-sdk"
+        property "sonar.projectName", "java-sdk"
         property "sonar.projectVersion", "${version}-${buildNumber}"
         property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/report.xml"
     }
