@@ -29,7 +29,7 @@ jobs:
     script:
     - ./gradlew check
     - bash <(curl -s https://codecov.io/bash)
-    - ./gradlew sonarqube
+    - ./gradlew sonarqube -Dbuild.number=$TRAVIS_BUILD_NUMBER
     jdk: openjdk11
   - stage: snapshot
     script: "./gradlew artifactoryPublish -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER"
