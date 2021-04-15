@@ -95,7 +95,7 @@ The ConfigCat SDK supports three different polling mechanisms to acquire the set
 If you need help using this SDK, feel free to contact the ConfigCat Staff at [https://configcat.com](https://configcat.com). We're happy to help.
 
 ## Contributing
-Contributions are welcome.
+Contributions are welcome. For more info please read the [Contribution Guideline](CONTRIBUTING.md).
 
 ## About ConfigCat
 - [Official ConfigCat SDKs for other platforms](https://github.com/configcat)
