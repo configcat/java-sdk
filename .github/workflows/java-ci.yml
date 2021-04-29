@@ -101,7 +101,12 @@ jobs:
       run: chmod +x gradlew
       
     - name: Deploy snapshot with Gradle
-      run: ./gradlew artifactoryPublish -Dsnapshot=true -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.key=${{ secrets.BINTRAY_KEY }} -Dbuild.number=$GITHUB_RUN_NUMBER
+      run: ./gradlew publishMavenJavaPublicationToMavenRepository -Dsnapshot=true -Dbuild.number=$GITHUB_RUN_NUMBER
+      env:
+        ORG_GRADLE_PROJECT_OSSRH_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+        ORG_GRADLE_PROJECT_OSSRH_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+        ORG_GRADLE_PROJECT_SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        ORG_GRADLE_PROJECT_SIGNING_PASSPHRASE: ${{ secrets.PASSPHRASE }}
       
   deploy-release:
     needs: coverage-scan
@@ -126,4 +131,9 @@ jobs:
       run: chmod +x gradlew
       
     - name: Deploy release with Gradle
-      run: ./gradlew bintrayUpload -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.key=${{ secrets.BINTRAY_KEY }} -Dsigning.pass=${{ secrets.SIGN_PASS }} -Dbuild.number=$GITHUB_RUN_NUMBER
+      run: ./gradlew publishMavenJavaPublicationToMavenRepository -Dbuild.number=$GITHUB_RUN_NUMBER
+      env:
+        ORG_GRADLE_PROJECT_OSSRH_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+        ORG_GRADLE_PROJECT_OSSRH_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+        ORG_GRADLE_PROJECT_SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        ORG_GRADLE_PROJECT_SIGNING_PASSPHRASE: ${{ secrets.PASSPHRASE }}
