@@ -29,8 +29,8 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 compile group: 'com.configcat', name: 'configcat-java-client', version: '6.+'
 ```
 
-### 2. Go to the <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your applications</a> tab to get your *SDK Key*:
-![SDK-KEY](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme01.png  "SDK-KEY")
+### 2. Go to the <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your applications</a> section to get your *SDK Key*:
+![SDK-KEY](https://raw.githubusercontent.com/ConfigCat/java-sdk/master/media/readme02-2.png  "SDK-KEY")
 
 ### 3. Import *com.configcat.** in your application code
 ```java
