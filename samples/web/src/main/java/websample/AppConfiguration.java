@@ -11,6 +11,6 @@ public class AppConfiguration {
     public ConfigCatClient configCatClient() {
         return ConfigCatClient
                 .newBuilder()
-                .build("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
+                .build("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ");
     }
 }
