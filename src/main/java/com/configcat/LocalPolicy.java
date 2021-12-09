@@ -16,12 +16,14 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 class LocalPolicy implements RefreshPolicy {
     private final LocalPollingMode configuration;
+    private final ConfigCatLogger logger;
     private final Gson gson = new GsonBuilder().create();
     private Config loadedConfig;
     private final FileWatcher watcher;
 
-    public LocalPolicy(LocalPollingMode configuration) {
+    public LocalPolicy(LocalPollingMode configuration, ConfigCatLogger logger) {
         this.configuration = configuration;
+        this.logger = logger;
         this.reloadFileContent();
 
         FileWatcher fileWatcher = null;
@@ -30,7 +32,7 @@ class LocalPolicy implements RefreshPolicy {
                 fileWatcher = FileWatcher.create(configuration.getFilePath());
                 fileWatcher.start(this::reloadFileContent);
             } catch (IOException e) {
-                e.printStackTrace();
+                this.logger.error("Error during initializing file watcher on " + this.configuration.getFilePath().toString() + ".", e);
             }
         }
         this.watcher = fileWatcher;
@@ -58,7 +60,7 @@ class LocalPolicy implements RefreshPolicy {
         try {
             content = this.readFile();
         } catch (IOException e) {
-            e.printStackTrace();
+            this.logger.error("Error during reading " + this.configuration.getFilePath().toString() + ".", e);
         }
 
         if (content != null && !content.isEmpty()) {
@@ -134,7 +136,7 @@ class LocalPolicy implements RefreshPolicy {
         }
     }
 
-    private class SimplifiedConfig {
+    private static class SimplifiedConfig {
         @SerializedName("flags")
         public Map<String, JsonElement> Entries;
     }

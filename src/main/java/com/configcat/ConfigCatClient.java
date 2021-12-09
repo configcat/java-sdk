@@ -376,7 +376,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         } else if (mode instanceof ManualPollingMode) {
             return new ManualPollingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey);
         } else if (mode instanceof LocalPollingMode) {
-            return new LocalPolicy((LocalPollingMode) mode);
+            return new LocalPolicy((LocalPollingMode) mode, logger);
         } else {
             throw new InvalidParameterException("The polling mode parameter is invalid.");
         }
