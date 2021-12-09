@@ -5,6 +5,13 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.Map;
 
+enum SettingType {
+    BOOLEAN,
+    STRING,
+    INT,
+    DOUBLE,
+}
+
 class Config {
     public transient String JsonString;
 
@@ -42,7 +49,7 @@ class Setting {
     @SerializedName(value = "v")
     public JsonElement Value;
     @SerializedName(value = "t")
-    public String Type;
+    public int Type;
     @SerializedName(value = "p")
     public RolloutPercentageItem[] RolloutPercentageItems;
     @SerializedName(value = "r")

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -22,6 +23,7 @@ public class ConfigCatClientTest {
     private static final String APIKEY = "TEST_KEY";
 
     private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_MULTIPLE = "{ f: { key1: { v: true, i: 'fakeId1', p: [] ,r: [] }, key2: { v: false, i: 'fakeId2', p: [] ,r: [] } } }";
 
     @Test
     public void ensuresApiKeyIsNotNull() {
@@ -243,6 +245,28 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(3, TimeUnit.SECONDS));
 
         cl.forceRefresh();
+
+        server.shutdown();
+        cl.close();
+    }
+
+    @Test
+    public void getAllValues() throws IOException, ExecutionException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.newBuilder()
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
+                .build(APIKEY);
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_MULTIPLE));
+        cl.forceRefresh();
+
+        Map<String, Object> allValues = cl.getAllValues(null);
+
+        assertEquals(true, allValues.get("key1"));
+        assertEquals(false, allValues.get("key2"));
 
         server.shutdown();
         cl.close();

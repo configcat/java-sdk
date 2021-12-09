@@ -124,6 +124,22 @@ public interface ConfigurationProvider extends Closeable {
     CompletableFuture<Collection<String>> getAllVariationIdsAsync(User user);
 
     /**
+     * Gets the values of all feature flags or settings synchronously.
+     *
+     * @param user the user object to identify the caller.
+     * @return a collection of all values.
+     */
+    Map<String, Object> getAllValues(User user);
+
+    /**
+     * Gets the values of all feature flags or settings asynchronously.
+     *
+     * @param user the user object to identify the caller.
+     * @return a future which computes the collection of all values.
+     */
+    CompletableFuture<Map<String, Object>> getAllValuesAsync(User user);
+
+    /**
      * Gets the key of a setting and its value identified by the given Variation ID (analytics).
      *
      * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.

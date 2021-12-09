@@ -171,7 +171,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return this.getAllVariationIdsAsync(user).get();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all the variation ids.", e);
+            this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
             return new ArrayList<>();
         }
     }
@@ -190,8 +190,41 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during the deserialization. Returning empty array.", e);
+                        this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
                         return new ArrayList<>();
+                    }
+                });
+    }
+
+    @Override
+    public Map<String, Object> getAllValues(User user) {
+        try {
+            return this.getAllValuesAsync(user).get();
+        } catch (Exception e) {
+            this.logger.error("An error occurred during getting all values. Returning empty map.", e);
+            return new HashMap<>();
+        }
+    }
+
+    @Override
+    public CompletableFuture<Map<String, Object>> getAllValuesAsync(User user) {
+        return this.refreshPolicy.getConfigurationAsync()
+                .thenApply(config -> {
+                    try {
+                        Collection<String> keys = config.Entries.keySet();
+                        Map<String, Object> result = new HashMap<>();
+
+                        for (String key : keys) {
+                            Setting setting = config.Entries.get(key);
+                            JsonElement evaluated = this.rolloutEvaluator.evaluate(config.Entries.get(key), key, user).getKey();
+                            Object value = this.parseObject(this.classBySettingType(setting.Type), evaluated);
+                            result.put(key, value);
+                        }
+
+                        return result;
+                    } catch (Exception e) {
+                        this.logger.error("An error occurred during getting all values. Returning empty map.", e);
+                        return new HashMap<>();
                     }
                 });
     }
@@ -222,7 +255,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return this.getAllKeysAsync().get();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all the setting keys.", e);
+            this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
             return new ArrayList<>();
         }
     }
@@ -234,7 +267,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     try {
                         return config.Entries.keySet();
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during the deserialization. Returning empty array.", e);
+                        this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
                         return new ArrayList<>();
                     }
                 });
@@ -358,6 +391,19 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return element.getAsDouble();
         else if (classOfT == Boolean.class || classOfT == boolean.class)
             return element.getAsBoolean();
+        else
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
+    }
+
+    private Class<?> classBySettingType(int settingType) {
+        if (settingType == SettingType.BOOLEAN.ordinal())
+            return boolean.class;
+        else if (settingType == SettingType.STRING.ordinal())
+            return String.class;
+        else if (settingType == SettingType.INT.ordinal())
+            return int.class;
+        else if (settingType == SettingType.DOUBLE.ordinal())
+            return double.class;
         else
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
     }

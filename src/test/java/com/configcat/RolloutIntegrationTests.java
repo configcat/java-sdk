@@ -37,7 +37,6 @@ public class RolloutIntegrationTests {
 
     public RolloutIntegrationTests(String fileName, String apiKey, String kind) throws FileNotFoundException {
         this.client = ConfigCatClient.newBuilder()
-                .logLevel(LogLevel.INFO)
                 .build(apiKey);
 
         ClassLoader classLoader = getClass().getClassLoader();
