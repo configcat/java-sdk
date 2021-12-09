@@ -43,7 +43,7 @@ class RolloutEvaluator {
 
             if (user == null) {
                 if ((setting.RolloutRules != null && setting.RolloutRules.length > 0) ||
-                    (setting.RolloutPercentageItems != null && setting.RolloutPercentageItems.length > 0)) {
+                        (setting.RolloutPercentageItems != null && setting.RolloutPercentageItems.length > 0)) {
                     this.logger.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
                 }
 

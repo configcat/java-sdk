@@ -31,7 +31,7 @@ public class ManualPollingPolicyTest {
         PollingMode mode = PollingModes.ManualPoll();
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
-        this.policy = new ManualPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger),"");
+        this.policy = new ManualPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "");
     }
 
     @AfterEach
@@ -57,8 +57,8 @@ public class ManualPollingPolicyTest {
     @Test
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes.ManualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger),"", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        DefaultRefreshPolicy lPolicy = new ManualPollingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger),"");
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        DefaultRefreshPolicy lPolicy = new ManualPollingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "");
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
@@ -98,7 +98,7 @@ public class ManualPollingPolicyTest {
         when(fetcher.getConfigurationAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(String.format(TEST_JSON, result)))));
 
-        ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger),"");
+        ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "");
         policy.refreshAsync().get();
         assertEquals(result, policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
 

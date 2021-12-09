@@ -15,8 +15,8 @@ class AutoPollingPolicy extends DefaultRefreshPolicy {
     private final AtomicBoolean initialized;
     private final ArrayList<ConfigurationChangeListener> listeners;
 
-    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, ConfigCatLogger logger, ConfigMemoryCache deserializer, String sdkKey, AutoPollingMode config) {
-        super(configFetcher, cache, logger, deserializer, sdkKey);
+    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, ConfigCatLogger logger, ConfigMemoryCache configMemoryCache, String sdkKey, AutoPollingMode config) {
+        super(configFetcher, cache, logger, configMemoryCache, sdkKey);
         this.listeners = new ArrayList<>();
 
         if (config.getListener() != null)

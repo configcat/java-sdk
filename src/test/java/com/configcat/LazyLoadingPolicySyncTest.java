@@ -31,9 +31,9 @@ public class LazyLoadingPolicySyncTest {
         PollingMode mode = PollingModes
                 .LazyLoad(5);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger),"", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
-        this.policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode)mode);
+        this.policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) mode);
     }
 
     @AfterEach
@@ -63,7 +63,7 @@ public class LazyLoadingPolicySyncTest {
                 .LazyLoad(5);
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        DefaultRefreshPolicy lPolicy = new LazyLoadingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode)mode);
+        DefaultRefreshPolicy lPolicy = new LazyLoadingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) mode);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
@@ -104,7 +104,7 @@ public class LazyLoadingPolicySyncTest {
         when(fetcher.getConfigurationAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(result))));
 
-        DefaultRefreshPolicy policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode)PollingModes
+        DefaultRefreshPolicy policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) PollingModes
                 .LazyLoad(60));
 
         assertEquals("test", policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());

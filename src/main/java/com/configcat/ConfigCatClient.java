@@ -29,7 +29,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), builder.logLevel);
 
         if (SDK_KEYS.contains(sdkKey)) {
-            this.logger.warn("A ConfigCat Client is already initialized with SDK Key '"+ sdkKey +"'. We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
+            this.logger.warn("A ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'. We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
         }
 
         SDK_KEYS.add(sdkKey);
@@ -335,13 +335,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private RefreshPolicy selectPolicy(PollingMode mode, ConfigCache cache, ConfigFetcher fetcher, ConfigCatLogger logger, ConfigMemoryCache deserializer, String sdkKey) {
+    private RefreshPolicy selectPolicy(PollingMode mode, ConfigCache cache, ConfigFetcher fetcher, ConfigCatLogger logger, ConfigMemoryCache configMemoryCache, String sdkKey) {
         if (mode instanceof AutoPollingMode) {
-            return new AutoPollingPolicy(fetcher, cache, logger, deserializer, sdkKey, (AutoPollingMode) mode);
+            return new AutoPollingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey, (AutoPollingMode) mode);
         } else if (mode instanceof LazyLoadingMode) {
-            return new LazyLoadingPolicy(fetcher, cache, logger, deserializer, sdkKey, (LazyLoadingMode) mode);
+            return new LazyLoadingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey, (LazyLoadingMode) mode);
         } else if (mode instanceof ManualPollingMode) {
-            return new ManualPollingPolicy(fetcher, cache, logger, deserializer, sdkKey);
+            return new ManualPollingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey);
         } else if (mode instanceof LocalPollingMode) {
             return new LocalPolicy((LocalPollingMode) mode);
         } else {

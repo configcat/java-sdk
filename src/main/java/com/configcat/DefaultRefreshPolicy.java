@@ -38,11 +38,11 @@ abstract class DefaultRefreshPolicy implements RefreshPolicy {
         return configFetcher;
     }
 
-    DefaultRefreshPolicy(ConfigFetcher configFetcher, ConfigCache cache, ConfigCatLogger logger, ConfigMemoryCache deserializer, String sdkKey) {
+    DefaultRefreshPolicy(ConfigFetcher configFetcher, ConfigCache cache, ConfigCatLogger logger, ConfigMemoryCache configMemoryCache, String sdkKey) {
         this.configFetcher = configFetcher;
         this.cache = cache;
         this.logger = logger;
-        this.configMemoryCache = deserializer;
+        this.configMemoryCache = configMemoryCache;
         this.CacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CacheBase, sdkKey))));
     }
 
