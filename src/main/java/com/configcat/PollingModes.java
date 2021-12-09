@@ -10,7 +10,7 @@ public final class PollingModes {
      * @param autoPollIntervalInSeconds Sets at least how often this policy should fetch the latest configuration and refresh the cache.
      * @return the auto polling configuration.
      */
-    public static PollingMode AutoPoll(int autoPollIntervalInSeconds) {
+    public static PollingMode autoPoll(int autoPollIntervalInSeconds) {
         return new AutoPollingMode(autoPollIntervalInSeconds, 5, null);
     }
 
@@ -21,7 +21,7 @@ public final class PollingModes {
      * @param maxInitWaitTimeSeconds    Sets the maximum waiting time between initialization and the first config acquisition in seconds.
      * @return the auto polling configuration.
      */
-    public static PollingMode AutoPoll(int autoPollIntervalInSeconds, int maxInitWaitTimeSeconds) {
+    public static PollingMode autoPoll(int autoPollIntervalInSeconds, int maxInitWaitTimeSeconds) {
         return new AutoPollingMode(autoPollIntervalInSeconds, maxInitWaitTimeSeconds, null);
     }
 
@@ -32,7 +32,7 @@ public final class PollingModes {
      * @param listener                  Sets a configuration changed listener.
      * @return the auto polling configuration.
      */
-    public static PollingMode AutoPoll(int autoPollIntervalInSeconds, ConfigurationChangeListener listener) {
+    public static PollingMode autoPoll(int autoPollIntervalInSeconds, ConfigurationChangeListener listener) {
         return new AutoPollingMode(autoPollIntervalInSeconds, 5, listener);
     }
 
@@ -44,7 +44,7 @@ public final class PollingModes {
      * @param listener                  Sets a configuration changed listener.
      * @return the auto polling configuration.
      */
-    public static PollingMode AutoPoll(int autoPollIntervalInSeconds, int maxInitWaitTimeSeconds, ConfigurationChangeListener listener) {
+    public static PollingMode autoPoll(int autoPollIntervalInSeconds, int maxInitWaitTimeSeconds, ConfigurationChangeListener listener) {
         return new AutoPollingMode(autoPollIntervalInSeconds, maxInitWaitTimeSeconds, listener);
     }
 
@@ -54,7 +54,7 @@ public final class PollingModes {
      * @param cacheRefreshIntervalInSeconds Sets how long the cache will store its value before fetching the latest from the network again.
      * @return the lazy loading polling configuration.
      */
-    public static PollingMode LazyLoad(int cacheRefreshIntervalInSeconds) {
+    public static PollingMode lazyLoad(int cacheRefreshIntervalInSeconds) {
         return new LazyLoadingMode(cacheRefreshIntervalInSeconds, false);
     }
 
@@ -69,7 +69,7 @@ public final class PollingModes {
      *                                      value is being refreshed with the latest configuration.</p>
      * @return the lazy loading polling configuration.
      */
-    public static PollingMode LazyLoad(int cacheRefreshIntervalInSeconds, boolean asyncRefresh) {
+    public static PollingMode lazyLoad(int cacheRefreshIntervalInSeconds, boolean asyncRefresh) {
         return new LazyLoadingMode(cacheRefreshIntervalInSeconds, asyncRefresh);
     }
 
@@ -78,7 +78,7 @@ public final class PollingModes {
      *
      * @return the manual polling configuration.
      */
-    public static PollingMode ManualPoll() {
+    public static PollingMode manualPoll() {
         return new ManualPollingMode();
     }
 
@@ -87,7 +87,7 @@ public final class PollingModes {
      *
      * @return the local file polling configuration.
      */
-    public static PollingMode LocalFile(String filePath, boolean autoReload) {
+    public static PollingMode localFile(String filePath, boolean autoReload) {
         return new LocalPollingMode(filePath, autoReload, false);
     }
 
@@ -96,7 +96,7 @@ public final class PollingModes {
      *
      * @return the local file polling configuration.
      */
-    public static PollingMode LocalClassPathResource(String filePath, boolean autoReload) {
+    public static PollingMode localClassPathResource(String filePath, boolean autoReload) {
         return new LocalPollingMode(filePath, autoReload, true);
     }
 }

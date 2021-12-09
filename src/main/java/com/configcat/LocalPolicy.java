@@ -65,13 +65,13 @@ class LocalPolicy implements RefreshPolicy {
 
         if (content != null && !content.isEmpty()) {
             SimplifiedConfig simplifiedConfig = this.gson.fromJson(content, SimplifiedConfig.class);
-            if (simplifiedConfig != null && simplifiedConfig.Entries != null && simplifiedConfig.Entries.size() > 0) {
+            if (simplifiedConfig != null && simplifiedConfig.entries != null && simplifiedConfig.entries.size() > 0) {
                 this.loadedConfig = new Config();
-                this.loadedConfig.Entries = new HashMap<>();
-                for (Map.Entry<String, JsonElement> entry : simplifiedConfig.Entries.entrySet()) {
+                this.loadedConfig.entries = new HashMap<>();
+                for (Map.Entry<String, JsonElement> entry : simplifiedConfig.entries.entrySet()) {
                     Setting setting = new Setting();
-                    setting.Value = entry.getValue();
-                    this.loadedConfig.Entries.put(entry.getKey(), setting);
+                    setting.value = entry.getValue();
+                    this.loadedConfig.entries.put(entry.getKey(), setting);
                 }
 
                 return;
@@ -120,7 +120,8 @@ class LocalPolicy implements RefreshPolicy {
                         }
                     }
                     key.reset();
-                } catch (InterruptedException ignored) {
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
             }
         }
@@ -138,6 +139,6 @@ class LocalPolicy implements RefreshPolicy {
 
     private static class SimplifiedConfig {
         @SerializedName("flags")
-        public Map<String, JsonElement> Entries;
+        public Map<String, JsonElement> entries;
     }
 }

@@ -30,7 +30,7 @@ public class ConfigCatClientIntegrationTest {
 
         this.client = ConfigCatClient.newBuilder()
                 .httpClient(new OkHttpClient.Builder().build())
-                .mode(PollingModes.LazyLoad(2, true))
+                .mode(PollingModes.lazyLoad(2, true))
                 .baseUrl(this.server.url("/").toString())
                 .build(APIKEY);
     }

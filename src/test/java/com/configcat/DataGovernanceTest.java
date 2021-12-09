@@ -28,7 +28,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.getConfigurationAsync().get();
 
         // Assert
-        assertEquals(body, response.config().JsonString);
+        assertEquals(body, response.config().jsonString);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -49,7 +49,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.getConfigurationAsync().get();
 
         // Assert
-        assertEquals(body, response.config().JsonString);
+        assertEquals(body, response.config().jsonString);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -70,7 +70,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.getConfigurationAsync().get();
 
         // Assert
-        assertEquals(body, response.config().JsonString);
+        assertEquals(body, response.config().jsonString);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -95,7 +95,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.getConfigurationAsync().get();
 
         // Assert
-        assertEquals(secondBody, response.config().JsonString);
+        assertEquals(secondBody, response.config().jsonString);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -122,7 +122,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.getConfigurationAsync().get();
 
         // Assert
-        assertEquals(secondBody, response.config().JsonString);
+        assertEquals(secondBody, response.config().jsonString);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -150,7 +150,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.getConfigurationAsync().get();
 
         // Assert
-        assertEquals(firstBody, response.config().JsonString);
+        assertEquals(firstBody, response.config().jsonString);
         assertEquals(2, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -174,7 +174,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.getConfigurationAsync().get();
 
         // Assert
-        assertEquals(firstBody, response.config().JsonString);
+        assertEquals(firstBody, response.config().jsonString);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(0, secondServer.getRequestCount());
 
@@ -201,7 +201,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.getConfigurationAsync().get();
 
         // Assert
-        assertEquals(secondBody, response.config().JsonString);
+        assertEquals(secondBody, response.config().jsonString);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 

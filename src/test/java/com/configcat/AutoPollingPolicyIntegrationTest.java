@@ -25,7 +25,7 @@ public class AutoPollingPolicyIntegrationTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        PollingMode pollingMode = PollingModes.AutoPoll(2);
+        PollingMode pollingMode = PollingModes.autoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
                 logger,
                 new ConfigMemoryCache(logger),
@@ -45,7 +45,7 @@ public class AutoPollingPolicyIntegrationTest {
 
     @Test
     public void ensuresPollingIntervalGreaterThanTwoSeconds() {
-        assertThrows(IllegalArgumentException.class, () -> PollingModes.AutoPoll(1));
+        assertThrows(IllegalArgumentException.class, () -> PollingModes.autoPoll(1));
     }
 
     @Test
@@ -54,13 +54,13 @@ public class AutoPollingPolicyIntegrationTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache refresh
         Thread.sleep(6000);
 
         //next call will get the new value
-        assertEquals("test2", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test2", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
     }
 
     @Test
@@ -79,27 +79,27 @@ public class AutoPollingPolicyIntegrationTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test4")));
 
         //first calls
-        assertEquals("test", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
-        assertEquals("test", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
-        assertEquals("test", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache refresh
         Thread.sleep(2500);
 
         //next call will get the new value
-        assertEquals("test2", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test2", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache refresh
         Thread.sleep(2500);
 
         //next call will get the new value
-        assertEquals("test3", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test3", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache refresh
         Thread.sleep(2500);
 
         //next call will get the new value
-        assertEquals("test4", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test4", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
     }
 
     @Test
@@ -108,13 +108,13 @@ public class AutoPollingPolicyIntegrationTest {
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
-        assertEquals("test", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache invalidation
         Thread.sleep(3000);
 
         //previous value returned because of the refresh failure
-        assertEquals("test", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
     }
 }
 

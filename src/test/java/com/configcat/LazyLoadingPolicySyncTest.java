@@ -29,7 +29,7 @@ public class LazyLoadingPolicySyncTest {
         this.server.start();
 
         PollingMode mode = PollingModes
-                .LazyLoad(5);
+                .lazyLoad(5);
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
@@ -48,19 +48,19 @@ public class LazyLoadingPolicySyncTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test2", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
     }
 
     @Test
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes
-                .LazyLoad(5);
+                .lazyLoad(5);
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         DefaultRefreshPolicy lPolicy = new LazyLoadingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) mode);
@@ -69,13 +69,13 @@ public class LazyLoadingPolicySyncTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", lPolicy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test", lPolicy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", lPolicy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test2", lPolicy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
     }
 
     @Test
@@ -84,13 +84,13 @@ public class LazyLoadingPolicySyncTest {
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
-        assertEquals("test", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //previous value returned because of the refresh failure
-        assertEquals("test", this.policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
     }
 
     @Test
@@ -105,9 +105,9 @@ public class LazyLoadingPolicySyncTest {
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(result))));
 
         DefaultRefreshPolicy policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) PollingModes
-                .LazyLoad(60));
+                .lazyLoad(60));
 
-        assertEquals("test", policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+        assertEquals("test", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         verify(cache, never()).write(anyString(), eq(result));
     }

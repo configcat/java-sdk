@@ -39,7 +39,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
         PollingMode pollingMode = builder.pollingMode == null
-                ? PollingModes.AutoPoll(60)
+                ? PollingModes.autoPoll(60)
                 : builder.pollingMode;
 
         boolean hasCustomBaseUrl = builder.baseUrl != null && !builder.baseUrl.isEmpty();
@@ -97,6 +97,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         try {
             return this.getValueAsync(classOfT, key, user, defaultValue).get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return defaultValue;
         } catch (Exception e) {
             return defaultValue;
         }
@@ -137,6 +140,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         try {
             return this.getVariationIdAsync(key, user, defaultVariationId).get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return defaultVariationId;
         } catch (Exception e) {
             return defaultVariationId;
         }
@@ -170,6 +176,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public Collection<String> getAllVariationIds(User user) {
         try {
             return this.getAllVariationIdsAsync(user).get();
+        } catch (InterruptedException e) {
+            this.logger.error("Thread interrupted.", e);
+            Thread.currentThread().interrupt();
+            return new ArrayList<>();
         } catch (Exception e) {
             this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
             return new ArrayList<>();
@@ -181,7 +191,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.refreshPolicy.getConfigurationAsync()
                 .thenApply(config -> {
                     try {
-                        Collection<String> keys = config.Entries.keySet();
+                        Collection<String> keys = config.entries.keySet();
                         ArrayList<String> result = new ArrayList<>();
 
                         for (String key : keys) {
@@ -200,6 +210,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public Map<String, Object> getAllValues(User user) {
         try {
             return this.getAllValuesAsync(user).get();
+        } catch (InterruptedException e) {
+            this.logger.error("Thread interrupted.", e);
+            Thread.currentThread().interrupt();
+            return new HashMap<>();
         } catch (Exception e) {
             this.logger.error("An error occurred during getting all values. Returning empty map.", e);
             return new HashMap<>();
@@ -211,13 +225,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.refreshPolicy.getConfigurationAsync()
                 .thenApply(config -> {
                     try {
-                        Collection<String> keys = config.Entries.keySet();
+                        Collection<String> keys = config.entries.keySet();
                         Map<String, Object> result = new HashMap<>();
 
                         for (String key : keys) {
-                            Setting setting = config.Entries.get(key);
-                            JsonElement evaluated = this.rolloutEvaluator.evaluate(config.Entries.get(key), key, user).getKey();
-                            Object value = this.parseObject(this.classBySettingType(setting.Type), evaluated);
+                            Setting setting = config.entries.get(key);
+                            JsonElement evaluated = this.rolloutEvaluator.evaluate(config.entries.get(key), key, user).getKey();
+                            Object value = this.parseObject(this.classBySettingType(setting.type), evaluated);
                             result.put(key, value);
                         }
 
@@ -236,6 +250,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         try {
             return this.getKeyAndValueAsync(classOfT, variationId).get();
+        } catch (InterruptedException e) {
+            this.logger.error("Thread interrupted.", e);
+            Thread.currentThread().interrupt();
+            return null;
         } catch (Exception e) {
             return null;
         }
@@ -254,6 +272,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public Collection<String> getAllKeys() {
         try {
             return this.getAllKeysAsync().get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            this.logger.error("Thread interrupted.", e);
+            return new ArrayList<>();
         } catch (Exception e) {
             this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
             return new ArrayList<>();
@@ -265,7 +287,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.refreshPolicy.getConfigurationAsync()
                 .thenApply(config -> {
                     try {
-                        return config.Entries.keySet();
+                        return config.entries.keySet();
                     } catch (Exception e) {
                         this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
                         return new ArrayList<>();
@@ -277,6 +299,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public void forceRefresh() {
         try {
             this.forceRefreshAsync().get();
+        } catch (InterruptedException e) {
+            this.logger.error("Thread interrupted.", e);
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             this.logger.error("An error occurred during the refresh.", e);
         }
@@ -300,9 +325,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return defaultValue;
             }
 
-            Setting setting = config.Entries.get(key);
+            Setting setting = config.entries.get(key);
             if (setting == null) {
-                this.logger.error("Value not found for key " + key + ". Here are the available keys: " + String.join(", ", config.Entries.keySet()));
+                this.logger.error("Value not found for key " + key + ". Here are the available keys: " + String.join(", ", config.entries.keySet()));
                 return defaultValue;
             }
 
@@ -321,9 +346,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return defaultVariationId;
             }
 
-            Setting setting = config.Entries.get(key);
+            Setting setting = config.entries.get(key);
             if (setting == null) {
-                this.logger.error("Variation ID not found for key " + key + ". Here are the available keys: " + String.join(", ", config.Entries.keySet()));
+                this.logger.error("Variation ID not found for key " + key + ". Here are the available keys: " + String.join(", ", config.entries.keySet()));
                 return defaultVariationId;
             }
             return this.rolloutEvaluator.evaluate(setting, key, user).getValue();
@@ -341,22 +366,22 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return null;
             }
 
-            for (Map.Entry<String, Setting> node : config.Entries.entrySet()) {
+            for (Map.Entry<String, Setting> node : config.entries.entrySet()) {
                 String settingKey = node.getKey();
                 Setting setting = node.getValue();
-                if (variationId.equals(setting.VariationId)) {
-                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.Value));
+                if (variationId.equals(setting.variationId)) {
+                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.value));
                 }
 
-                for (RolloutRule rolloutRule : setting.RolloutRules) {
-                    if (variationId.equals(rolloutRule.VariationId)) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.Value));
+                for (RolloutRule rolloutRule : setting.rolloutRules) {
+                    if (variationId.equals(rolloutRule.variationId)) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.value));
                     }
                 }
 
-                for (RolloutPercentageItem percentageRule : setting.RolloutPercentageItems) {
-                    if (variationId.equals(percentageRule.VariationId)) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.Value));
+                for (RolloutPercentageItem percentageRule : setting.percentageItems) {
+                    if (variationId.equals(percentageRule.variationId)) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.value));
                     }
                 }
             }

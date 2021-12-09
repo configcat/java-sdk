@@ -16,14 +16,14 @@ public class LocalFilePolicyTests {
 
     @Test
     public void readFile() throws Exception {
-        LocalPolicy policy = new LocalPolicy((LocalPollingMode) PollingModes.LocalClassPathResource("test.json", false), logger);
+        LocalPolicy policy = new LocalPolicy((LocalPollingMode) PollingModes.localClassPathResource("test.json", false), logger);
         assertNotNull(policy.getConfigurationAsync().get());
     }
 
     @Test
     public void withClient() {
         ConfigCatClient client = new ConfigCatClient.Builder()
-                .mode(PollingModes.LocalClassPathResource("test.json", false))
+                .mode(PollingModes.localClassPathResource("test.json", false))
                 .build("localhost");
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
@@ -33,7 +33,7 @@ public class LocalFilePolicyTests {
     @Test
     public void withClient_Simple() {
         ConfigCatClient client = new ConfigCatClient.Builder()
-                .mode(PollingModes.LocalClassPathResource("test-simple.json", false))
+                .mode(PollingModes.localClassPathResource("test-simple.json", false))
                 .build("localhost");
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
@@ -46,11 +46,11 @@ public class LocalFilePolicyTests {
         newFile.createNewFile();
         try {
             this.writeContent(newFile, String.format(TEST_JSON, "test"));
-            LocalPolicy policy = new LocalPolicy((LocalPollingMode) PollingModes.LocalFile("src/test/resources/auto_created.txt", true), logger);
-            assertEquals("test", policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+            LocalPolicy policy = new LocalPolicy((LocalPollingMode) PollingModes.localFile("src/test/resources/auto_created.txt", true), logger);
+            assertEquals("test", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
             this.writeContent(newFile, String.format(TEST_JSON, "modified"));
             Thread.sleep(500);
-            assertEquals("modified", policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+            assertEquals("modified", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
             policy.close();
         } finally {
             newFile.delete();

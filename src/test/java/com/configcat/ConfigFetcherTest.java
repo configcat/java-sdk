@@ -26,7 +26,7 @@ public class ConfigFetcherTest {
         this.server.start();
 
         this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger),
-                "", this.server.url("/").toString(), false, PollingModes.ManualPoll().getPollingIdentifier());
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
     }
 
     @AfterEach
@@ -43,7 +43,7 @@ public class ConfigFetcherTest {
 
         FetchResponse fResult = this.fetcher.getConfigurationAsync().get();
 
-        assertEquals(result, fResult.config().JsonString);
+        assertEquals(result, fResult.config().jsonString);
         assertTrue(fResult.isFetched());
         assertFalse(fResult.isNotModified());
         assertFalse(fResult.isFailed());
@@ -68,7 +68,7 @@ public class ConfigFetcherTest {
                 "",
                 this.server.url("/").toString(),
                 false,
-                PollingModes.ManualPoll().getPollingIdentifier());
+                PollingModes.manualPoll().getPollingIdentifier());
 
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(2, TimeUnit.SECONDS));
 
@@ -89,7 +89,7 @@ public class ConfigFetcherTest {
                 "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA",
                 "https://cdn-global.configcat.com",
                 false,
-                PollingModes.ManualPoll().getPollingIdentifier());
+                PollingModes.manualPoll().getPollingIdentifier());
 
         assertTrue(fetch.getConfigurationAsync().get().isFetched());
         assertTrue(fetch.getConfigurationAsync().get().isNotModified());

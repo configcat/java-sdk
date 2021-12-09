@@ -30,7 +30,7 @@ class ConfigMemoryCache {
 
         try {
             this.cached = this.gson.fromJson(json, Config.class);
-            this.cached.JsonString = json;
+            this.cached.jsonString = json;
             this.cachedHash = MurmurHash3.hash128(json);
             return cached;
         } catch (Exception e) {

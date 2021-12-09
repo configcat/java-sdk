@@ -7,17 +7,17 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 abstract class DefaultRefreshPolicy implements RefreshPolicy {
-    private static final String CacheBase = "java_" + ConfigFetcher.CONFIG_JSON_NAME + "_%s";
+    private static final String CACHE_BASE = "java_" + ConfigFetcher.CONFIG_JSON_NAME + "_%s";
     private final ConfigCache cache;
     private final ConfigFetcher configFetcher;
     protected final ConfigMemoryCache configMemoryCache;
-    private final String CacheKey;
+    private final String cacheKey;
     protected final ConfigCatLogger logger;
     private Config inMemoryConfig;
 
     protected Config readConfigCache() {
         try {
-            Config result = this.configMemoryCache.getConfigFromJson(this.cache.read(CacheKey));
+            Config result = this.configMemoryCache.getConfigFromJson(this.cache.read(cacheKey));
             return result != null ? result : this.inMemoryConfig;
         } catch (Exception e) {
             this.logger.error("An error occurred during the cache read.", e);
@@ -28,7 +28,7 @@ abstract class DefaultRefreshPolicy implements RefreshPolicy {
     protected void writeConfigCache(Config value) {
         try {
             this.inMemoryConfig = value;
-            this.cache.write(CacheKey, value.JsonString);
+            this.cache.write(cacheKey, value.jsonString);
         } catch (Exception e) {
             this.logger.error("An error occurred during the cache write.", e);
         }
@@ -43,10 +43,8 @@ abstract class DefaultRefreshPolicy implements RefreshPolicy {
         this.cache = cache;
         this.logger = logger;
         this.configMemoryCache = configMemoryCache;
-        this.CacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CacheBase, sdkKey))));
+        this.cacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CACHE_BASE, sdkKey))));
     }
-
-    public abstract CompletableFuture<Config> getConfigurationAsync();
 
     public CompletableFuture<Void> refreshAsync() {
         return this.fetcher().getConfigurationAsync()

@@ -42,23 +42,23 @@ class RolloutEvaluator {
         try {
 
             if (user == null) {
-                if ((setting.RolloutRules != null && setting.RolloutRules.length > 0) ||
-                        (setting.RolloutPercentageItems != null && setting.RolloutPercentageItems.length > 0)) {
+                if ((setting.rolloutRules != null && setting.rolloutRules.length > 0) ||
+                        (setting.percentageItems != null && setting.percentageItems.length > 0)) {
                     this.logger.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
                 }
 
-                logEntries.add("Returning " + setting.Value + ".");
-                return new AbstractMap.SimpleEntry<>(setting.Value, setting.VariationId);
+                logEntries.add("Returning " + setting.value + ".");
+                return new AbstractMap.SimpleEntry<>(setting.value, setting.variationId);
             }
 
-            if (setting.RolloutRules != null) {
-                for (RolloutRule rule : setting.RolloutRules) {
+            if (setting.rolloutRules != null) {
+                for (RolloutRule rule : setting.rolloutRules) {
 
-                    String comparisonAttribute = rule.ComparisonAttribute;
-                    String comparisonValue = rule.ComparisonValue;
-                    int comparator = rule.Comparator;
-                    JsonElement value = rule.Value;
-                    String variationId = rule.VariationId;
+                    String comparisonAttribute = rule.comparisonAttribute;
+                    String comparisonValue = rule.comparisonValue;
+                    int comparator = rule.comparator;
+                    JsonElement value = rule.value;
+                    String variationId = rule.variationId;
                     String userValue = user.getAttribute(comparisonAttribute);
 
                     if (comparisonValue == null || comparisonValue.isEmpty() ||
@@ -196,7 +196,7 @@ class RolloutEvaluator {
                 }
             }
 
-            if (setting.RolloutPercentageItems != null && setting.RolloutPercentageItems.length > 0) {
+            if (setting.percentageItems != null && setting.percentageItems.length > 0) {
                 String hashCandidate = key + user.getIdentifier();
                 int scale = 100;
                 String hexHash = new String(Hex.encodeHex(DigestUtils.sha1(hashCandidate))).substring(0, 7);
@@ -204,18 +204,18 @@ class RolloutEvaluator {
                 int scaled = longHash % scale;
 
                 int bucket = 0;
-                for (RolloutPercentageItem rule : setting.RolloutPercentageItems) {
+                for (RolloutPercentageItem rule : setting.percentageItems) {
 
-                    bucket += rule.Percentage;
+                    bucket += rule.percentage;
                     if (scaled < bucket) {
-                        logEntries.add("Evaluating % options. Returning " + rule.Value + ".");
-                        return new AbstractMap.SimpleEntry<>(rule.Value, rule.VariationId);
+                        logEntries.add("Evaluating % options. Returning " + rule.value + ".");
+                        return new AbstractMap.SimpleEntry<>(rule.value, rule.variationId);
                     }
                 }
             }
 
-            logEntries.add("Returning " + setting.Value + ".");
-            return new AbstractMap.SimpleEntry<>(setting.Value, setting.VariationId);
+            logEntries.add("Returning " + setting.value + ".");
+            return new AbstractMap.SimpleEntry<>(setting.value, setting.variationId);
         } finally {
             this.logger.info(logEntries.toPrint());
         }

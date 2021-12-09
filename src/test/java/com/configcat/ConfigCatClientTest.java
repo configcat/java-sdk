@@ -8,15 +8,12 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 public class ConfigCatClientTest {
 
@@ -71,7 +68,7 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
@@ -90,7 +87,7 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .mode(PollingModes.AutoPoll(5))
+                .mode(PollingModes.autoPoll(5))
                 .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
@@ -109,7 +106,7 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .mode(PollingModes.LazyLoad(5))
+                .mode(PollingModes.lazyLoad(5))
                 .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
@@ -128,7 +125,7 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
@@ -146,7 +143,7 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
                 .httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build())
                 .build(APIKEY);
@@ -169,7 +166,7 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .mode(PollingModes.AutoPoll(60, 1))
+                .mode(PollingModes.autoPoll(60, 1))
                 .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
@@ -189,7 +186,7 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
@@ -211,7 +208,7 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
                 .httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build())
                 .build(APIKEY);
@@ -237,7 +234,7 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
                 .httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build())
                 .build(APIKEY);
@@ -256,7 +253,7 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 

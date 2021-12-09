@@ -13,12 +13,12 @@ enum SettingType {
 }
 
 class Config {
-    public transient String JsonString;
+    public transient String jsonString;
 
     @SerializedName(value = "p")
-    public Preferences Preferences;
+    public Preferences preferences;
     @SerializedName(value = "f")
-    public Map<String, Setting> Entries;
+    public Map<String, Setting> entries;
 
     @Override
     public boolean equals(Object obj) {
@@ -29,53 +29,53 @@ class Config {
             return false;
         }
 
-        return ((Config) obj).JsonString.equals(this.JsonString);
+        return ((Config) obj).jsonString.equals(this.jsonString);
     }
 
     @Override
     public int hashCode() {
-        return this.JsonString.hashCode();
+        return this.jsonString.hashCode();
     }
 }
 
 class Preferences {
     @SerializedName(value = "u")
-    public String BaseUrl;
+    public String baseUrl;
     @SerializedName(value = "r")
-    public int Redirect;
+    public int redirect;
 }
 
 class Setting {
     @SerializedName(value = "v")
-    public JsonElement Value;
+    public JsonElement value;
     @SerializedName(value = "t")
-    public int Type;
+    public int type;
     @SerializedName(value = "p")
-    public RolloutPercentageItem[] RolloutPercentageItems;
+    public RolloutPercentageItem[] percentageItems;
     @SerializedName(value = "r")
-    public RolloutRule[] RolloutRules;
+    public RolloutRule[] rolloutRules;
     @SerializedName(value = "i")
-    public String VariationId = "";
+    public String variationId = "";
 }
 
 class RolloutRule {
     @SerializedName(value = "v")
-    public JsonElement Value;
+    public JsonElement value;
     @SerializedName(value = "a")
-    public String ComparisonAttribute;
+    public String comparisonAttribute;
     @SerializedName(value = "t")
-    public int Comparator;
+    public int comparator;
     @SerializedName(value = "c")
-    public String ComparisonValue;
+    public String comparisonValue;
     @SerializedName(value = "i")
-    public String VariationId;
+    public String variationId;
 }
 
 class RolloutPercentageItem {
     @SerializedName(value = "v")
-    public JsonElement Value;
+    public JsonElement value;
     @SerializedName(value = "p")
-    public double Percentage;
+    public double percentage;
     @SerializedName(value = "i")
-    public String VariationId;
+    public String variationId;
 }

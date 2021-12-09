@@ -57,16 +57,16 @@ class ConfigFetcher implements Closeable {
             }
             try {
                 Config config = fetchResponse.config();
-                if (config == null || config.Preferences == null) {
+                if (config == null || config.preferences == null) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
-                String newUrl = config.Preferences.BaseUrl;
+                String newUrl = config.preferences.baseUrl;
                 if (newUrl.equals(this.url)) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
-                int redirect = config.Preferences.Redirect;
+                int redirect = config.preferences.redirect;
 
                 // we have a custom url set and we didn't get a forced redirect
                 if (this.urlIsCustom && redirect != RedirectMode.ForceRedirect.ordinal()) {
