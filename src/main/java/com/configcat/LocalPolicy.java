@@ -134,8 +134,7 @@ class LocalPolicy implements RefreshPolicy {
         }
     }
 
-    private class SimplifiedConfig
-    {
+    private class SimplifiedConfig {
         @SerializedName("flags")
         public Map<String, JsonElement> Entries;
     }

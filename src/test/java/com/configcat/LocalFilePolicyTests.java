@@ -16,7 +16,7 @@ public class LocalFilePolicyTests {
 
     @Test
     public void readFile() throws Exception {
-        LocalPolicy policy = new LocalPolicy((LocalPollingMode)PollingModes.LocalClassPathResource("test.json", false));
+        LocalPolicy policy = new LocalPolicy((LocalPollingMode) PollingModes.LocalClassPathResource("test.json", false));
         assertNotNull(policy.getConfigurationAsync().get());
     }
 
@@ -46,7 +46,7 @@ public class LocalFilePolicyTests {
         newFile.createNewFile();
         try {
             this.writeContent(newFile, String.format(TEST_JSON, "test"));
-            LocalPolicy policy = new LocalPolicy((LocalPollingMode)PollingModes.LocalFile("src/test/resources/auto_created.txt", true));
+            LocalPolicy policy = new LocalPolicy((LocalPollingMode) PollingModes.LocalFile("src/test/resources/auto_created.txt", true));
             assertEquals("test", policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
             this.writeContent(newFile, String.format(TEST_JSON, "modified"));
             Thread.sleep(500);

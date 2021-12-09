@@ -34,7 +34,7 @@ public class AutoPollingPolicyIntegrationTest {
                 false,
                 pollingMode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
-        this.policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode)pollingMode);
+        this.policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode) pollingMode);
     }
 
     @AfterEach
@@ -45,7 +45,7 @@ public class AutoPollingPolicyIntegrationTest {
 
     @Test
     public void ensuresPollingIntervalGreaterThanTwoSeconds() {
-        assertThrows(IllegalArgumentException.class, ()-> PollingModes.AutoPoll(1));
+        assertThrows(IllegalArgumentException.class, () -> PollingModes.AutoPoll(1));
     }
 
     @Test

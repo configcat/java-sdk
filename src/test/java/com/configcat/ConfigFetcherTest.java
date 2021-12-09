@@ -61,8 +61,8 @@ public class ConfigFetcherTest {
     public void getConfigurationException() throws IOException, ExecutionException, InterruptedException {
 
         ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
-                    .readTimeout(1, TimeUnit.SECONDS)
-                    .build(),
+                .readTimeout(1, TimeUnit.SECONDS)
+                .build(),
                 logger,
                 new ConfigMemoryCache(logger),
                 "",

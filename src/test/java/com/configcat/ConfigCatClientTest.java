@@ -251,10 +251,10 @@ public class ConfigCatClientTest {
     @Test
     public void getValueInvalidArguments() {
         ConfigCatClient client = new ConfigCatClient("key");
-        assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class,null, false));
-        assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class,"", false));
+        assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class, null, false));
+        assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class, "", false));
 
-        assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,null, false).get());
-        assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,"", false).get());
+        assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class, null, false).get());
+        assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class, "", false).get());
     }
 }

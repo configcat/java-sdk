@@ -22,7 +22,7 @@ class Config {
             return false;
         }
 
-        return ((Config)obj).JsonString.equals(this.JsonString);
+        return ((Config) obj).JsonString.equals(this.JsonString);
     }
 
     @Override

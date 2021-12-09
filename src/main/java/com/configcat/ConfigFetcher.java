@@ -138,7 +138,7 @@ class ConfigFetcher implements Closeable {
                         future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
                     }
                 } catch (SocketTimeoutException e) {
-                    logger.error("Request timed out. Timeout values: [connect: "+ httpClient.connectTimeoutMillis() +"ms, read: "+ httpClient.readTimeoutMillis() +"ms, write: "+ httpClient.writeTimeoutMillis() +"ms]", e);
+                    logger.error("Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]", e);
                     future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
                 } catch (Exception e) {
                     logger.error("Exception in ConfigFetcher.getResponseAsync", e);
