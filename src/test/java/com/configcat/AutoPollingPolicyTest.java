@@ -4,7 +4,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -16,7 +15,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class AutoPollingPolicyTest {
-    private final Logger logger = LoggerFactory.getLogger(AutoPollingPolicyTest.class);
+    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(AutoPollingPolicyTest.class), LogLevel.WARNING);
+    private final ConfigMemoryCache memoryCache = new ConfigMemoryCache(logger);
 
     @Test
     public void getCacheFails() throws Exception {
@@ -28,12 +29,14 @@ public class AutoPollingPolicyTest {
         doThrow(new Exception()).when(cache).read(anyString());
         doThrow(new Exception()).when(cache).write(anyString(), anyString());
 
-        when(fetcher.getConfigurationJsonStringAsync())
-                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
+        when(fetcher.getConfigurationAsync())
+                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(String.format(TEST_JSON, result)))));
 
-        RefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, "", (AutoPollingMode)PollingModes.AutoPoll(2));
+        DefaultRefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode)PollingModes.AutoPoll(2));
 
-        assertEquals(result, policy.getConfigurationJsonAsync().get());
+        assertEquals(result, policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
+
+        policy.close();
     }
 
     @Test
@@ -43,15 +46,17 @@ public class AutoPollingPolicyTest {
         ConfigFetcher fetcher = mock(ConfigFetcher.class);
         ConfigCache cache = mock(ConfigCache.class);
 
-        when(cache.read(anyString())).thenReturn(result);
+        when(cache.read(anyString())).thenReturn(String.format(TEST_JSON, result));
 
-        when(fetcher.getConfigurationJsonStringAsync())
-                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
+        when(fetcher.getConfigurationAsync())
+                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(String.format(TEST_JSON, result)))));
 
-        RefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, "", (AutoPollingMode)PollingModes.AutoPoll(2));
-        assertEquals("test", policy.getConfigurationJsonAsync().get());
+        DefaultRefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode)PollingModes.AutoPoll(2));
+        assertEquals(result, policy.getConfigurationAsync().get().Entries.get("fakeKey").Value.getAsString());
 
         verify(cache, never()).write(anyString(), eq(result));
+
+        policy.close();
     }
 
     @Test
@@ -62,12 +67,13 @@ public class AutoPollingPolicyTest {
         AtomicBoolean isCalled  = new AtomicBoolean();
         PollingMode mode = PollingModes
                 .AutoPoll(2, () -> isCalled.set(true));
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger),
+                "", server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
 
-        RefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, "", (AutoPollingMode)mode);
+        DefaultRefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode)mode);
 
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         Thread.sleep(1000);
 

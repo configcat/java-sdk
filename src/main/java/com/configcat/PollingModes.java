@@ -11,18 +11,41 @@ public final class PollingModes {
      * @return the auto polling configuration.
      */
     public static PollingMode AutoPoll(int autoPollIntervalInSeconds) {
-        return new AutoPollingMode(autoPollIntervalInSeconds, null);
+        return new AutoPollingMode(autoPollIntervalInSeconds, 5, null);
     }
 
     /**
      * Creates a configured auto polling configuration.
      *
      * @param autoPollIntervalInSeconds Sets at least how often this policy should fetch the latest configuration and refresh the cache.
-     * @param listener Sets a configuration changed listener.
+     * @param maxInitWaitTimeSeconds    Sets the maximum waiting time between initialization and the first config acquisition in seconds.
+     * @return the auto polling configuration.
+     */
+    public static PollingMode AutoPoll(int autoPollIntervalInSeconds, int maxInitWaitTimeSeconds) {
+        return new AutoPollingMode(autoPollIntervalInSeconds, maxInitWaitTimeSeconds, null);
+    }
+
+    /**
+     * Creates a configured auto polling configuration.
+     *
+     * @param autoPollIntervalInSeconds Sets at least how often this policy should fetch the latest configuration and refresh the cache.
+     * @param listener                  Sets a configuration changed listener.
      * @return the auto polling configuration.
      */
     public static PollingMode AutoPoll(int autoPollIntervalInSeconds, ConfigurationChangeListener listener) {
-        return new AutoPollingMode(autoPollIntervalInSeconds, listener);
+        return new AutoPollingMode(autoPollIntervalInSeconds, 5, listener);
+    }
+
+    /**
+     * Creates a configured auto polling configuration.
+     *
+     * @param autoPollIntervalInSeconds Sets at least how often this policy should fetch the latest configuration and refresh the cache.
+     * @param maxInitWaitTimeSeconds    Sets the maximum waiting time between initialization and the first config acquisition in seconds.
+     * @param listener                  Sets a configuration changed listener.
+     * @return the auto polling configuration.
+     */
+    public static PollingMode AutoPoll(int autoPollIntervalInSeconds, int maxInitWaitTimeSeconds, ConfigurationChangeListener listener) {
+        return new AutoPollingMode(autoPollIntervalInSeconds, maxInitWaitTimeSeconds, listener);
     }
 
     /**
@@ -39,11 +62,11 @@ public final class PollingModes {
      * Creates a configured lazy loading polling configuration.
      *
      * @param cacheRefreshIntervalInSeconds Sets how long the cache will store its value before fetching the latest from the network again.
-     * @param asyncRefresh Sets whether the cache should refresh itself asynchronously or synchronously.
-     * <p>If it's set to {@code true} reading from the policy will not wait for the refresh to be finished,
-     * instead it returns immediately with the previous stored value.</p>
-     * <p>If it's set to {@code false} the policy will wait until the expired
-     * value is being refreshed with the latest configuration.</p>
+     * @param asyncRefresh                  Sets whether the cache should refresh itself asynchronously or synchronously.
+     *                                      <p>If it's set to {@code true} reading from the policy will not wait for the refresh to be finished,
+     *                                      instead it returns immediately with the previous stored value.</p>
+     *                                      <p>If it's set to {@code false} the policy will wait until the expired
+     *                                      value is being refreshed with the latest configuration.</p>
      * @return the lazy loading polling configuration.
      */
     public static PollingMode LazyLoad(int cacheRefreshIntervalInSeconds, boolean asyncRefresh) {
@@ -57,5 +80,23 @@ public final class PollingModes {
      */
     public static PollingMode ManualPoll() {
         return new ManualPollingMode();
+    }
+
+    /**
+     * Creates a local file polling configuration.
+     *
+     * @return the local file polling configuration.
+     */
+    public static PollingMode LocalFile(String filePath, boolean autoReload) {
+        return new LocalPollingMode(filePath, autoReload, false);
+    }
+
+    /**
+     * Creates a local classpath resource file polling configuration.
+     *
+     * @return the local file polling configuration.
+     */
+    public static PollingMode LocalClassPathResource(String filePath, boolean autoReload) {
+        return new LocalPollingMode(filePath, autoReload, true);
     }
 }

@@ -102,7 +102,7 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void getIntegerValue() {
         int iValue = 342423;
-        String result = String.format(TEST_JSON, String.valueOf(iValue));
+        String result = String.format(TEST_JSON, iValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         int config = this.client.getValue(Integer.class,"fakeKey", 0);
         assertEquals(iValue, config);
@@ -111,7 +111,7 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void getIntegerValuePrimitive() {
         int iValue = 342423;
-        String result = String.format(TEST_JSON, String.valueOf(iValue));
+        String result = String.format(TEST_JSON, iValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         int config = this.client.getValue(int.class,"fakeKey", 0);
         assertEquals(iValue, config);
@@ -137,7 +137,7 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void getDoubleValue() {
         double iValue = 432.234;
-        String result = String.format(TEST_JSON, String.valueOf(iValue));
+        String result = String.format(TEST_JSON, iValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         double config = this.client.getValue(double.class,"fakeKey", 0.0);
         assertEquals(iValue, config);
@@ -170,8 +170,8 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void invalidateCache() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, String.valueOf("test"))));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, String.valueOf("test2"))));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")));
 
         assertEquals("test", this.client.getValue(String.class, "fakeKey", null));
         this.client.forceRefresh();
@@ -180,7 +180,7 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void invalidateCacheFail() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, String.valueOf("test"))));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         server.enqueue(new MockResponse().setResponseCode(500));
 
         assertEquals("test", this.client.getValue(String.class, "fakeKey", null));
@@ -191,7 +191,7 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void getConfigurationJsonStringWithDefaultConfigTimeout() {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .maxWaitTimeForSyncCallsInSeconds(2)
+                .httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build())
                 .build(APIKEY);
 
         // makes a call to a real url which would fail, null expected

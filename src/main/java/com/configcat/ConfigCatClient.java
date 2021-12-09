@@ -1,16 +1,13 @@
 package com.configcat;
 
+import com.google.gson.JsonElement;
 import okhttp3.OkHttpClient;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A client for handling configurations provided by ConfigCat.
@@ -18,19 +15,28 @@ import java.util.concurrent.TimeUnit;
 public final class ConfigCatClient implements ConfigurationProvider {
     private static final String BASE_URL_GLOBAL = "https://cdn-global.configcat.com";
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
+    private static final Set<String> SDK_KEYS = new HashSet<>();
 
     private final RefreshPolicy refreshPolicy;
-    private final int maxWaitTimeForSyncCallsInSeconds;
-    private final Logger logger;
-    private final ConfigurationParser parser;
+    private final ConfigCatLogger logger;
+    private final RolloutEvaluator rolloutEvaluator;
+    private final String sdkKey;
 
     private ConfigCatClient(String sdkKey, Builder builder) throws IllegalArgumentException {
-        if(sdkKey == null || sdkKey.isEmpty())
+        if (sdkKey == null || sdkKey.isEmpty())
             throw new IllegalArgumentException("sdkKey is null or empty");
 
-        this.logger = LoggerFactory.getLogger(ConfigCatClient.class);
-        this.parser = new ConfigurationParser(this.logger);
-        this.maxWaitTimeForSyncCallsInSeconds = builder.maxWaitTimeForSyncCallsInSeconds;
+        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), builder.logLevel);
+
+        if (SDK_KEYS.contains(sdkKey)) {
+            this.logger.warn("A ConfigCat Client is already initialized with SDK Key '"+ sdkKey +"'. We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
+        }
+
+        SDK_KEYS.add(sdkKey);
+
+        this.sdkKey = sdkKey;
+        ConfigMemoryCache configMemoryCache = new ConfigMemoryCache(this.logger);
+        this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
         PollingMode pollingMode = builder.pollingMode == null
                 ? PollingModes.AutoPoll(60)
@@ -39,17 +45,18 @@ public final class ConfigCatClient implements ConfigurationProvider {
         boolean hasCustomBaseUrl = builder.baseUrl != null && !builder.baseUrl.isEmpty();
         ConfigFetcher fetcher = new ConfigFetcher(builder.httpClient == null
                 ? new OkHttpClient
-                    .Builder()
-                    .retryOnConnectionFailure(true)
-                    .build()
+                .Builder()
+                .retryOnConnectionFailure(true)
+                .build()
                 : builder.httpClient,
                 this.logger,
+                configMemoryCache,
                 sdkKey,
                 !hasCustomBaseUrl
-                    ? builder.dataGovernance == DataGovernance.GLOBAL
+                        ? builder.dataGovernance == DataGovernance.GLOBAL
                         ? BASE_URL_GLOBAL
                         : BASE_URL_EU
-                    : builder.baseUrl,
+                        : builder.baseUrl,
                 hasCustomBaseUrl,
                 pollingMode.getPollingIdentifier());
 
@@ -57,7 +64,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 ? new InMemoryConfigCache()
                 : builder.cache;
 
-        this.refreshPolicy = this.selectPolicy(pollingMode, cache, fetcher, this.logger, sdkKey);
+        this.refreshPolicy = this.selectPolicy(pollingMode, cache, fetcher, this.logger, configMemoryCache, sdkKey);
     }
 
     /**
@@ -70,16 +77,16 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public  <T> T getValue(Class<T> classOfT, String key, T defaultValue) {
+    public <T> T getValue(Class<T> classOfT, String key, T defaultValue) {
         return this.getValue(classOfT, key, null, defaultValue);
     }
 
     @Override
-    public  <T> T getValue(Class<T> classOfT, String key, User user, T defaultValue) {
-        if(key == null || key.isEmpty())
+    public <T> T getValue(Class<T> classOfT, String key, User user, T defaultValue) {
+        if (key == null || key.isEmpty())
             throw new IllegalArgumentException("key is null or empty");
 
-        if(classOfT != String.class &&
+        if (classOfT != String.class &&
                 classOfT != Integer.class &&
                 classOfT != int.class &&
                 classOfT != Double.class &&
@@ -89,11 +96,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
 
         try {
-            return this.maxWaitTimeForSyncCallsInSeconds > 0
-                    ? this.getValueAsync(classOfT, key, user, defaultValue).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
-                    : this.getValueAsync(classOfT, key, user, defaultValue).get();
+            return this.getValueAsync(classOfT, key, user, defaultValue).get();
         } catch (Exception e) {
-            return this.getValueFromJson(classOfT, this.refreshPolicy.getLatestCachedValue(), key, user, defaultValue);
+            return defaultValue;
         }
     }
 
@@ -104,10 +109,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, User user, T defaultValue) {
-        if(key == null || key.isEmpty())
+        if (key == null || key.isEmpty())
             throw new IllegalArgumentException("key is null or empty");
 
-        if(classOfT != String.class &&
+        if (classOfT != String.class &&
                 classOfT != Integer.class &&
                 classOfT != int.class &&
                 classOfT != Double.class &&
@@ -116,8 +121,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 classOfT != boolean.class)
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
 
-        return this.refreshPolicy.getConfigurationJsonAsync()
-                .thenApply(config -> this.getValueFromJson(classOfT, config, key, user, defaultValue));
+        return this.refreshPolicy.getConfigurationAsync()
+                .thenApply(config -> this.getValueFromConfig(classOfT, config, key, user, defaultValue));
     }
 
     @Override
@@ -127,15 +132,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public String getVariationId(String key, User user, String defaultVariationId) {
-        if(key == null || key.isEmpty())
+        if (key == null || key.isEmpty())
             throw new IllegalArgumentException("key is null or empty");
 
         try {
-            return this.maxWaitTimeForSyncCallsInSeconds > 0
-                    ? this.getVariationIdAsync(key, user, defaultVariationId).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
-                    : this.getVariationIdAsync(key, user, defaultVariationId).get();
+            return this.getVariationIdAsync(key, user, defaultVariationId).get();
         } catch (Exception e) {
-            return this.getVariationIdFromJson(this.refreshPolicy.getLatestCachedValue(), key, user, defaultVariationId);
+            return defaultVariationId;
         }
     }
 
@@ -146,11 +149,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<String> getVariationIdAsync(String key, User user, String defaultVariationId) {
-        if(key == null || key.isEmpty())
+        if (key == null || key.isEmpty())
             throw new IllegalArgumentException("key is null or empty");
 
-        return this.refreshPolicy.getConfigurationJsonAsync()
-                .thenApply(config -> this.getVariationIdFromJson(config, key, user, defaultVariationId));
+        return this.refreshPolicy.getConfigurationAsync()
+                .thenApply(config -> this.getVariationIdFromConfig(config, key, user, defaultVariationId));
     }
 
     @Override
@@ -166,9 +169,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public Collection<String> getAllVariationIds(User user) {
         try {
-            return this.maxWaitTimeForSyncCallsInSeconds > 0
-                    ? this.getAllVariationIdsAsync(user).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
-                    : this.getAllVariationIdsAsync(user).get();
+            return this.getAllVariationIdsAsync(user).get();
         } catch (Exception e) {
             this.logger.error("An error occurred during getting all the variation ids.", e);
             return new ArrayList<>();
@@ -177,14 +178,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<Collection<String>> getAllVariationIdsAsync(User user) {
-        return this.refreshPolicy.getConfigurationJsonAsync()
+        return this.refreshPolicy.getConfigurationAsync()
                 .thenApply(config -> {
                     try {
-                        Collection<String> keys = parser.getAllKeys(config);
+                        Collection<String> keys = config.Entries.keySet();
                         ArrayList<String> result = new ArrayList<>();
 
                         for (String key : keys) {
-                            result.add(this.getVariationIdFromJson(config, key, user, null));
+                            result.add(this.getVariationIdFromConfig(config, key, user, null));
                         }
 
                         return result;
@@ -197,33 +198,29 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId) {
-        if(variationId == null || variationId.isEmpty())
+        if (variationId == null || variationId.isEmpty())
             throw new IllegalArgumentException("variationId is null or empty");
 
         try {
-            return this.maxWaitTimeForSyncCallsInSeconds > 0
-                    ? this.getKeyAndValueAsync(classOfT, variationId).get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
-                    : this.getKeyAndValueAsync(classOfT, variationId).get();
+            return this.getKeyAndValueAsync(classOfT, variationId).get();
         } catch (Exception e) {
-            return this.getKeyAndValueFromJson(classOfT, this.refreshPolicy.getLatestCachedValue(), variationId);
+            return null;
         }
     }
 
     @Override
     public <T> CompletableFuture<Map.Entry<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId) {
-        if(variationId == null || variationId.isEmpty())
+        if (variationId == null || variationId.isEmpty())
             throw new IllegalArgumentException("variationId is null or empty");
 
-        return this.refreshPolicy.getConfigurationJsonAsync()
-                .thenApply(config -> this.getKeyAndValueFromJson(classOfT, config, variationId));
+        return this.refreshPolicy.getConfigurationAsync()
+                .thenApply(config -> this.getKeyAndValueFromConfig(classOfT, config, variationId));
     }
 
     @Override
     public Collection<String> getAllKeys() {
         try {
-            return this.maxWaitTimeForSyncCallsInSeconds > 0
-                    ? this.getAllKeysAsync().get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS)
-                    : this.getAllKeysAsync().get();
+            return this.getAllKeysAsync().get();
         } catch (Exception e) {
             this.logger.error("An error occurred during getting all the setting keys.", e);
             return new ArrayList<>();
@@ -232,24 +229,21 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<Collection<String>> getAllKeysAsync() {
-        return this.refreshPolicy.getConfigurationJsonAsync()
+        return this.refreshPolicy.getConfigurationAsync()
                 .thenApply(config -> {
-                   try {
-                       return parser.getAllKeys(config);
-                   } catch (Exception e) {
-                       this.logger.error("An error occurred during the deserialization. Returning empty array.", e);
-                       return new ArrayList<>();
-                   }
+                    try {
+                        return config.Entries.keySet();
+                    } catch (Exception e) {
+                        this.logger.error("An error occurred during the deserialization. Returning empty array.", e);
+                        return new ArrayList<>();
+                    }
                 });
     }
 
     @Override
     public void forceRefresh() {
         try {
-            if(this.maxWaitTimeForSyncCallsInSeconds > 0)
-                this.forceRefreshAsync().get(this.maxWaitTimeForSyncCallsInSeconds, TimeUnit.SECONDS);
-            else
-                this.forceRefreshAsync().get();
+            this.forceRefreshAsync().get();
         } catch (Exception e) {
             this.logger.error("An error occurred during the refresh.", e);
         }
@@ -263,47 +257,109 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public void close() throws IOException {
         this.refreshPolicy.close();
+        SDK_KEYS.remove(this.sdkKey);
     }
 
-    private <T> T getValueFromJson(Class<T> classOfT, String config, String key, User user, T defaultValue) {
+    private <T> T getValueFromConfig(Class<T> classOfT, Config config, String key, User user, T defaultValue) {
         try {
-            return parser.parseValue(classOfT, config, key, user);
+            if (config == null) {
+                this.logger.error("Config JSON is not present. Returning defaultValue: [" + defaultValue + "].");
+                return defaultValue;
+            }
+
+            Setting setting = config.Entries.get(key);
+            if (setting == null) {
+                this.logger.error("Value not found for key " + key + ". Here are the available keys: " + String.join(", ", config.Entries.keySet()));
+                return defaultValue;
+            }
+
+            return (T) this.parseObject(classOfT, this.rolloutEvaluator.evaluate(setting, key, user).getKey());
         } catch (Exception e) {
-            this.logger.error("Evaluating getValue('"+key+"') failed. Returning defaultValue: ["+ defaultValue +"]. "
+            this.logger.error("Evaluating getValue('" + key + "') failed. Returning defaultValue: [" + defaultValue + "]. "
                     + e.getMessage(), e);
             return defaultValue;
         }
     }
 
-    private String getVariationIdFromJson(String config, String key, User user, String defaultVariationId) {
+    private String getVariationIdFromConfig(Config config, String key, User user, String defaultVariationId) {
         try {
-            return parser.parseVariationId(config, key, user);
+            if (config == null) {
+                this.logger.error("Config JSON is not present. Returning defaultVariationId: [" + defaultVariationId + "].");
+                return defaultVariationId;
+            }
+
+            Setting setting = config.Entries.get(key);
+            if (setting == null) {
+                this.logger.error("Variation ID not found for key " + key + ". Here are the available keys: " + String.join(", ", config.Entries.keySet()));
+                return defaultVariationId;
+            }
+            return this.rolloutEvaluator.evaluate(setting, key, user).getValue();
         } catch (Exception e) {
-            this.logger.error("Evaluating getVariationId('"+key+"') failed. Returning defaultVariationId: ["+ defaultVariationId +"]. "
+            this.logger.error("Evaluating getVariationId('" + key + "') failed. Returning defaultVariationId: [" + defaultVariationId + "]. "
                     + e.getMessage(), e);
             return defaultVariationId;
         }
     }
 
-    private <T> Map.Entry<String, T> getKeyAndValueFromJson(Class<T> classOfT, String config, String variationId) {
+    private <T> Map.Entry<String, T> getKeyAndValueFromConfig(Class<T> classOfT, Config config, String variationId) {
         try {
-            return parser.parseKeyValue(classOfT, config, variationId);
+            if (config == null) {
+                this.logger.error("Config JSON is not present. Returning null.");
+                return null;
+            }
+
+            for (Map.Entry<String, Setting> node : config.Entries.entrySet()) {
+                String settingKey = node.getKey();
+                Setting setting = node.getValue();
+                if (variationId.equals(setting.VariationId)) {
+                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.Value));
+                }
+
+                for (RolloutRule rolloutRule : setting.RolloutRules) {
+                    if (variationId.equals(rolloutRule.VariationId)) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.Value));
+                    }
+                }
+
+                for (RolloutPercentageItem percentageRule : setting.RolloutPercentageItems) {
+                    if (variationId.equals(percentageRule.VariationId)) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.Value));
+                    }
+                }
+            }
+
+            return null;
         } catch (Exception e) {
             this.logger.error("Could not find the setting for the given variation ID: " + variationId);
             return null;
         }
     }
 
-    private RefreshPolicy selectPolicy(PollingMode mode, ConfigCache cache, ConfigFetcher fetcher, Logger logger, String sdkKey) {
+    private RefreshPolicy selectPolicy(PollingMode mode, ConfigCache cache, ConfigFetcher fetcher, ConfigCatLogger logger, ConfigMemoryCache deserializer, String sdkKey) {
         if (mode instanceof AutoPollingMode) {
-            return new AutoPollingPolicy(fetcher, cache, logger, sdkKey, (AutoPollingMode)mode);
+            return new AutoPollingPolicy(fetcher, cache, logger, deserializer, sdkKey, (AutoPollingMode) mode);
         } else if (mode instanceof LazyLoadingMode) {
-            return new LazyLoadingPolicy(fetcher, cache, logger, sdkKey, (LazyLoadingMode)mode);
+            return new LazyLoadingPolicy(fetcher, cache, logger, deserializer, sdkKey, (LazyLoadingMode) mode);
         } else if (mode instanceof ManualPollingMode) {
-            return new ManualPollingPolicy(fetcher, cache, logger, sdkKey);
+            return new ManualPollingPolicy(fetcher, cache, logger, deserializer, sdkKey);
+        } else if (mode instanceof LocalPollingMode) {
+            return new LocalPolicy((LocalPollingMode) mode);
         } else {
             throw new InvalidParameterException("The polling mode parameter is invalid.");
         }
+    }
+
+    private Object parseObject(Class<?> classOfT, JsonElement element) {
+        if (classOfT == String.class)
+            return element.getAsString();
+        else if (classOfT == Integer.class || classOfT == int.class)
+            return element.getAsInt();
+        else if (classOfT == Double.class || classOfT == double.class)
+            return element.getAsDouble();
+        else if (classOfT == Boolean.class || classOfT == boolean.class)
+            return element.getAsBoolean();
+        else
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
     }
 
     /**
@@ -321,9 +377,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public static class Builder {
         private OkHttpClient httpClient;
         private ConfigCache cache;
-        private int maxWaitTimeForSyncCallsInSeconds;
         private String baseUrl;
         private PollingMode pollingMode;
+        private LogLevel logLevel = LogLevel.WARNING;
         private DataGovernance dataGovernance = DataGovernance.GLOBAL;
 
         /**
@@ -383,19 +439,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         /**
-         * Sets the maximum time in seconds at most how long the synchronous calls
-         * e.g. {@code client.getConfiguration(...)} have to be blocked.
+         * Default: Warning. Sets the internal log level.
          *
-         * @param maxWaitTimeForSyncCallsInSeconds the maximum time in seconds at most how long the synchronous calls
-         *                                        e.g. {@code client.getConfiguration(...)} have to be blocked.
+         * @param logLevel the {@link LogLevel} parameter.
          * @return the builder.
-         * @throws IllegalArgumentException when the given value is lesser than 2.
          */
-        public Builder maxWaitTimeForSyncCallsInSeconds(int maxWaitTimeForSyncCallsInSeconds) {
-            if(maxWaitTimeForSyncCallsInSeconds < 2)
-                throw new IllegalArgumentException("maxWaitTimeForSyncCallsInSeconds cannot be less than 2 seconds");
-
-            this.maxWaitTimeForSyncCallsInSeconds = maxWaitTimeForSyncCallsInSeconds;
+        public Builder logLevel(LogLevel logLevel) {
+            this.logLevel = logLevel;
             return this;
         }
 

@@ -1,10 +1,14 @@
 package com.configcat;
 
+import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -46,16 +50,9 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void ensuresMaxWaitTimeoutGreaterThanTwoSeconds() {
-        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient
-                .newBuilder()
-                .maxWaitTimeForSyncCallsInSeconds(1));
-    }
-
-    @Test
     public void getValueWithDefaultConfigTimeout() throws IOException {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .maxWaitTimeForSyncCallsInSeconds(2)
+                .httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build())
                 .build(APIKEY);
 
         // makes a call to a real url which would fail, default expected
@@ -142,23 +139,43 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getConfigurationReturnsPreviousCachedOnFail() throws IOException {
+    public void getConfigurationReturnsPreviousCachedOnTimeout() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .mode(PollingModes.ManualPoll())
                 .baseUrl(server.url("/").toString())
-                .maxWaitTimeForSyncCallsInSeconds(2)
+                .httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build())
                 .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(5, TimeUnit.SECONDS));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(3, TimeUnit.SECONDS));
 
         cl.forceRefresh();
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
         cl.forceRefresh();
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
+
+        server.close();
+        cl.close();
+    }
+
+    @Test
+    public void maxInitWaitTimeTest() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.newBuilder()
+                .mode(PollingModes.AutoPoll(60, 1))
+                .baseUrl(server.url("/").toString())
+                .build(APIKEY);
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(2, TimeUnit.SECONDS));
+
+        Instant previous = Instant.now();
+        assertNull(cl.getValue(String.class, "fakeKey", null));
+        assertTrue(Duration.between(previous, Instant.now()).toMillis() < 1500);
 
         server.close();
         cl.close();
@@ -194,13 +211,13 @@ public class ConfigCatClientTest {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .mode(PollingModes.ManualPoll())
                 .baseUrl(server.url("/").toString())
-                .maxWaitTimeForSyncCallsInSeconds(2)
+                .httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build())
                 .build(APIKEY);
 
         String badJson = "{ test: test] }";
         String def = "def";
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(5, TimeUnit.SECONDS));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(3, TimeUnit.SECONDS));
 
         cl.forceRefresh();
         assertSame(def, cl.getValue(String.class, "test", def));
@@ -220,10 +237,10 @@ public class ConfigCatClientTest {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .mode(PollingModes.ManualPoll())
                 .baseUrl(server.url("/").toString())
-                .maxWaitTimeForSyncCallsInSeconds(2)
+                .httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build())
                 .build(APIKEY);
 
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(5, TimeUnit.SECONDS));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(3, TimeUnit.SECONDS));
 
         cl.forceRefresh();
 

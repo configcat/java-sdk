@@ -18,7 +18,7 @@ public abstract class ConfigCache {
      * * Child classes has to implement this method, the {@link ConfigCatClient}
      * uses it to set the actual cached value.
      *
-     * @param key the key of the cache entry.
+     * @param key   the key of the cache entry.
      * @param value the new value to cache.
      * @throws Exception if unable to save the value.
      */
