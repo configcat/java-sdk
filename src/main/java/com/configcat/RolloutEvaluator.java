@@ -243,7 +243,7 @@ class RolloutEvaluator {
         }
 
         public String toPrint() {
-            return String.join("\n", this.entries);
+            return String.join(System.lineSeparator(), this.entries);
         }
     }
 }
