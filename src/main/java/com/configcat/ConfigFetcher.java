@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 class ConfigFetcher implements Closeable {
     public static final String CONFIG_JSON_NAME = "config_v5";
-    private AtomicBoolean isClosed = new AtomicBoolean(false);
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
     private final OkHttpClient httpClient;
     private final String mode;
