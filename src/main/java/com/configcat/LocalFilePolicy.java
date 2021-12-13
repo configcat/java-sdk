@@ -14,14 +14,14 @@ import java.util.concurrent.CompletableFuture;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
-class LocalPolicy implements RefreshPolicy {
-    private final LocalPollingMode configuration;
+class LocalFilePolicy implements RefreshPolicy {
+    private final LocalFilePollingMode configuration;
     private final ConfigCatLogger logger;
     private final Gson gson = new GsonBuilder().create();
     private Config loadedConfig;
     private final FileWatcher watcher;
 
-    public LocalPolicy(LocalPollingMode configuration, ConfigCatLogger logger) {
+    public LocalFilePolicy(LocalFilePollingMode configuration, ConfigCatLogger logger) {
         this.configuration = configuration;
         this.logger = logger;
         this.reloadFileContent();

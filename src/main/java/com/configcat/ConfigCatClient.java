@@ -24,7 +24,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     private ConfigCatClient(String sdkKey, Builder builder) throws IllegalArgumentException {
         if (sdkKey == null || sdkKey.isEmpty())
-            throw new IllegalArgumentException("sdkKey is null or empty");
+            throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
 
         this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), builder.logLevel);
 
@@ -84,7 +84,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public <T> T getValue(Class<T> classOfT, String key, User user, T defaultValue) {
         if (key == null || key.isEmpty())
-            throw new IllegalArgumentException("key is null or empty");
+            throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         if (classOfT != String.class &&
                 classOfT != Integer.class &&
@@ -93,7 +93,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 classOfT != double.class &&
                 classOfT != Boolean.class &&
                 classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         try {
             return this.getValueAsync(classOfT, key, user, defaultValue).get();
@@ -113,7 +113,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, User user, T defaultValue) {
         if (key == null || key.isEmpty())
-            throw new IllegalArgumentException("key is null or empty");
+            throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         if (classOfT != String.class &&
                 classOfT != Integer.class &&
@@ -122,7 +122,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 classOfT != double.class &&
                 classOfT != Boolean.class &&
                 classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         return this.refreshPolicy.getConfigurationAsync()
                 .thenApply(config -> this.getValueFromConfig(classOfT, config, key, user, defaultValue));
@@ -136,7 +136,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public String getVariationId(String key, User user, String defaultVariationId) {
         if (key == null || key.isEmpty())
-            throw new IllegalArgumentException("key is null or empty");
+            throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         try {
             return this.getVariationIdAsync(key, user, defaultVariationId).get();
@@ -156,7 +156,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public CompletableFuture<String> getVariationIdAsync(String key, User user, String defaultVariationId) {
         if (key == null || key.isEmpty())
-            throw new IllegalArgumentException("key is null or empty");
+            throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         return this.refreshPolicy.getConfigurationAsync()
                 .thenApply(config -> this.getVariationIdFromConfig(config, key, user, defaultVariationId));
@@ -246,7 +246,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId) {
         if (variationId == null || variationId.isEmpty())
-            throw new IllegalArgumentException("variationId is null or empty");
+            throw new IllegalArgumentException("'variationId' cannot be null or empty.");
 
         try {
             return this.getKeyAndValueAsync(classOfT, variationId).get();
@@ -262,7 +262,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public <T> CompletableFuture<Map.Entry<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId) {
         if (variationId == null || variationId.isEmpty())
-            throw new IllegalArgumentException("variationId is null or empty");
+            throw new IllegalArgumentException("'variationId' cannot be null or empty.");
 
         return this.refreshPolicy.getConfigurationAsync()
                 .thenApply(config -> this.getKeyAndValueFromConfig(classOfT, config, variationId));
@@ -400,8 +400,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return new LazyLoadingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey, (LazyLoadingMode) mode);
         } else if (mode instanceof ManualPollingMode) {
             return new ManualPollingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey);
-        } else if (mode instanceof LocalPollingMode) {
-            return new LocalPolicy((LocalPollingMode) mode, logger);
+        } else if (mode instanceof LocalFilePollingMode) {
+            return new LocalFilePolicy((LocalFilePollingMode) mode, logger);
+        } else if (mode instanceof LocalMapPollingMode) {
+            return new LocalMapPolicy((LocalMapPollingMode)mode);
         } else {
             throw new InvalidParameterException("The polling mode parameter is invalid.");
         }

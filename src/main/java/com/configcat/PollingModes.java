@@ -1,5 +1,7 @@
 package com.configcat;
 
+import java.util.Map;
+
 /**
  * Describes the polling modes.
  */
@@ -88,7 +90,7 @@ public final class PollingModes {
      * @return the local file polling configuration.
      */
     public static PollingMode localFile(String filePath, boolean autoReload) {
-        return new LocalPollingMode(filePath, autoReload, false);
+        return new LocalFilePollingMode(filePath, autoReload, false);
     }
 
     /**
@@ -97,6 +99,15 @@ public final class PollingModes {
      * @return the local file polling configuration.
      */
     public static PollingMode localClassPathResource(String filePath, boolean autoReload) {
-        return new LocalPollingMode(filePath, autoReload, true);
+        return new LocalFilePollingMode(filePath, autoReload, true);
+    }
+
+    /**
+     * Creates a polling configuration that produces the internal flags & settings structure from a {@code Map<String, Object>}.
+     *
+     * @return the object polling configuration.
+     */
+    public static PollingMode localObject(Map<String, Object> source) {
+        return new LocalMapPollingMode(source);
     }
 }
