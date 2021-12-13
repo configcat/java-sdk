@@ -42,7 +42,7 @@ public class VariationIdTests {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> client.getVariationId(null, null));
 
-        assertEquals("key is null or empty", exception.getMessage());
+        assertEquals("'key' cannot be null or empty.", exception.getMessage());
     }
 
     @Test

@@ -27,12 +27,12 @@ public class ConfigCatClientTest {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(null));
 
-        assertEquals("sdkKey is null or empty", exception.getMessage());
+        assertEquals("'sdkKey' cannot be null or empty.", exception.getMessage());
 
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.newBuilder().build(null));
 
-        assertEquals("sdkKey is null or empty", builderException.getMessage());
+        assertEquals("'sdkKey' cannot be null or empty.", builderException.getMessage());
     }
 
     @Test
@@ -40,12 +40,12 @@ public class ConfigCatClientTest {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(""));
 
-        assertEquals("sdkKey is null or empty", exception.getMessage());
+        assertEquals("'sdkKey' cannot be null or empty.", exception.getMessage());
 
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.newBuilder().build(""));
 
-        assertEquals("sdkKey is null or empty", builderException.getMessage());
+        assertEquals("'sdkKey' cannot be null or empty.", builderException.getMessage());
     }
 
     @Test
