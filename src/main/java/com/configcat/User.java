@@ -46,6 +46,11 @@ public class User {
         return this.attributes.getOrDefault(key, null);
     }
 
+    @Override
+    public String toString() {
+        return "User" + attributes + "";
+    }
+
     /**
      * A builder that helps construct a {@link User} instance.
      */

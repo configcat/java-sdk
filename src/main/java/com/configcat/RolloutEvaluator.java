@@ -51,6 +51,7 @@ class RolloutEvaluator {
                 return new AbstractMap.SimpleEntry<>(setting.value, setting.variationId);
             }
 
+            logEntries.add("User object: " + user + "");
             if (setting.rolloutRules != null) {
                 for (RolloutRule rule : setting.rolloutRules) {
 

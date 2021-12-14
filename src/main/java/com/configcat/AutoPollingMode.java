@@ -3,7 +3,7 @@ package com.configcat;
 class AutoPollingMode extends PollingMode {
     private final int autoPollRateInSeconds;
     private final ConfigurationChangeListener listener;
-    private int maxInitWaitTimeSeconds;
+    private final int maxInitWaitTimeSeconds;
 
     AutoPollingMode(int autoPollRateInSeconds, int maxInitWaitTimeSeconds, ConfigurationChangeListener listener) {
         if (autoPollRateInSeconds < 2)
