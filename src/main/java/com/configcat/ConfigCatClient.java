@@ -98,6 +98,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return this.getValueAsync(classOfT, key, user, defaultValue).get();
         } catch (InterruptedException e) {
+            this.logger.error("Thread interrupted.", e);
             Thread.currentThread().interrupt();
             return defaultValue;
         } catch (Exception e) {
@@ -141,6 +142,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return this.getVariationIdAsync(key, user, defaultVariationId).get();
         } catch (InterruptedException e) {
+            this.logger.error("Thread interrupted.", e);
             Thread.currentThread().interrupt();
             return defaultVariationId;
         } catch (Exception e) {
