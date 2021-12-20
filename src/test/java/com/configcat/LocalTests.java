@@ -74,7 +74,7 @@ public class LocalTests {
             try {
                 this.writeContent(newFile, String.format(TEST_JSON, "test"));
                 ConfigCatClient client = new ConfigCatClient.Builder()
-                        .flagOverrides(OverrideDataSourceBuilder.localFile("src/test/resources/auto_created.txt", false), OverrideBehaviour.LOCAL_ONLY)
+                        .flagOverrides(OverrideDataSourceBuilder.localFile("src/test/resources/auto_created.txt", true), OverrideBehaviour.LOCAL_ONLY)
                         .build("localhost");
 
                 assertEquals("test", client.getValue(String.class, "fakeKey", ""));
