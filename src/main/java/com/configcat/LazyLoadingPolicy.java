@@ -5,10 +5,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Describes a {@link DefaultRefreshPolicy} which uses an expiring cache
+ * Describes a {@link RefreshPolicyBase} which uses an expiring cache
  * to maintain the internally stored configuration.
  */
-class LazyLoadingPolicy extends DefaultRefreshPolicy {
+class LazyLoadingPolicy extends RefreshPolicyBase {
     private Instant lastRefreshedTime;
     private final int cacheRefreshIntervalInSeconds;
     private final boolean asyncRefresh;
@@ -36,7 +36,7 @@ class LazyLoadingPolicy extends DefaultRefreshPolicy {
     }
 
     @Override
-    public CompletableFuture<Config> getConfigurationAsync() {
+    protected CompletableFuture<Config> getConfigurationAsync() {
         if (Instant.now().isAfter(lastRefreshedTime.plusSeconds(this.cacheRefreshIntervalInSeconds))) {
             boolean isInitialized = this.init.isDone();
 

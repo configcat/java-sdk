@@ -8,7 +8,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class AutoPollingPolicy extends DefaultRefreshPolicy {
+class AutoPollingPolicy extends RefreshPolicyBase {
     private final ScheduledExecutorService scheduler;
     private final ScheduledExecutorService initScheduler;
     private final CompletableFuture<Void> initFuture;
@@ -51,7 +51,7 @@ class AutoPollingPolicy extends DefaultRefreshPolicy {
     }
 
     @Override
-    public CompletableFuture<Config> getConfigurationAsync() {
+    protected CompletableFuture<Config> getConfigurationAsync() {
         if (this.initFuture.isDone())
             return CompletableFuture.completedFuture(super.readConfigCache());
 

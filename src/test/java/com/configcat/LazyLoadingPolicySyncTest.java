@@ -13,11 +13,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class LazyLoadingPolicySyncTest {
-    private DefaultRefreshPolicy policy;
+    private RefreshPolicyBase policy;
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicySyncTest.class));
     private final ConfigMemoryCache memoryCache = new ConfigMemoryCache(logger);
@@ -63,7 +64,7 @@ public class LazyLoadingPolicySyncTest {
                 .lazyLoad(5);
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        DefaultRefreshPolicy lPolicy = new LazyLoadingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) mode);
+        RefreshPolicyBase lPolicy = new LazyLoadingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) mode);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
@@ -104,7 +105,7 @@ public class LazyLoadingPolicySyncTest {
         when(fetcher.getConfigurationAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(result))));
 
-        DefaultRefreshPolicy policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) PollingModes
+        RefreshPolicyBase policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) PollingModes
                 .lazyLoad(60));
 
         assertEquals("test", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());

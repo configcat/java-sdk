@@ -1,7 +1,8 @@
 package com.configcat;
 
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -12,20 +13,13 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LocalPolicyTests {
+public class LocalTests {
     private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LocalPolicyTests.class));
-
-    @Test
-    public void readFile() throws Exception {
-        LocalFilePolicy policy = new LocalFilePolicy((LocalFilePollingMode) PollingModes.localClassPathResource("test.json", false), logger);
-        assertNotNull(policy.getConfigurationAsync().get());
-    }
 
     @Test
     public void withClient() throws IOException {
         ConfigCatClient client = new ConfigCatClient.Builder()
-                .mode(PollingModes.localClassPathResource("test.json", false))
+                .flagOverrides(OverrideDataSourceBuilder.classPathResource("test.json", false), OverrideBehaviour.LOCAL_ONLY)
                 .build("localhost");
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
@@ -40,7 +34,7 @@ public class LocalPolicyTests {
     @Test
     public void withClient_Simple() throws IOException {
         ConfigCatClient client = new ConfigCatClient.Builder()
-                .mode(PollingModes.localClassPathResource("test-simple.json", false))
+                .flagOverrides(OverrideDataSourceBuilder.classPathResource("test-simple.json", false), OverrideBehaviour.LOCAL_ONLY)
                 .build("localhost");
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
@@ -61,7 +55,7 @@ public class LocalPolicyTests {
         map.put("doubleSetting", 3.14);
         map.put("stringSetting", "test");
         ConfigCatClient client = new ConfigCatClient.Builder()
-                .mode(PollingModes.localObject(map))
+                .flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.LOCAL_ONLY)
                 .build("localhost");
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
@@ -79,18 +73,69 @@ public class LocalPolicyTests {
         if (newFile.createNewFile()) {
             try {
                 this.writeContent(newFile, String.format(TEST_JSON, "test"));
-                LocalFilePolicy policy = new LocalFilePolicy((LocalFilePollingMode) PollingModes.localFile("src/test/resources/auto_created.txt", true), logger);
-                assertEquals("test", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+                ConfigCatClient client = new ConfigCatClient.Builder()
+                        .flagOverrides(OverrideDataSourceBuilder.localFile("src/test/resources/auto_created.txt", false), OverrideBehaviour.LOCAL_ONLY)
+                        .build("localhost");
+
+                assertEquals("test", client.getValue(String.class, "fakeKey", ""));
                 this.writeContent(newFile, String.format(TEST_JSON, "modified"));
                 Thread.sleep(500);
-                assertEquals("modified", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
-                policy.close();
+                assertEquals("modified", client.getValue(String.class, "fakeKey", ""));
+                client.close();
             } finally {
                 newFile.delete();
             }
         } else {
             fail("The test wasn't able to create the test file.");
         }
+    }
+
+    @Test
+    public void localOverRemote() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("fakeKey", true);
+        map.put("nonexisting", true);
+        ConfigCatClient client = new ConfigCatClient.Builder()
+                .mode(PollingModes.manualPoll())
+                .baseUrl(server.url("/").toString())
+                .flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.LOCAL_OVER_REMOTE)
+                .build("localhost");
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, false)));
+
+        client.forceRefresh();
+        assertTrue(client.getValue(Boolean.class, "fakeKey", false));
+        assertTrue(client.getValue(Boolean.class, "nonexisting", false));
+
+        server.close();
+        client.close();
+    }
+
+    @Test
+    public void remoteOverLocal() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("fakeKey", true);
+        map.put("nonexisting", true);
+        ConfigCatClient client = new ConfigCatClient.Builder()
+                .mode(PollingModes.manualPoll())
+                .baseUrl(server.url("/").toString())
+                .flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.REMOTE_OVER_LOCAL)
+                .build("localhost");
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, false)));
+
+        client.forceRefresh();
+        assertFalse(client.getValue(Boolean.class, "fakeKey", false));
+        assertTrue(client.getValue(Boolean.class, "nonexisting", false));
+
+        server.close();
+        client.close();
     }
 
     private void writeContent(File file, String content) throws IOException {

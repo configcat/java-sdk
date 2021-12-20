@@ -20,13 +20,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private final RefreshPolicy refreshPolicy;
     private final ConfigCatLogger logger;
     private final RolloutEvaluator rolloutEvaluator;
+    private final OverrideDataSource overrideDataSource;
+    private final OverrideBehaviour overrideBehaviour;
     private final String sdkKey;
 
     private ConfigCatClient(String sdkKey, Builder builder) throws IllegalArgumentException {
         if (sdkKey == null || sdkKey.isEmpty())
             throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
 
-        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), builder.logLevel);
+        LogLevel logLevel = builder.logLevel == null ? LogLevel.WARNING : builder.logLevel;
+        DataGovernance dataGovernance = builder.dataGovernance == null ? DataGovernance.GLOBAL : builder.dataGovernance;
+        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), logLevel);
 
         if (SDK_KEYS.contains(sdkKey)) {
             this.logger.warn("A ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'. We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
@@ -35,8 +39,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
         SDK_KEYS.add(sdkKey);
 
         this.sdkKey = sdkKey;
-        ConfigMemoryCache configMemoryCache = new ConfigMemoryCache(this.logger);
+        this.overrideDataSource = builder.localDataSourceBuilder != null
+                ? builder.localDataSourceBuilder.build(this.logger)
+                : new OverrideDataSource();
+        this.overrideBehaviour = builder.overrideBehaviour;
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
+
+        ConfigMemoryCache configMemoryCache = new ConfigMemoryCache(this.logger);
 
         PollingMode pollingMode = builder.pollingMode == null
                 ? PollingModes.autoPoll(60)
@@ -45,17 +54,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
         boolean hasCustomBaseUrl = builder.baseUrl != null && !builder.baseUrl.isEmpty();
         ConfigFetcher fetcher = new ConfigFetcher(builder.httpClient == null
                 ? new OkHttpClient
-                .Builder()
-                .retryOnConnectionFailure(true)
-                .build()
+                    .Builder()
+                    .retryOnConnectionFailure(true)
+                    .build()
                 : builder.httpClient,
                 this.logger,
                 configMemoryCache,
                 sdkKey,
                 !hasCustomBaseUrl
-                        ? builder.dataGovernance == DataGovernance.GLOBAL
-                        ? BASE_URL_GLOBAL
-                        : BASE_URL_EU
+                        ? dataGovernance == DataGovernance.GLOBAL
+                            ? BASE_URL_GLOBAL
+                            : BASE_URL_EU
                         : builder.baseUrl,
                 hasCustomBaseUrl,
                 pollingMode.getPollingIdentifier());
@@ -64,7 +73,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 ? new InMemoryConfigCache()
                 : builder.cache;
 
-        this.refreshPolicy = this.selectPolicy(pollingMode, cache, fetcher, this.logger, configMemoryCache, sdkKey);
+        this.refreshPolicy = this.overrideBehaviour == OverrideBehaviour.LOCAL_ONLY
+                ? new NullRefreshPolicy()
+                : this.selectPolicy(pollingMode, cache, fetcher, this.logger, configMemoryCache, sdkKey);
     }
 
     /**
@@ -125,8 +136,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 classOfT != boolean.class)
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
-        return this.refreshPolicy.getConfigurationAsync()
-                .thenApply(config -> this.getValueFromConfig(classOfT, config, key, user, defaultValue));
+        return this.getSettingsAsync()
+                .thenApply(settings -> this.getValueFromSettingsMap(classOfT, settings, key, user, defaultValue));
     }
 
     @Override
@@ -160,8 +171,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
-        return this.refreshPolicy.getConfigurationAsync()
-                .thenApply(config -> this.getVariationIdFromConfig(config, key, user, defaultVariationId));
+        return this.getSettingsAsync()
+                .thenApply(settings -> this.getVariationIdFromSettingsMap(settings, key, user, defaultVariationId));
     }
 
     @Override
@@ -190,14 +201,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<Collection<String>> getAllVariationIdsAsync(User user) {
-        return this.refreshPolicy.getConfigurationAsync()
-                .thenApply(config -> {
+        return this.getSettingsAsync()
+                .thenApply(settings -> {
                     try {
-                        Collection<String> keys = config.entries.keySet();
+                        Collection<String> keys = settings.keySet();
                         ArrayList<String> result = new ArrayList<>();
 
                         for (String key : keys) {
-                            result.add(this.getVariationIdFromConfig(config, key, user, null));
+                            result.add(this.getVariationIdFromSettingsMap(settings, key, user, null));
                         }
 
                         return result;
@@ -224,15 +235,15 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<Map<String, Object>> getAllValuesAsync(User user) {
-        return this.refreshPolicy.getConfigurationAsync()
-                .thenApply(config -> {
+        return this.getSettingsAsync()
+                .thenApply(settings -> {
                     try {
-                        Collection<String> keys = config.entries.keySet();
+                        Collection<String> keys = settings.keySet();
                         Map<String, Object> result = new HashMap<>();
 
                         for (String key : keys) {
-                            Setting setting = config.entries.get(key);
-                            JsonElement evaluated = this.rolloutEvaluator.evaluate(config.entries.get(key), key, user).getKey();
+                            Setting setting = settings.get(key);
+                            JsonElement evaluated = this.rolloutEvaluator.evaluate(setting, key, user).getKey();
                             Object value = this.parseObject(this.classBySettingType(setting.type), evaluated);
                             result.put(key, value);
                         }
@@ -266,8 +277,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (variationId == null || variationId.isEmpty())
             throw new IllegalArgumentException("'variationId' cannot be null or empty.");
 
-        return this.refreshPolicy.getConfigurationAsync()
-                .thenApply(config -> this.getKeyAndValueFromConfig(classOfT, config, variationId));
+        return this.getSettingsAsync()
+                .thenApply(settings -> this.getKeyAndValueFromConfig(classOfT, settings, variationId));
     }
 
     @Override
@@ -286,10 +297,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<Collection<String>> getAllKeysAsync() {
-        return this.refreshPolicy.getConfigurationAsync()
-                .thenApply(config -> {
+        return this.getSettingsAsync()
+                .thenApply(settings -> {
                     try {
-                        return config.entries.keySet();
+                        return settings.keySet();
                     } catch (Exception e) {
                         this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
                         return new ArrayList<>();
@@ -317,19 +328,46 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public void close() throws IOException {
         this.refreshPolicy.close();
+        this.overrideDataSource.close();
         SDK_KEYS.remove(this.sdkKey);
     }
 
-    private <T> T getValueFromConfig(Class<T> classOfT, Config config, String key, User user, T defaultValue) {
+    private CompletableFuture<Map<String, Setting>> getSettingsAsync() {
+        if (this.overrideBehaviour != null) {
+            switch (this.overrideBehaviour) {
+                case LOCAL_ONLY:
+                    return CompletableFuture.completedFuture(this.overrideDataSource.getLocalConfiguration());
+                case REMOTE_OVER_LOCAL:
+                    return this.refreshPolicy.getSettingsAsync()
+                            .thenApply(settings -> {
+                                Map<String, Setting> localSettings = new HashMap<>(this.overrideDataSource.getLocalConfiguration());
+                                localSettings.putAll(settings);
+                                return localSettings;
+                            });
+                case LOCAL_OVER_REMOTE:
+                    return this.refreshPolicy.getSettingsAsync()
+                            .thenApply(settings -> {
+                                Map<String, Setting> localSettings = this.overrideDataSource.getLocalConfiguration();
+                                Map<String, Setting> remoteSettings = new HashMap<>(settings);
+                                remoteSettings.putAll(localSettings);
+                                return remoteSettings;
+                            });
+            }
+        }
+
+        return this.refreshPolicy.getSettingsAsync();
+    }
+
+    private <T> T getValueFromSettingsMap(Class<T> classOfT, Map<String, Setting> settings, String key, User user, T defaultValue) {
         try {
-            if (config == null) {
+            if (settings.isEmpty()) {
                 this.logger.error("Config JSON is not present. Returning defaultValue: [" + defaultValue + "].");
                 return defaultValue;
             }
 
-            Setting setting = config.entries.get(key);
+            Setting setting = settings.get(key);
             if (setting == null) {
-                this.logger.error("Value not found for key " + key + ". Here are the available keys: " + String.join(", ", config.entries.keySet()));
+                this.logger.error("Value not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet()));
                 return defaultValue;
             }
 
@@ -341,16 +379,16 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private String getVariationIdFromConfig(Config config, String key, User user, String defaultVariationId) {
+    private String getVariationIdFromSettingsMap(Map<String, Setting> settings, String key, User user, String defaultVariationId) {
         try {
-            if (config == null) {
+            if (settings.isEmpty()) {
                 this.logger.error("Config JSON is not present. Returning defaultVariationId: [" + defaultVariationId + "].");
                 return defaultVariationId;
             }
 
-            Setting setting = config.entries.get(key);
+            Setting setting = settings.get(key);
             if (setting == null) {
-                this.logger.error("Variation ID not found for key " + key + ". Here are the available keys: " + String.join(", ", config.entries.keySet()));
+                this.logger.error("Variation ID not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet()));
                 return defaultVariationId;
             }
             return this.rolloutEvaluator.evaluate(setting, key, user).getValue();
@@ -361,14 +399,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private <T> Map.Entry<String, T> getKeyAndValueFromConfig(Class<T> classOfT, Config config, String variationId) {
+    private <T> Map.Entry<String, T> getKeyAndValueFromConfig(Class<T> classOfT, Map<String, Setting> settings, String variationId) {
         try {
-            if (config == null) {
+            if (settings.isEmpty()) {
                 this.logger.error("Config JSON is not present. Returning null.");
                 return null;
             }
 
-            for (Map.Entry<String, Setting> node : config.entries.entrySet()) {
+            for (Map.Entry<String, Setting> node : settings.entrySet()) {
                 String settingKey = node.getKey();
                 Setting setting = node.getValue();
                 if (variationId.equals(setting.variationId)) {
@@ -395,17 +433,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private RefreshPolicy selectPolicy(PollingMode mode, ConfigCache cache, ConfigFetcher fetcher, ConfigCatLogger logger, ConfigMemoryCache configMemoryCache, String sdkKey) {
+    private RefreshPolicyBase selectPolicy(PollingMode mode, ConfigCache cache, ConfigFetcher fetcher, ConfigCatLogger logger, ConfigMemoryCache configMemoryCache, String sdkKey) {
         if (mode instanceof AutoPollingMode) {
             return new AutoPollingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey, (AutoPollingMode) mode);
         } else if (mode instanceof LazyLoadingMode) {
             return new LazyLoadingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey, (LazyLoadingMode) mode);
         } else if (mode instanceof ManualPollingMode) {
             return new ManualPollingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey);
-        } else if (mode instanceof LocalFilePollingMode) {
-            return new LocalFilePolicy((LocalFilePollingMode) mode, logger);
-        } else if (mode instanceof LocalMapPollingMode) {
-            return new LocalMapPolicy((LocalMapPollingMode)mode);
         } else {
             throw new InvalidParameterException("The polling mode parameter is invalid.");
         }
@@ -454,8 +488,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private ConfigCache cache;
         private String baseUrl;
         private PollingMode pollingMode;
-        private LogLevel logLevel = LogLevel.WARNING;
-        private DataGovernance dataGovernance = DataGovernance.GLOBAL;
+        private LogLevel logLevel;
+        private DataGovernance dataGovernance;
+        private OverrideDataSourceBuilder localDataSourceBuilder;
+        private OverrideBehaviour overrideBehaviour;
 
         /**
          * Sets the underlying http client which will be used to fetch the latest configuration.
@@ -471,7 +507,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         /**
          * Sets the internal cache implementation.
          *
-         * @param cache a {@link ConfigFetcher} implementation used to cache the configuration.
+         * @param cache a {@link ConfigCache} implementation used to cache the configuration.
          * @return the builder.
          */
         public Builder cache(ConfigCache cache) {
@@ -521,6 +557,31 @@ public final class ConfigCatClient implements ConfigurationProvider {
          */
         public Builder logLevel(LogLevel logLevel) {
             this.logLevel = logLevel;
+            return this;
+        }
+
+        /**
+         * Sets feature flag & setting overrides.
+         *
+         * @param dataSourceBuilder builder that describes the overrides' data source.
+         * @param behaviour the override behaviour. It can be used to set preference on whether the local values should
+         *                  override the remote values, or use local values only when a remote value doesn't exist,
+         *                  or use it for local only mode.
+         * @return the builder.
+         *
+         * @throws IllegalArgumentException when the <tt>dataSourceBuilder</tt> or <tt>behaviour</tt> parameter is null.
+         */
+        public Builder flagOverrides(OverrideDataSourceBuilder dataSourceBuilder, OverrideBehaviour behaviour) {
+            if (dataSourceBuilder == null) {
+                throw new IllegalArgumentException("'dataSourceBuilder' cannot be null or empty.");
+            }
+
+            if (behaviour == null) {
+                throw new IllegalArgumentException("'behaviour' cannot be null.");
+            }
+
+            this.localDataSourceBuilder = dataSourceBuilder;
+            this.overrideBehaviour = behaviour;
             return this;
         }
 

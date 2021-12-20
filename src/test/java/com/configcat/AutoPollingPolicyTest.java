@@ -32,7 +32,7 @@ public class AutoPollingPolicyTest {
         when(fetcher.getConfigurationAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(String.format(TEST_JSON, result)))));
 
-        DefaultRefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode) PollingModes.autoPoll(2));
+        RefreshPolicyBase policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode) PollingModes.autoPoll(2));
 
         assertEquals(result, policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
@@ -51,7 +51,7 @@ public class AutoPollingPolicyTest {
         when(fetcher.getConfigurationAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(String.format(TEST_JSON, result)))));
 
-        DefaultRefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode) PollingModes.autoPoll(2));
+        RefreshPolicyBase policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode) PollingModes.autoPoll(2));
         assertEquals(result, policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         verify(cache, never()).write(anyString(), eq(result));
@@ -71,7 +71,7 @@ public class AutoPollingPolicyTest {
                 "", server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
 
-        DefaultRefreshPolicy policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode) mode);
+        RefreshPolicyBase policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode) mode);
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 

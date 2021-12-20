@@ -83,34 +83,4 @@ public final class PollingModes {
     public static PollingMode manualPoll() {
         return new ManualPollingMode();
     }
-
-    /**
-     * Creates a local file polling configuration.
-     * When this mode is used, the SDK won't fetch the flags & settings from the ConfigCat CDN.
-     *
-     * @return the local file polling configuration.
-     */
-    public static PollingMode localFile(String filePath, boolean autoReload) {
-        return new LocalFilePollingMode(filePath, autoReload, false);
-    }
-
-    /**
-     * Creates a local classpath resource file polling configuration.
-     * When this mode is used, the SDK won't fetch the flags & settings from the ConfigCat CDN.
-     *
-     * @return the local file polling configuration.
-     */
-    public static PollingMode localClassPathResource(String filePath, boolean autoReload) {
-        return new LocalFilePollingMode(filePath, autoReload, true);
-    }
-
-    /**
-     * Creates a polling configuration that produces the internal flags & settings structure from a {@code Map<String, Object>}.
-     * When this mode is used, the SDK won't fetch the flags & settings from the ConfigCat CDN.
-     *
-     * @return the object polling configuration.
-     */
-    public static PollingMode localObject(Map<String, Object> source) {
-        return new LocalMapPollingMode(source);
-    }
 }

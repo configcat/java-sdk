@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class ManualPollingPolicyTest {
-    private DefaultRefreshPolicy policy;
+    private RefreshPolicyBase policy;
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingPolicyTest.class));
     private final ConfigMemoryCache memoryCache = new ConfigMemoryCache(logger);
@@ -58,7 +58,7 @@ public class ManualPollingPolicyTest {
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes.manualPoll();
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        DefaultRefreshPolicy lPolicy = new ManualPollingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "");
+        RefreshPolicyBase lPolicy = new ManualPollingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "");
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
