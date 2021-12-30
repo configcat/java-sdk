@@ -122,6 +122,7 @@ class RolloutEvaluator {
                                 }
                             } catch (Exception e) {
                                 logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
+                                continue;
                             }
                             break;
                         //LESS THAN, LESS THAN OR EQUALS TO, GREATER THAN, GREATER THAN OR EQUALS TO (SemVer)
@@ -141,6 +142,7 @@ class RolloutEvaluator {
                                 }
                             } catch (Exception e) {
                                 logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
+                                continue;
                             }
                             break;
                         //LESS THAN, LESS THAN OR EQUALS TO, GREATER THAN, GREATER THAN OR EQUALS TO (SemVer)
@@ -165,6 +167,7 @@ class RolloutEvaluator {
                                 }
                             } catch (NumberFormatException e) {
                                 logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
+                                continue;
                             }
                             break;
                         //IS ONE OF (Sensitive)
