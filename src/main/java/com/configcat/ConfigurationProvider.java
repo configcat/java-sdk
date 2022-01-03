@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface ConfigurationProvider extends Closeable {
     /**
-     * Gets a value synchronously as T from the configuration identified by the given {@code key}.
+     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the configuration value.
@@ -21,7 +21,7 @@ public interface ConfigurationProvider extends Closeable {
     <T> T getValue(Class<T> classOfT, String key, T defaultValue);
 
     /**
-     * Gets a value synchronously as T from the configuration identified by the given {@code key}.
+     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the configuration value.
@@ -33,7 +33,7 @@ public interface ConfigurationProvider extends Closeable {
     <T> T getValue(Class<T> classOfT, String key, User user, T defaultValue);
 
     /**
-     * Gets a value asynchronously as T from the configuration identified by the given {@code key}.
+     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the configuration value.
@@ -44,7 +44,7 @@ public interface ConfigurationProvider extends Closeable {
     <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, T defaultValue);
 
     /**
-     * Gets a value asynchronously as T from the configuration identified by the given {@code key}.
+     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the configuration value.
