@@ -42,7 +42,7 @@ import com.configcat.*;
 ConfigCatClient client = new ConfigCatClient("#YOUR-SDK-KEY#");
 ```
 
-### 5. Get the setting's value:
+### 5. Get your setting value
 ```java
 boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "isMyAwesomeFeatureEnabled", false);
 if(isMyAwesomeFeatureEnabled) {
@@ -61,6 +61,11 @@ client.getValueAsync(Boolean.class, "isMyAwesomeFeatureEnabled", false)
             doTheOldThing();
         }
     });
+```
+
+### 6. Close the client on application exit
+```dart
+client.close();
 ```
 
 ## Getting user-specific setting values with Targeting
