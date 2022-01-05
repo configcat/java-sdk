@@ -5,18 +5,20 @@ package com.configcat;
  */
 public enum OverrideBehaviour {
     /**
-     * With this mode, the SDK won't fetch the flags & settings from the ConfigCat CDN, and it will use only the local
-     * overrides to evaluate values.
+     * When evaluating values, the SDK will not use feature flags & settings from the ConfigCat CDN, but it will use
+     * all feature flags & settings that are loaded from local-override sources.
      */
     LOCAL_ONLY,
     /**
-     * With this mode, the SDK will fetch the feature flags & settings from the ConfigCat CDN, and it will replace
-     * those that have a matching key in the flag overrides.
+     * When evaluating values, the SDK will use all feature flags & settings that are downloaded from the ConfigCat CDN,
+     * plus all feature flags & settings that are loaded from local-override sources. If a feature flag or a setting is
+     * defined both in the fetched and the local-override source then the local-override version will take precedence.
      */
     LOCAL_OVER_REMOTE,
     /**
-     * With this mode, the SDK will fetch the feature flags & settings from the ConfigCat CDN, and it will use the
-     * overrides for only those flags that doesn't exist in the fetched configuration.
+     * When evaluating values, the SDK will use all feature flags & settings that are downloaded from the ConfigCat CDN,
+     * plus all feature flags & settings that are loaded from local-override sources. If a feature flag or a setting is
+     * defined both in the fetched and the local-override source then the fetched version will take precedence.
      */
     REMOTE_OVER_LOCAL,
 }
