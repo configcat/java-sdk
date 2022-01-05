@@ -102,7 +102,7 @@ public class LazyLoadingPolicySyncTest {
         String result = String.format(TEST_JSON, "test");
         when(cache.read(anyString())).thenReturn(result);
 
-        when(fetcher.getConfigurationAsync())
+        when(fetcher.fetchAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(result))));
 
         RefreshPolicyBase policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) PollingModes

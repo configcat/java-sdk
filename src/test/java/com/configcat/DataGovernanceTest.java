@@ -25,7 +25,7 @@ public class DataGovernanceTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
         assertEquals(body, response.config().jsonString);
@@ -46,7 +46,7 @@ public class DataGovernanceTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
         assertEquals(body, response.config().jsonString);
@@ -67,7 +67,7 @@ public class DataGovernanceTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
         assertEquals(body, response.config().jsonString);
@@ -92,7 +92,7 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
         assertEquals(secondBody, response.config().jsonString);
@@ -119,7 +119,7 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
         assertEquals(secondBody, response.config().jsonString);
@@ -147,7 +147,7 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
         assertEquals(firstBody, response.config().jsonString);
@@ -171,7 +171,7 @@ public class DataGovernanceTest {
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
         assertEquals(firstBody, response.config().jsonString);
@@ -198,7 +198,7 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
         assertEquals(secondBody, response.config().jsonString);

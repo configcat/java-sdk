@@ -34,7 +34,7 @@ class AutoPollingPolicy extends RefreshPolicyBase {
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
         this.scheduler.scheduleAtFixedRate(() -> {
             try {
-                FetchResponse response = super.fetcher().getConfigurationAsync().get();
+                FetchResponse response = super.fetcher().fetchAsync().get();
                 Config cachedConfig = super.readConfigCache();
                 Config fetchedConfig = response.config();
                 if (response.isFetched() && !fetchedConfig.equals(cachedConfig)) {

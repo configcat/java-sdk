@@ -64,7 +64,7 @@ class LazyLoadingPolicy extends RefreshPolicyBase {
     }
 
     private CompletableFuture<Config> fetch() {
-        return super.fetcher().getConfigurationAsync()
+        return super.fetcher().fetchAsync()
                 .thenApplyAsync(response -> {
                     Config cachedConfig = super.readConfigCache();
                     Config fetchedConfig = response.config();

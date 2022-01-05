@@ -51,31 +51,33 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 ? PollingModes.autoPoll(60)
                 : builder.pollingMode;
 
-        boolean hasCustomBaseUrl = builder.baseUrl != null && !builder.baseUrl.isEmpty();
-        ConfigFetcher fetcher = new ConfigFetcher(builder.httpClient == null
-                ? new OkHttpClient
+        if (this.overrideBehaviour == OverrideBehaviour.LOCAL_ONLY) {
+            this.refreshPolicy = new NullRefreshPolicy();
+        } else {
+            boolean hasCustomBaseUrl = builder.baseUrl != null && !builder.baseUrl.isEmpty();
+            ConfigFetcher fetcher = new ConfigFetcher(builder.httpClient == null
+                    ? new OkHttpClient
                     .Builder()
                     .retryOnConnectionFailure(true)
                     .build()
-                : builder.httpClient,
-                this.logger,
-                configMemoryCache,
-                sdkKey,
-                !hasCustomBaseUrl
-                        ? dataGovernance == DataGovernance.GLOBAL
+                    : builder.httpClient,
+                    this.logger,
+                    configMemoryCache,
+                    sdkKey,
+                    !hasCustomBaseUrl
+                            ? dataGovernance == DataGovernance.GLOBAL
                             ? BASE_URL_GLOBAL
                             : BASE_URL_EU
-                        : builder.baseUrl,
-                hasCustomBaseUrl,
-                pollingMode.getPollingIdentifier());
+                            : builder.baseUrl,
+                    hasCustomBaseUrl,
+                    pollingMode.getPollingIdentifier());
 
-        ConfigCache cache = builder.cache == null
-                ? new InMemoryConfigCache()
-                : builder.cache;
+            ConfigCache cache = builder.cache == null
+                    ? new InMemoryConfigCache()
+                    : builder.cache;
 
-        this.refreshPolicy = this.overrideBehaviour == OverrideBehaviour.LOCAL_ONLY
-                ? new NullRefreshPolicy()
-                : this.selectPolicy(pollingMode, cache, fetcher, this.logger, configMemoryCache, sdkKey);
+            this.refreshPolicy = this.selectPolicy(pollingMode, cache, fetcher, this.logger, configMemoryCache, sdkKey);
+        }
     }
 
     /**

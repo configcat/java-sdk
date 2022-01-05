@@ -46,7 +46,7 @@ class ConfigFetcher implements Closeable {
         this.mode = pollingIdentifier;
     }
 
-    public CompletableFuture<FetchResponse> getConfigurationAsync() {
+    public CompletableFuture<FetchResponse> fetchAsync() {
         return this.executeFetchAsync(2);
     }
 

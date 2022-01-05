@@ -29,7 +29,7 @@ public class AutoPollingPolicyTest {
         doThrow(new Exception()).when(cache).read(anyString());
         doThrow(new Exception()).when(cache).write(anyString(), anyString());
 
-        when(fetcher.getConfigurationAsync())
+        when(fetcher.fetchAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(String.format(TEST_JSON, result)))));
 
         RefreshPolicyBase policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode) PollingModes.autoPoll(2));
@@ -48,7 +48,7 @@ public class AutoPollingPolicyTest {
 
         when(cache.read(anyString())).thenReturn(String.format(TEST_JSON, result));
 
-        when(fetcher.getConfigurationAsync())
+        when(fetcher.fetchAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(String.format(TEST_JSON, result)))));
 
         RefreshPolicyBase policy = new AutoPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (AutoPollingMode) PollingModes.autoPoll(2));

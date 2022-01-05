@@ -41,14 +41,14 @@ public class ConfigFetcherTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(result).setHeader("ETag", "fakeETag"));
         this.server.enqueue(new MockResponse().setResponseCode(304));
 
-        FetchResponse fResult = this.fetcher.getConfigurationAsync().get();
+        FetchResponse fResult = this.fetcher.fetchAsync().get();
 
         assertEquals(result, fResult.config().jsonString);
         assertTrue(fResult.isFetched());
         assertFalse(fResult.isNotModified());
         assertFalse(fResult.isFailed());
 
-        FetchResponse notModifiedResponse = this.fetcher.getConfigurationAsync().get();
+        FetchResponse notModifiedResponse = this.fetcher.fetchAsync().get();
         assertTrue(notModifiedResponse.isNotModified());
         assertFalse(notModifiedResponse.isFailed());
         assertFalse(notModifiedResponse.isFetched());
@@ -72,8 +72,8 @@ public class ConfigFetcherTest {
 
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(2, TimeUnit.SECONDS));
 
-        assertTrue(fetch.getConfigurationAsync().get().isFailed());
-        assertNull(fetch.getConfigurationAsync().get().config());
+        assertTrue(fetch.fetchAsync().get().isFailed());
+        assertNull(fetch.fetchAsync().get().config());
 
         fetch.close();
     }
@@ -91,8 +91,8 @@ public class ConfigFetcherTest {
                 false,
                 PollingModes.manualPoll().getPollingIdentifier());
 
-        assertTrue(fetch.getConfigurationAsync().get().isFetched());
-        assertTrue(fetch.getConfigurationAsync().get().isNotModified());
+        assertTrue(fetch.fetchAsync().get().isFetched());
+        assertTrue(fetch.fetchAsync().get().isNotModified());
 
         fetch.close();
     }
