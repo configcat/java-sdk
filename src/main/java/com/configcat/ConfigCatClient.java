@@ -563,7 +563,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         /**
-         * Sets feature flag & setting overrides.
+         * Sets feature flag and setting overrides.
          *
          * @param dataSourceBuilder builder that describes the overrides' data source.
          * @param behaviour the override behaviour. It can be used to set preference on whether the local values should
