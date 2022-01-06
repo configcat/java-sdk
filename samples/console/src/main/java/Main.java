@@ -1,4 +1,5 @@
 import com.configcat.ConfigCatClient;
+import com.configcat.LogLevel;
 import com.configcat.User;
 
 import java.io.IOException;

@@ -1,6 +1,7 @@
 package websample;
 
 import com.configcat.ConfigCatClient;
+import com.configcat.LogLevel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
