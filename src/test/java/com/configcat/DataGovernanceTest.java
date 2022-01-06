@@ -4,7 +4,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -14,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class DataGovernanceTest {
     private static final String JsonTemplate = "{ p: { u: \"%s\", r: %d }, f: {} }";
-    private final Logger logger = LoggerFactory.getLogger(DataGovernanceTest.class);
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(DataGovernanceTest.class));
 
     @Test
     public void shouldStayOnGivenUrl() throws IOException, ExecutionException, InterruptedException {
@@ -26,10 +25,10 @@ public class DataGovernanceTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(body, response.config());
+        assertEquals(body, response.config().jsonString);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -47,10 +46,10 @@ public class DataGovernanceTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(body, response.config());
+        assertEquals(body, response.config().jsonString);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -68,10 +67,10 @@ public class DataGovernanceTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(body, response.config());
+        assertEquals(body, response.config().jsonString);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -93,10 +92,10 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondBody, response.config());
+        assertEquals(secondBody, response.config().jsonString);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -120,10 +119,10 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondBody, response.config());
+        assertEquals(secondBody, response.config().jsonString);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -148,10 +147,10 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(firstBody, response.config());
+        assertEquals(firstBody, response.config().jsonString);
         assertEquals(2, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -172,10 +171,10 @@ public class DataGovernanceTest {
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(firstBody, response.config());
+        assertEquals(firstBody, response.config().jsonString);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(0, secondServer.getRequestCount());
 
@@ -199,10 +198,10 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondBody, response.config());
+        assertEquals(secondBody, response.config().jsonString);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -220,6 +219,6 @@ public class DataGovernanceTest {
     }
 
     private ConfigFetcher createFetcher(String url, boolean isCustomUrl) {
-        return new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", url, isCustomUrl, "m");
+        return new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", url, isCustomUrl, "m");
     }
 }

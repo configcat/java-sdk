@@ -25,7 +25,7 @@ public class RolloutIntegrationTests {
     @Parameterized.Parameters(name
             = "{index}: Test with File={0}, ApiKey={1}")
     public static Iterable<Object[]> data() {
-        return Arrays.asList(new Object[][] {
+        return Arrays.asList(new Object[][]{
                 {"testmatrix.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", ValueTestKind},
                 {"testmatrix_semantic.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA", ValueTestKind},
                 {"testmatrix_number.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw", ValueTestKind},
@@ -53,7 +53,7 @@ public class RolloutIntegrationTests {
     @Test
     public void testMatrixTest() {
 
-        if(!this.csvScanner.hasNext())
+        if (!this.csvScanner.hasNext())
             fail();
 
         String[] header = this.csvScanner.nextLine().split(";");
@@ -65,21 +65,20 @@ public class RolloutIntegrationTests {
             String[] testObject = this.csvScanner.nextLine().split(";");
 
             User user = null;
-            if(!testObject[0].equals("##null##"))
-            {
+            if (!testObject[0].equals("##null##")) {
                 String email = "";
                 String country = "";
 
                 String identifier = testObject[0];
 
-                if(!testObject[1].isEmpty() && !testObject[1].equals("##null##"))
+                if (!testObject[1].isEmpty() && !testObject[1].equals("##null##"))
                     email = testObject[1];
 
-                if(!testObject[2].isEmpty() && !testObject[2].equals("##null##"))
+                if (!testObject[2].isEmpty() && !testObject[2].equals("##null##"))
                     country = testObject[2];
 
                 Map<String, String> customAttributes = new HashMap<>();
-                if(!testObject[3].isEmpty() && !testObject[3].equals("##null##"))
+                if (!testObject[3].isEmpty() && !testObject[3].equals("##null##"))
                     customAttributes.put(customKey, testObject[3]);
 
                 user = User.newBuilder()
@@ -90,11 +89,11 @@ public class RolloutIntegrationTests {
             }
 
             int i = 0;
-            for (String settingKey: settingKeys) {
+            for (String settingKey : settingKeys) {
                 String value = this.Kind.equals(VariationTestKind)
                         ? client.getVariationId(settingKey, user, null)
                         : client.getValue(String.class, settingKey, user, null);
-                if(!value.toLowerCase().equals(testObject[i + 4].toLowerCase())) {
+                if (!value.toLowerCase().equals(testObject[i + 4].toLowerCase())) {
                     errors.add(String.format("Identifier: %s, Key: %s. UV: %s Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[3], testObject[i + 4], value));
                 }
                 i++;

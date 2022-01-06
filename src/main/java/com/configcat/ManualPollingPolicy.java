@@ -1,15 +1,14 @@
 package com.configcat;
 
-import org.slf4j.Logger;
 import java.util.concurrent.CompletableFuture;
 
-class ManualPollingPolicy extends RefreshPolicy {
-    ManualPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, Logger logger, String sdkKey) {
-        super(configFetcher, cache, logger, sdkKey);
+class ManualPollingPolicy extends RefreshPolicyBase {
+    ManualPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, ConfigCatLogger logger, ConfigMemoryCache configMemoryCache, String sdkKey) {
+        super(configFetcher, cache, logger, configMemoryCache, sdkKey);
     }
 
     @Override
-    public CompletableFuture<String> getConfigurationJsonAsync() {
+    protected CompletableFuture<Config> getConfigurationAsync() {
         return CompletableFuture.completedFuture(super.readConfigCache());
     }
 }

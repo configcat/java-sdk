@@ -3,17 +3,23 @@ package com.configcat;
 class AutoPollingMode extends PollingMode {
     private final int autoPollRateInSeconds;
     private final ConfigurationChangeListener listener;
+    private final int maxInitWaitTimeSeconds;
 
-    AutoPollingMode(int autoPollRateInSeconds, ConfigurationChangeListener listener) {
-        if(autoPollRateInSeconds < 2)
+    AutoPollingMode(int autoPollRateInSeconds, int maxInitWaitTimeSeconds, ConfigurationChangeListener listener) {
+        if (autoPollRateInSeconds < 2)
             throw new IllegalArgumentException("autoPollRateInSeconds cannot be less than 2 seconds");
 
         this.autoPollRateInSeconds = autoPollRateInSeconds;
+        this.maxInitWaitTimeSeconds = maxInitWaitTimeSeconds;
         this.listener = listener;
     }
 
     int getAutoPollRateInSeconds() {
         return autoPollRateInSeconds;
+    }
+
+    public int getMaxInitWaitTimeSeconds() {
+        return maxInitWaitTimeSeconds;
     }
 
     ConfigurationChangeListener getListener() {
@@ -24,4 +30,5 @@ class AutoPollingMode extends PollingMode {
     String getPollingIdentifier() {
         return "a";
     }
+
 }

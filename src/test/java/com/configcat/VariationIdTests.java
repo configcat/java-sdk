@@ -26,7 +26,7 @@ public class VariationIdTests {
 
         this.client = ConfigCatClient.newBuilder()
                 .httpClient(new OkHttpClient.Builder().build())
-                .mode(PollingModes.LazyLoad(2, false))
+                .mode(PollingModes.lazyLoad(2, false))
                 .baseUrl(this.server.url("/").toString())
                 .build("TEST_KEY");
     }
@@ -42,7 +42,7 @@ public class VariationIdTests {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> client.getVariationId(null, null));
 
-        assertEquals("key is null or empty", exception.getMessage());
+        assertEquals("'key' cannot be null or empty.", exception.getMessage());
     }
 
     @Test

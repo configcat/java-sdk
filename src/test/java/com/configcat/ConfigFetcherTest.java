@@ -6,7 +6,6 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -19,14 +18,15 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ConfigFetcherTest {
     private MockWebServer server;
     private ConfigFetcher fetcher;
-    private final Logger logger = LoggerFactory.getLogger(ConfigFetcherTest.class);
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigFetcherTest.class), LogLevel.WARNING);
 
     @BeforeEach
     public void setUp() throws IOException {
         this.server = new MockWebServer();
         this.server.start();
 
-        this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, PollingModes.ManualPoll().getPollingIdentifier());
+        this.fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger),
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
     }
 
     @AfterEach
@@ -37,18 +37,18 @@ public class ConfigFetcherTest {
 
     @Test
     public void getConfigurationJsonStringETag() throws InterruptedException, ExecutionException {
-        String result = "test";
+        String result = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(result).setHeader("ETag", "fakeETag"));
         this.server.enqueue(new MockResponse().setResponseCode(304));
 
-        FetchResponse fResult = this.fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse fResult = this.fetcher.fetchAsync().get();
 
-        assertEquals(result, fResult.config());
+        assertEquals(result, fResult.config().jsonString);
         assertTrue(fResult.isFetched());
         assertFalse(fResult.isNotModified());
         assertFalse(fResult.isFailed());
 
-        FetchResponse notModifiedResponse = this.fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse notModifiedResponse = this.fetcher.fetchAsync().get();
         assertTrue(notModifiedResponse.isNotModified());
         assertFalse(notModifiedResponse.isFailed());
         assertFalse(notModifiedResponse.isFetched());
@@ -61,18 +61,19 @@ public class ConfigFetcherTest {
     public void getConfigurationException() throws IOException, ExecutionException, InterruptedException {
 
         ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
-                    .readTimeout(1, TimeUnit.SECONDS)
-                    .build(),
+                .readTimeout(1, TimeUnit.SECONDS)
+                .build(),
                 logger,
+                new ConfigMemoryCache(logger),
                 "",
                 this.server.url("/").toString(),
                 false,
-                PollingModes.ManualPoll().getPollingIdentifier());
+                PollingModes.manualPoll().getPollingIdentifier());
 
-        this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(5, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(2, TimeUnit.SECONDS));
 
-        assertTrue(fetch.getConfigurationJsonStringAsync().get().isFailed());
-        assertNull(fetch.getConfigurationJsonStringAsync().get().config());
+        assertTrue(fetch.fetchAsync().get().isFailed());
+        assertNull(fetch.fetchAsync().get().config());
 
         fetch.close();
     }
@@ -84,13 +85,14 @@ public class ConfigFetcherTest {
                 .readTimeout(1, TimeUnit.SECONDS)
                 .build(),
                 logger,
+                new ConfigMemoryCache(logger),
                 "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA",
                 "https://cdn-global.configcat.com",
                 false,
-                PollingModes.ManualPoll().getPollingIdentifier());
+                PollingModes.manualPoll().getPollingIdentifier());
 
-        assertTrue(fetch.getConfigurationJsonStringAsync().get().isFetched());
-        assertTrue(fetch.getConfigurationJsonStringAsync().get().isNotModified());
+        assertTrue(fetch.fetchAsync().get().isFetched());
+        assertTrue(fetch.fetchAsync().get().isNotModified());
 
         fetch.close();
     }

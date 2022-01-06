@@ -18,13 +18,15 @@ public class ConfigController {
     ConfigCatClient client;
 
     @RequestMapping(value = "api/config/awesome", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
-    public @ResponseBody String awesome() {
-        return this.client.getValue(Boolean.class,"isAwesomeFeatureEnabled",false).toString();
+    public @ResponseBody
+    String awesome() {
+        return this.client.getValue(Boolean.class, "isAwesomeFeatureEnabled", false).toString();
     }
 
     @RequestMapping(value = "api/config/poc", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
-    public @ResponseBody String poc(@RequestParam String email) {
+    public @ResponseBody
+    String poc(@RequestParam String email) {
         User user = User.newBuilder().email(email).build("#SOME-USER-ID#");
-        return this.client.getValue(Boolean.class,"isPOCFeatureEnabled", user,false).toString();
+        return this.client.getValue(Boolean.class, "isPOCFeatureEnabled", user, false).toString();
     }
 }
