@@ -22,21 +22,6 @@ class Config {
     @SerializedName(value = "f")
     public Map<String, Setting> entries = new HashMap<>();
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj == null || obj.getClass() != this.getClass()) {
-            return false;
-        }
-        return ((Config) obj).jsonString.equals(this.jsonString);
-    }
-    @Override
-    public int hashCode() {
-        return this.jsonString.hashCode();
-    }
-
     public static Config empty = new Config();
 }
 
