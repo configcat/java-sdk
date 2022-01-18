@@ -5,9 +5,12 @@ import com.google.gson.GsonBuilder;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import java.time.Instant;
+
 class ConfigJsonCache {
     private static final String CACHE_BASE = "java_" + ConfigFetcher.CONFIG_JSON_NAME + "_%s";
     private Config inMemoryConfig = Config.empty;
+    private String inMemoryConfigString = "";
     private final Gson gson = new GsonBuilder().create();
     private final ConfigCatLogger logger;
     private final ConfigCache cache;
@@ -19,19 +22,13 @@ class ConfigJsonCache {
         this.cacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CACHE_BASE, sdkKey))));
     }
 
-    public Config readFromJson(String json, String etag) {
+    public Config readFromJson(String json) {
         if (json == null || json.isEmpty()) {
             return Config.empty;
         }
 
-        if (json.equals(this.inMemoryConfig.jsonString)) {
-            return this.inMemoryConfig;
-        }
-
         try {
-            Config deserialized = this.deserialize(json);
-            deserialized.eTag = etag;
-            return deserialized;
+            return this.deserialize(json);
         } catch (Exception e) {
             this.logger.error("Config JSON parsing failed.", e);
             return Config.empty;
@@ -40,13 +37,17 @@ class ConfigJsonCache {
 
     public Config readFromCache() {
         String fromCache = this.readCache();
-        if (fromCache == null || fromCache.isEmpty() || fromCache.equals(this.inMemoryConfig.jsonString)) {
+        if (fromCache == null || fromCache.isEmpty() || fromCache.equals(this.inMemoryConfigString)) {
             return this.inMemoryConfig;
         }
 
         try {
             Config config = this.deserialize(fromCache);
+            if (this.inMemoryConfig.timeStamp > config.timeStamp) {
+                return this.inMemoryConfig;
+            }
             this.inMemoryConfig = config;
+            this.inMemoryConfigString = fromCache;
             return config;
         } catch (Exception e) {
             this.logger.error("Config JSON parsing failed.", e);
@@ -54,10 +55,13 @@ class ConfigJsonCache {
         }
     }
 
-    public void writeToCache(Config config) {
+    public void writeToCache(Config config, String eTag) {
         try {
+            config.eTag = eTag;
+            config.timeStamp = Instant.now().getEpochSecond();
             this.inMemoryConfig = config;
-            this.cache.write(cacheKey, config.jsonString);
+            this.inMemoryConfigString = this.gson.toJson(config);
+            this.cache.write(cacheKey, this.inMemoryConfigString);
         } catch (Exception e) {
             this.logger.error("An error occurred during the cache write.", e);
         }
@@ -73,8 +77,6 @@ class ConfigJsonCache {
     }
 
     private Config deserialize(String json) {
-        Config config = this.gson.fromJson(json, Config.class);
-        config.jsonString = json;
-        return config;
+        return this.gson.fromJson(json, Config.class);
     }
 }

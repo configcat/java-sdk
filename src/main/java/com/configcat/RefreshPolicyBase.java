@@ -36,11 +36,7 @@ abstract class RefreshPolicyBase implements RefreshPolicy {
 
     public CompletableFuture<Void> refreshAsync() {
         return this.fetcher().fetchAsync()
-                .thenAcceptAsync(response -> {
-                    if (response.isFetched()) {
-                        this.configJsonCache.writeToCache(response.config());
-                    }
-                });
+                .thenAcceptAsync(response -> {});
     }
 
     @Override

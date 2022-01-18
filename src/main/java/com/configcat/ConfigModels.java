@@ -14,13 +14,14 @@ enum SettingType {
 }
 
 class Config {
-    public transient String jsonString = "";
-    public transient String eTag = "";
-
     @SerializedName(value = "p")
     public Preferences preferences;
     @SerializedName(value = "f")
     public Map<String, Setting> entries = new HashMap<>();
+    @SerializedName(value = "e")
+    public String eTag = "";
+    @SerializedName(value = "t")
+    public long timeStamp = 0;
 
     public static Config empty = new Config();
 }

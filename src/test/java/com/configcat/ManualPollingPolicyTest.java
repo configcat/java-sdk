@@ -97,7 +97,7 @@ public class ManualPollingPolicyTest {
         when(cache.read(anyString())).thenReturn(String.format(TEST_JSON, result));
 
         when(fetcher.fetchAsync())
-                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.readFromJson(String.format(TEST_JSON, result), ""))));
+                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.readFromJson(String.format(TEST_JSON, result)))));
 
         ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, logger, memoryCache);
         policy.refreshAsync().get();

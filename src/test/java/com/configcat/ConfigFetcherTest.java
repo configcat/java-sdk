@@ -47,7 +47,7 @@ public class ConfigFetcherTest {
 
         FetchResponse fResult = fetcher.fetchAsync().get();
 
-        assertEquals(TEST_JSON, fResult.config().jsonString);
+        assertEquals("fakeValue", fResult.config().entries.get("fakeKey").value.getAsString());
         assertTrue(fResult.isFetched());
         assertFalse(fResult.isNotModified());
         assertFalse(fResult.isFailed());

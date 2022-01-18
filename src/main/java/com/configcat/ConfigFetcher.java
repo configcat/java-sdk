@@ -121,20 +121,15 @@ class ConfigFetcher implements Closeable {
             public void onResponse(Call call, Response response) {
                 try (ResponseBody body = response.body()) {
                     if (response.isSuccessful() && body != null) {
-                        String eTag = response.header("ETag");
                         String content = body.string();
-                        if (cachedConfig.jsonString.equals(content)) {
-                            future.complete(FetchResponse.notModified());
-                            return;
-                        }
-
-                        Config config = configJsonCache.readFromJson(content, eTag);
+                        Config config = configJsonCache.readFromJson(content);
                         if (config == Config.empty) {
                             future.complete(FetchResponse.failed());
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
-                        configJsonCache.writeToCache(config);
+                        String eTag = response.header("ETag");
+                        configJsonCache.writeToCache(config, eTag);
                         future.complete(FetchResponse.fetched(config));
                     } else if (response.code() == 304) {
                         logger.debug("Fetch was successful: config not modified.");
