@@ -20,7 +20,6 @@ public class ManualPollingPolicyTest {
     private RefreshPolicyBase policy;
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingPolicyTest.class));
-    private final ConfigMemoryCache memoryCache = new ConfigMemoryCache(logger);
     private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
     @BeforeEach
@@ -28,10 +27,10 @@ public class ManualPollingPolicyTest {
         this.server = new MockWebServer();
         this.server.start();
 
+        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, new NullConfigCache(), "");
         PollingMode mode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigCache cache = new InMemoryConfigCache();
-        this.policy = new ManualPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "");
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, memoryCache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        this.policy = new ManualPollingPolicy(fetcher, logger, memoryCache);
     }
 
     @AfterEach
@@ -57,8 +56,9 @@ public class ManualPollingPolicyTest {
     @Test
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        RefreshPolicyBase lPolicy = new ManualPollingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "");
+        ConfigJsonCache cache = new ConfigJsonCache(logger, new FailingCache(), "");
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, cache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        RefreshPolicyBase lPolicy = new ManualPollingPolicy(fetcher, logger, cache);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
@@ -90,15 +90,16 @@ public class ManualPollingPolicyTest {
     public void getFetchedSameResponseUpdatesCache() throws Exception {
         String result = "test";
 
-        ConfigFetcher fetcher = mock(ConfigFetcher.class);
         ConfigCache cache = mock(ConfigCache.class);
+        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
+        ConfigFetcher fetcher = mock(ConfigFetcher.class);
 
         when(cache.read(anyString())).thenReturn(String.format(TEST_JSON, result));
 
         when(fetcher.fetchAsync())
-                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(String.format(TEST_JSON, result)))));
+                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.readFromJson(String.format(TEST_JSON, result), ""))));
 
-        ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "");
+        ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, logger, memoryCache);
         policy.refreshAsync().get();
         assertEquals(result, policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 

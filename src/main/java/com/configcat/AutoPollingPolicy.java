@@ -15,8 +15,8 @@ class AutoPollingPolicy extends RefreshPolicyBase {
     private final AtomicBoolean initialized;
     private final ArrayList<ConfigurationChangeListener> listeners;
 
-    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, ConfigCatLogger logger, ConfigMemoryCache configMemoryCache, String sdkKey, AutoPollingMode config) {
-        super(configFetcher, cache, logger, configMemoryCache, sdkKey);
+    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCatLogger logger, ConfigJsonCache configJsonCache, AutoPollingMode config) {
+        super(configFetcher, logger, configJsonCache);
         this.listeners = new ArrayList<>();
 
         if (config.getListener() != null)
@@ -35,10 +35,7 @@ class AutoPollingPolicy extends RefreshPolicyBase {
         this.scheduler.scheduleAtFixedRate(() -> {
             try {
                 FetchResponse response = super.fetcher().fetchAsync().get();
-                Config cachedConfig = super.readConfigCache();
-                Config fetchedConfig = response.config();
-                if (response.isFetched() && !fetchedConfig.equals(cachedConfig)) {
-                    super.writeConfigCache(fetchedConfig);
+                if (response.isFetched()) {
                     this.broadcastConfigurationChanged();
                 }
 
@@ -53,9 +50,9 @@ class AutoPollingPolicy extends RefreshPolicyBase {
     @Override
     protected CompletableFuture<Config> getConfigurationAsync() {
         if (this.initFuture.isDone())
-            return CompletableFuture.completedFuture(super.readConfigCache());
+            return CompletableFuture.completedFuture(super.configJsonCache.readFromCache());
 
-        return this.initFuture.thenApplyAsync(v -> super.readConfigCache());
+        return this.initFuture.thenApplyAsync(v -> super.configJsonCache.readFromCache());
     }
 
     @Override

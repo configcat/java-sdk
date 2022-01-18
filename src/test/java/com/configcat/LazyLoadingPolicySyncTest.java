@@ -21,7 +21,6 @@ public class LazyLoadingPolicySyncTest {
     private RefreshPolicyBase policy;
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicySyncTest.class));
-    private final ConfigMemoryCache memoryCache = new ConfigMemoryCache(logger);
     private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
     @BeforeEach
@@ -29,12 +28,12 @@ public class LazyLoadingPolicySyncTest {
         this.server = new MockWebServer();
         this.server.start();
 
+        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, new NullConfigCache(), "");
         PollingMode mode = PollingModes
                 .lazyLoad(5);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigCache cache = new InMemoryConfigCache();
-        this.policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) mode);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, memoryCache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        this.policy = new LazyLoadingPolicy(fetcher, logger, memoryCache, (LazyLoadingMode) mode);
     }
 
     @AfterEach
@@ -62,9 +61,9 @@ public class LazyLoadingPolicySyncTest {
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes
                 .lazyLoad(5);
-
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        RefreshPolicyBase lPolicy = new LazyLoadingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) mode);
+        ConfigJsonCache cache = new ConfigJsonCache(logger, new FailingCache(), "");
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, cache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        RefreshPolicyBase lPolicy = new LazyLoadingPolicy(fetcher, logger, cache, (LazyLoadingMode) mode);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
@@ -92,24 +91,5 @@ public class LazyLoadingPolicySyncTest {
 
         //previous value returned because of the refresh failure
         assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
-    }
-
-    @Test
-    public void getFetchedSameResponseNotUpdatesCache() throws Exception {
-        ConfigFetcher fetcher = mock(ConfigFetcher.class);
-        ConfigCache cache = mock(ConfigCache.class);
-
-        String result = String.format(TEST_JSON, "test");
-        when(cache.read(anyString())).thenReturn(result);
-
-        when(fetcher.fetchAsync())
-                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.getConfigFromJson(result))));
-
-        RefreshPolicyBase policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) PollingModes
-                .lazyLoad(60));
-
-        assertEquals("test", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
-
-        verify(cache, never()).write(anyString(), eq(result));
     }
 }

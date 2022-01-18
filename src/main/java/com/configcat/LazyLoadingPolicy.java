@@ -21,12 +21,10 @@ class LazyLoadingPolicy extends RefreshPolicyBase {
      * Constructor used by the child classes.
      *
      * @param configFetcher the internal config fetcher instance.
-     * @param cache         the internal cache instance.
-     * @param sdkKey        the sdk key.
      * @param config        the polling mode configuration.
      */
-    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, ConfigCatLogger logger, ConfigMemoryCache configMemoryCache, String sdkKey, LazyLoadingMode config) {
-        super(configFetcher, cache, logger, configMemoryCache, sdkKey);
+    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCatLogger logger, ConfigJsonCache configJsonCache, LazyLoadingMode config) {
+        super(configFetcher, logger, configJsonCache);
         this.asyncRefresh = config.isAsyncRefresh();
         this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
         this.isFetching = new AtomicBoolean(false);
@@ -42,36 +40,30 @@ class LazyLoadingPolicy extends RefreshPolicyBase {
 
             if (isInitialized && !this.isFetching.compareAndSet(false, true))
                 return this.asyncRefresh && this.initialized.get()
-                        ? CompletableFuture.completedFuture(super.readConfigCache())
+                        ? CompletableFuture.completedFuture(super.configJsonCache.readFromCache())
                         : this.fetchingFuture;
 
             logger.debug("Cache expired, refreshing.");
             if (isInitialized) {
                 this.fetchingFuture = this.fetch();
                 if (this.asyncRefresh) {
-                    return CompletableFuture.completedFuture(super.readConfigCache());
+                    return CompletableFuture.completedFuture(super.configJsonCache.readFromCache());
                 }
                 return this.fetchingFuture;
             } else {
                 if (this.isFetching.compareAndSet(false, true)) {
                     this.fetchingFuture = this.fetch();
                 }
-                return this.init.thenApplyAsync(v -> super.readConfigCache());
+                return this.init.thenApplyAsync(v -> super.configJsonCache.readFromCache());
             }
         }
 
-        return CompletableFuture.completedFuture(super.readConfigCache());
+        return CompletableFuture.completedFuture(super.configJsonCache.readFromCache());
     }
 
     private CompletableFuture<Config> fetch() {
         return super.fetcher().fetchAsync()
                 .thenApplyAsync(response -> {
-                    Config cachedConfig = super.readConfigCache();
-                    Config fetchedConfig = response.config();
-                    if (response.isFetched() && !fetchedConfig.equals(cachedConfig)) {
-                        super.writeConfigCache(fetchedConfig);
-                    }
-
                     if (!response.isFailed())
                         this.lastRefreshedTime = Instant.now();
 
@@ -81,7 +73,7 @@ class LazyLoadingPolicy extends RefreshPolicyBase {
 
                     this.isFetching.set(false);
 
-                    return response.isFetched() ? fetchedConfig : cachedConfig;
+                    return response.isFetched() ? response.config() : super.configJsonCache.readFromCache();
                 });
     }
 }

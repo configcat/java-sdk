@@ -45,7 +45,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.overrideBehaviour = builder.overrideBehaviour;
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
-        ConfigMemoryCache configMemoryCache = new ConfigMemoryCache(this.logger);
+        ConfigCache cache = builder.cache == null
+                ? new NullConfigCache()
+                : builder.cache;
+
+        ConfigJsonCache configJsonCache = new ConfigJsonCache(this.logger, cache, sdkKey);
 
         PollingMode pollingMode = builder.pollingMode == null
                 ? PollingModes.autoPoll(60)
@@ -62,7 +66,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     .build()
                     : builder.httpClient,
                     this.logger,
-                    configMemoryCache,
+                    configJsonCache,
                     sdkKey,
                     !hasCustomBaseUrl
                             ? dataGovernance == DataGovernance.GLOBAL
@@ -72,11 +76,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     hasCustomBaseUrl,
                     pollingMode.getPollingIdentifier());
 
-            ConfigCache cache = builder.cache == null
-                    ? new InMemoryConfigCache()
-                    : builder.cache;
-
-            this.refreshPolicy = this.selectPolicy(pollingMode, cache, fetcher, this.logger, configMemoryCache, sdkKey);
+            this.refreshPolicy = this.selectPolicy(pollingMode, fetcher, this.logger, configJsonCache);
         }
     }
 
@@ -435,13 +435,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private RefreshPolicyBase selectPolicy(PollingMode mode, ConfigCache cache, ConfigFetcher fetcher, ConfigCatLogger logger, ConfigMemoryCache configMemoryCache, String sdkKey) {
+    private RefreshPolicyBase selectPolicy(PollingMode mode, ConfigFetcher fetcher, ConfigCatLogger logger, ConfigJsonCache configJsonCache) {
         if (mode instanceof AutoPollingMode) {
-            return new AutoPollingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey, (AutoPollingMode) mode);
+            return new AutoPollingPolicy(fetcher, logger, configJsonCache, (AutoPollingMode) mode);
         } else if (mode instanceof LazyLoadingMode) {
-            return new LazyLoadingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey, (LazyLoadingMode) mode);
+            return new LazyLoadingPolicy(fetcher, logger, configJsonCache, (LazyLoadingMode) mode);
         } else if (mode instanceof ManualPollingMode) {
-            return new ManualPollingPolicy(fetcher, cache, logger, configMemoryCache, sdkKey);
+            return new ManualPollingPolicy(fetcher, logger, configJsonCache);
         } else {
             throw new InvalidParameterException("The polling mode parameter is invalid.");
         }

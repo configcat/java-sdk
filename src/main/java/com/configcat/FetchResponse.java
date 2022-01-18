@@ -30,4 +30,16 @@ class FetchResponse {
         this.status = status;
         this.config = config;
     }
+
+    public static FetchResponse fetched(Config config) {
+        return new FetchResponse(Status.FETCHED, config == null ? Config.empty : config);
+    }
+
+    public static FetchResponse notModified() {
+        return new FetchResponse(Status.NOT_MODIFIED, Config.empty);
+    }
+
+    public static FetchResponse failed() {
+        return new FetchResponse(Status.FAILED, Config.empty);
+    }
 }
