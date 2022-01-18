@@ -64,6 +64,10 @@ class LazyLoadingPolicy extends RefreshPolicyBase {
     private CompletableFuture<Config> fetch() {
         return super.fetcher().fetchAsync()
                 .thenApplyAsync(response -> {
+                    if (response.isFetched()) {
+                        this.configJsonCache.writeToCache(response.config());
+                    }
+
                     if (!response.isFailed())
                         this.lastRefreshedTime = Instant.now();
 
@@ -73,7 +77,7 @@ class LazyLoadingPolicy extends RefreshPolicyBase {
 
                     this.isFetching.set(false);
 
-                    return response.isFetched() ? response.config() : super.configJsonCache.readFromCache();
+                    return super.configJsonCache.readFromCache();
                 });
     }
 }

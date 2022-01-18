@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +27,7 @@ public class ConfigFetcherTest {
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigFetcherTest.class), LogLevel.WARNING);
     private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
+    private static final String TEST_JSON2 = "{ f: { fakeKey: { v: fakeValue2, s: 0, p: [] ,r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -46,6 +50,7 @@ public class ConfigFetcherTest {
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         FetchResponse fResult = fetcher.fetchAsync().get();
+        cache.writeToCache(fResult.config());
 
         assertEquals("fakeValue", fResult.config().entries.get("fakeKey").value.getAsString());
         assertTrue(fResult.isFetched());
@@ -137,6 +142,54 @@ public class ConfigFetcherTest {
     }
 
     @Test
+    public void cacheWriteFails() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON2));
+        ConfigCache cache = mock(ConfigCache.class);
+
+        Gson gson = new GsonBuilder().create();
+        Config config = gson.fromJson(TEST_JSON, Config.class);
+        config.timeStamp = Instant.now().getEpochSecond();
+
+        when(cache.read(anyString())).thenReturn(gson.toJson(config));
+        doThrow(new Exception()).when(cache).write(anyString(), anyString());
+
+        ConfigJsonCache configJsonCache = new ConfigJsonCache(logger, cache, "");
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, configJsonCache,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse result = fetcher.fetchAsync().get();
+        configJsonCache.writeToCache(result.config());
+
+        assertEquals("fakeValue2", configJsonCache.readFromCache().entries.get("fakeKey").value.getAsString());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void cacheWriteFailsCachedTakesPrecedence() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON2));
+        ConfigCache cache = mock(ConfigCache.class);
+
+        Gson gson = new GsonBuilder().create();
+        Config config = gson.fromJson(TEST_JSON, Config.class);
+        config.timeStamp = Instant.now().getEpochSecond() + 50;
+
+        when(cache.read(anyString())).thenReturn(gson.toJson(config));
+        doThrow(new Exception()).when(cache).write(anyString(), anyString());
+
+        ConfigJsonCache configJsonCache = new ConfigJsonCache(logger, cache, "");
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, configJsonCache,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse result = fetcher.fetchAsync().get();
+        configJsonCache.writeToCache(result.config());
+
+        assertEquals("fakeValue", configJsonCache.readFromCache().entries.get("fakeKey").value.getAsString());
+
+        fetcher.close();
+    }
+
+    @Test
     public void testIntegration() throws IOException, ExecutionException, InterruptedException {
         ConfigJsonCache cache = new ConfigJsonCache(logger, new NullConfigCache(), "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA");
         ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
@@ -150,6 +203,7 @@ public class ConfigFetcherTest {
                 PollingModes.manualPoll().getPollingIdentifier());
 
         FetchResponse result = fetch.fetchAsync().get();
+        cache.writeToCache(result.config());
 
         assertTrue(result.isFetched());
         assertTrue(fetch.fetchAsync().get().isNotModified());

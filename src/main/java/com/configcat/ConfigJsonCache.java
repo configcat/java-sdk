@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import java.lang.invoke.ConstantCallSite;
 import java.time.Instant;
 
 class ConfigJsonCache {
@@ -22,13 +23,15 @@ class ConfigJsonCache {
         this.cacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CACHE_BASE, sdkKey))));
     }
 
-    public Config readFromJson(String json) {
+    public Config readFromJson(String json, String eTag) {
         if (json == null || json.isEmpty()) {
             return Config.empty;
         }
 
         try {
-            return this.deserialize(json);
+            Config config = this.deserialize(json);
+            config.eTag = eTag;
+            return config;
         } catch (Exception e) {
             this.logger.error("Config JSON parsing failed.", e);
             return Config.empty;
@@ -43,7 +46,7 @@ class ConfigJsonCache {
 
         try {
             Config config = this.deserialize(fromCache);
-            if (this.inMemoryConfig.timeStamp > config.timeStamp) {
+            if (this.inMemoryConfig.timeStamp >= config.timeStamp) {
                 return this.inMemoryConfig;
             }
             this.inMemoryConfig = config;
@@ -55,9 +58,8 @@ class ConfigJsonCache {
         }
     }
 
-    public void writeToCache(Config config, String eTag) {
+    public void writeToCache(Config config) {
         try {
-            config.eTag = eTag;
             config.timeStamp = Instant.now().getEpochSecond();
             this.inMemoryConfig = config;
             this.inMemoryConfigString = this.gson.toJson(config);

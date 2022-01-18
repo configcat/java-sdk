@@ -36,6 +36,7 @@ class AutoPollingPolicy extends RefreshPolicyBase {
             try {
                 FetchResponse response = super.fetcher().fetchAsync().get();
                 if (response.isFetched()) {
+                    this.configJsonCache.writeToCache(response.config());
                     this.broadcastConfigurationChanged();
                 }
 

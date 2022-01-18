@@ -89,20 +89,15 @@ public class ManualPollingPolicyTest {
     @Test
     public void getFetchedSameResponseUpdatesCache() throws Exception {
         String result = "test";
-
         ConfigCache cache = mock(ConfigCache.class);
         ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
         ConfigFetcher fetcher = mock(ConfigFetcher.class);
-
         when(cache.read(anyString())).thenReturn(String.format(TEST_JSON, result));
-
         when(fetcher.fetchAsync())
-                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.readFromJson(String.format(TEST_JSON, result)))));
-
+                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.readFromJson(String.format(TEST_JSON, result), ""))));
         ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, logger, memoryCache);
         policy.refreshAsync().get();
         assertEquals(result, policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
-
         verify(cache, atMostOnce()).write(anyString(), eq(String.format(TEST_JSON, result)));
     }
 }
