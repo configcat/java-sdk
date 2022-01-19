@@ -4,8 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
-
-import java.lang.invoke.ConstantCallSite;
 import java.time.Instant;
 
 class ConfigJsonCache {
