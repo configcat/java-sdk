@@ -21,7 +21,7 @@ class Config {
     @SerializedName(value = "e")
     public String eTag = "";
     @SerializedName(value = "t")
-    public long timeStamp = 0;
+    public long timeStamp = -1;
 
     public static Config empty = new Config();
 }
