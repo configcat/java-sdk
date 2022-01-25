@@ -59,9 +59,10 @@ class ConfigJsonCache {
     public void writeToCache(Config config) {
         try {
             config.timeStamp = Instant.now().getEpochSecond();
+            String configToCache = this.gson.toJson(config);
             this.inMemoryConfig = config;
-            this.inMemoryConfigString = this.gson.toJson(config);
-            this.cache.write(cacheKey, this.inMemoryConfigString);
+            this.inMemoryConfigString = configToCache;
+            this.cache.write(cacheKey, configToCache);
         } catch (Exception e) {
             this.logger.error("An error occurred during the cache write.", e);
         }
