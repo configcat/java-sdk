@@ -1,7 +1,5 @@
 package com.configcat;
 
-import java.util.Map;
-
 /**
  * Describes the polling modes.
  */
