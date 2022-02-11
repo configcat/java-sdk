@@ -280,7 +280,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'variationId' cannot be null or empty.");
 
         return this.getSettingsAsync()
-                .thenApply(settings -> this.getKeyAndValueFromConfig(classOfT, settings, variationId));
+                .thenApply(settings -> this.getKeyAndValueFromSettingsMap(classOfT, settings, variationId));
     }
 
     @Override
@@ -401,7 +401,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private <T> Map.Entry<String, T> getKeyAndValueFromConfig(Class<T> classOfT, Map<String, Setting> settings, String variationId) {
+    private <T> Map.Entry<String, T> getKeyAndValueFromSettingsMap(Class<T> classOfT, Map<String, Setting> settings, String variationId) {
         try {
             if (settings.isEmpty()) {
                 this.logger.error("Config JSON is not present. Returning null.");
