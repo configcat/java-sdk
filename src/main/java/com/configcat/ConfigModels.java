@@ -3,6 +3,7 @@ package com.configcat;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.HashMap;
 import java.util.Map;
 
 enum SettingType {
@@ -13,29 +14,16 @@ enum SettingType {
 }
 
 class Config {
-    public transient String jsonString;
-
     @SerializedName(value = "p")
     public Preferences preferences;
     @SerializedName(value = "f")
-    public Map<String, Setting> entries;
+    public Map<String, Setting> entries = new HashMap<>();
+    @SerializedName(value = "e")
+    public String eTag = "";
+    @SerializedName(value = "t")
+    public long timeStamp = -1;
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj == null || obj.getClass() != this.getClass()) {
-            return false;
-        }
-
-        return ((Config) obj).jsonString.equals(this.jsonString);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.jsonString.hashCode();
-    }
+    public static Config empty = new Config();
 }
 
 class Preferences {

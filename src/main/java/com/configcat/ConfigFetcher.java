@@ -15,13 +15,12 @@ class ConfigFetcher implements Closeable {
     private final OkHttpClient httpClient;
     private final String mode;
     private final String version;
-    private final ConfigMemoryCache configMemoryCache;
+    private final ConfigJsonCache configJsonCache;
     private final String sdkKey;
     private final boolean urlIsCustom;
     private CompletableFuture<FetchResponse> currentFuture;
 
     private String url;
-    private String eTag;
 
     enum RedirectMode {
         NoRedirect,
@@ -31,13 +30,13 @@ class ConfigFetcher implements Closeable {
 
     ConfigFetcher(OkHttpClient httpClient,
                   ConfigCatLogger logger,
-                  ConfigMemoryCache configMemoryCache,
+                  ConfigJsonCache configJsonCache,
                   String sdkKey,
                   String url,
                   boolean urlIsCustom,
                   String pollingIdentifier) {
         this.logger = logger;
-        this.configMemoryCache = configMemoryCache;
+        this.configJsonCache = configJsonCache;
         this.sdkKey = sdkKey;
         this.urlIsCustom = urlIsCustom;
         this.url = url;
@@ -57,7 +56,7 @@ class ConfigFetcher implements Closeable {
             }
             try {
                 Config config = fetchResponse.config();
-                if (config == null || config.preferences == null) {
+                if (config.preferences == null) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
@@ -68,7 +67,7 @@ class ConfigFetcher implements Closeable {
 
                 int redirect = config.preferences.redirect;
 
-                // we have a custom url set and we didn't get a forced redirect
+                // we have a custom url set, and we didn't get a forced redirect
                 if (this.urlIsCustom && redirect != RedirectMode.ForceRedirect.ordinal()) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
@@ -106,8 +105,8 @@ class ConfigFetcher implements Closeable {
             return this.currentFuture;
         }
 
-        Request request = this.getRequest();
-
+        Config cachedConfig = this.configJsonCache.readFromCache();
+        Request request = this.getRequest(cachedConfig.eTag);
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -115,34 +114,35 @@ class ConfigFetcher implements Closeable {
                 if (!isClosed.get()) {
                     logger.error("An error occurred during fetching the latest configuration.", e);
                 }
-                future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
+                future.complete(FetchResponse.failed());
             }
 
             @Override
             public void onResponse(Call call, Response response) {
                 try (ResponseBody body = response.body()) {
                     if (response.isSuccessful() && body != null) {
-                        Config config = configMemoryCache.getConfigFromJson(body.string());
-                        if (config == null) {
-                            future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
+                        String content = body.string();
+                        String eTag = response.header("ETag");
+                        Config config = configJsonCache.readFromJson(content, eTag);
+                        if (config == Config.empty) {
+                            future.complete(FetchResponse.failed());
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
-                        eTag = response.header("ETag");
-                        future.complete(new FetchResponse(FetchResponse.Status.FETCHED, config));
+                        future.complete(FetchResponse.fetched(config));
                     } else if (response.code() == 304) {
                         logger.debug("Fetch was successful: config not modified.");
-                        future.complete(new FetchResponse(FetchResponse.Status.NOT_MODIFIED, null));
+                        future.complete(FetchResponse.notModified());
                     } else {
                         logger.error("Double-check your API KEY at https://app.configcat.com/apikey. Received unexpected response: " + response.code());
-                        future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
+                        future.complete(FetchResponse.failed());
                     }
                 } catch (SocketTimeoutException e) {
                     logger.error("Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]", e);
-                    future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
+                    future.complete(FetchResponse.failed());
                 } catch (Exception e) {
                     logger.error("Exception in ConfigFetcher.getResponseAsync", e);
-                    future.complete(new FetchResponse(FetchResponse.Status.FAILED, null));
+                    future.complete(FetchResponse.failed());
                 }
             }
         });
@@ -158,24 +158,21 @@ class ConfigFetcher implements Closeable {
         }
 
         if (this.httpClient != null) {
-            if (this.httpClient.dispatcher() != null && this.httpClient.dispatcher().executorService() != null)
-                this.httpClient.dispatcher().executorService().shutdownNow();
-
-            if (this.httpClient.connectionPool() != null)
-                this.httpClient.connectionPool().evictAll();
-
-            if (this.httpClient.cache() != null)
-                this.httpClient.cache().close();
+            this.httpClient.dispatcher().executorService().shutdownNow();
+            this.httpClient.connectionPool().evictAll();
+            Cache cache = this.httpClient.cache();
+            if (cache != null)
+                cache.close();
         }
     }
 
-    Request getRequest() {
+    Request getRequest(String etag) {
         String url = this.url + "/configuration-files/" + this.sdkKey + "/" + CONFIG_JSON_NAME + ".json";
         Request.Builder builder = new Request.Builder()
                 .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/" + this.mode + "-" + this.version);
 
-        if (this.eTag != null)
-            builder.addHeader("If-None-Match", this.eTag);
+        if (etag != null && !etag.isEmpty())
+            builder.addHeader("If-None-Match", etag);
 
         return builder.url(url).build();
     }

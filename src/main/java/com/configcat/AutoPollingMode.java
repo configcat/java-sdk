@@ -30,5 +30,4 @@ class AutoPollingMode extends PollingMode {
     String getPollingIdentifier() {
         return "a";
     }
-
 }

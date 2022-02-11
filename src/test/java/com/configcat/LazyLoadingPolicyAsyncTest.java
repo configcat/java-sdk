@@ -27,10 +27,9 @@ public class LazyLoadingPolicyAsyncTest {
 
         PollingMode mode = PollingModes
                 .lazyLoad(5, true);
-
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigCache cache = new InMemoryConfigCache();
-        this.policy = new LazyLoadingPolicy(fetcher, cache, logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) mode);
+        ConfigJsonCache cache = new ConfigJsonCache(logger, new NullConfigCache(), "");
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, cache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        this.policy = new LazyLoadingPolicy(fetcher, logger, cache, (LazyLoadingMode) mode);
     }
 
     @AfterEach
@@ -65,8 +64,9 @@ public class LazyLoadingPolicyAsyncTest {
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes
                 .lazyLoad(5, true);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigMemoryCache(logger), "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        RefreshPolicyBase lPolicy = new LazyLoadingPolicy(fetcher, new FailingCache(), logger, new ConfigMemoryCache(logger), "", (LazyLoadingMode) mode);
+        ConfigJsonCache cache = new ConfigJsonCache(logger, new FailingCache(), "");
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, cache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        RefreshPolicyBase lPolicy = new LazyLoadingPolicy(fetcher, logger, cache, (LazyLoadingMode) mode);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
