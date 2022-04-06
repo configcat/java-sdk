@@ -23,7 +23,6 @@ public class ConfigCatClientIntegrationTest {
     private static final String APIKEY = "TEST_KEY";
     private ConfigCatClient client;
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingPolicyTest.class));
 
     private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
@@ -224,7 +223,8 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void ensureFailingCacheWriteDoesNotPreventFurtherWrites() {
         FailingWriteCache cache = new FailingWriteCache();
-        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
+        ConfigJsonCache memoryCache = new ConfigJsonCache(
+                new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClientIntegrationTest.class)), cache, "");
 
         Config initialConfig = memoryCache.readFromJson(String.format(TEST_JSON, "initial"), "etag1");
         memoryCache.writeToCache(initialConfig);
