@@ -230,7 +230,7 @@ public class ConfigCatClientIntegrationTest {
         memoryCache.writeToCache(initialConfig);
 
         Config updated = memoryCache.readFromJson(String.format(TEST_JSON, "updated"), "etag2");
-        memoryCache.writeToCache(updated);
+        memoryCache.writeToCache(updated); // this will fail
 
         Config fromCache1 = memoryCache.readFromCache();
         assertEquals(initialConfig.eTag, fromCache1.eTag);
