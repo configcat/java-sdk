@@ -12,3 +12,4 @@ public class FailingCache extends ConfigCache {
         throw new Exception();
     }
 }
+

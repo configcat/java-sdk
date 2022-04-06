@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
-import java.time.Instant;
 
 class ConfigJsonCache {
     private static final String CACHE_BASE = "java_" + ConfigFetcher.CONFIG_JSON_NAME + "_%s";
@@ -44,9 +43,6 @@ class ConfigJsonCache {
 
         try {
             Config config = this.deserialize(fromCache);
-            if (this.inMemoryConfig.timeStamp >= config.timeStamp) {
-                return this.inMemoryConfig;
-            }
             this.inMemoryConfig = config;
             this.inMemoryConfigString = fromCache;
             return config;
@@ -58,7 +54,6 @@ class ConfigJsonCache {
 
     public void writeToCache(Config config) {
         try {
-            config.timeStamp = Instant.now().getEpochSecond();
             String configToCache = this.gson.toJson(config);
             this.inMemoryConfig = config;
             this.inMemoryConfigString = configToCache;

@@ -6,14 +6,17 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 public class ConfigCatClientIntegrationTest {
 
@@ -206,12 +209,37 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getAllKeys() {
+    public void getAllKeys() throws IOException {
         ConfigCatClient cl = new ConfigCatClient("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
 
         Collection<String> keys = cl.getAllKeys();
 
         assertEquals(16, keys.size());
         assertTrue(keys.contains("stringDefaultCat"));
+
+        cl.close();
+    }
+
+    @Test
+    public void ensureFailingCacheWriteDoesNotPreventFurtherWrites() {
+        FailingWriteCache cache = new FailingWriteCache();
+        ConfigJsonCache memoryCache = new ConfigJsonCache(
+                new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClientIntegrationTest.class)), cache, "");
+
+        Config initialConfig = memoryCache.readFromJson(String.format(TEST_JSON, "initial"), "etag1");
+        memoryCache.writeToCache(initialConfig);
+
+        Config updated = memoryCache.readFromJson(String.format(TEST_JSON, "updated"), "etag2");
+        memoryCache.writeToCache(updated); // this will fail
+
+        Config fromCache1 = memoryCache.readFromCache();
+        assertEquals(initialConfig.eTag, fromCache1.eTag);
+
+        memoryCache.writeToCache(updated);
+
+        Config fromCache2 = memoryCache.readFromCache();
+        assertEquals(updated.eTag, fromCache2.eTag);
+
+        assertEquals(2, cache.successCounter.get());
     }
 }
