@@ -248,7 +248,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getAllValues() throws IOException, ExecutionException, InterruptedException {
+    public void getAllValues() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 

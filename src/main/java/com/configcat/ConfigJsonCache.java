@@ -44,9 +44,6 @@ class ConfigJsonCache {
 
         try {
             Config config = this.deserialize(fromCache);
-            if (this.inMemoryConfig.timeStamp >= config.timeStamp) {
-                return this.inMemoryConfig;
-            }
             this.inMemoryConfig = config;
             this.inMemoryConfigString = fromCache;
             return config;
@@ -58,7 +55,6 @@ class ConfigJsonCache {
 
     public void writeToCache(Config config) {
         try {
-            config.timeStamp = Instant.now().getEpochSecond();
             String configToCache = this.gson.toJson(config);
             this.inMemoryConfig = config;
             this.inMemoryConfigString = configToCache;

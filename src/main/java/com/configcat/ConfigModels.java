@@ -20,8 +20,6 @@ class Config {
     public Map<String, Setting> entries = new HashMap<>();
     @SerializedName(value = "e")
     public String eTag = "";
-    @SerializedName(value = "t")
-    public long timeStamp = -1;
 
     public static Config empty = new Config();
 }

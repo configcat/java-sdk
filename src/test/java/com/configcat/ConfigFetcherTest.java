@@ -141,37 +141,12 @@ public class ConfigFetcherTest {
     }
 
     @Test
-    public void cacheWriteFails() throws Exception {
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON2));
-        ConfigCache cache = mock(ConfigCache.class);
-
-        Gson gson = new GsonBuilder().create();
-        Config config = gson.fromJson(TEST_JSON, Config.class);
-        config.timeStamp = Instant.now().getEpochSecond();
-
-        when(cache.read(anyString())).thenReturn(gson.toJson(config));
-        doThrow(new Exception()).when(cache).write(anyString(), anyString());
-
-        ConfigJsonCache configJsonCache = new ConfigJsonCache(logger, cache, "");
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, configJsonCache,
-                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
-
-        FetchResponse result = fetcher.fetchAsync().get();
-        configJsonCache.writeToCache(result.config());
-
-        assertEquals("fakeValue2", configJsonCache.readFromCache().entries.get("fakeKey").value.getAsString());
-
-        fetcher.close();
-    }
-
-    @Test
     public void cacheWriteFailsCachedTakesPrecedence() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON2));
         ConfigCache cache = mock(ConfigCache.class);
 
         Gson gson = new GsonBuilder().create();
         Config config = gson.fromJson(TEST_JSON, Config.class);
-        config.timeStamp = Instant.now().getEpochSecond() + 50;
 
         when(cache.read(anyString())).thenReturn(gson.toJson(config));
         doThrow(new Exception()).when(cache).write(anyString(), anyString());
