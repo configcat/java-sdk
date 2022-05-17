@@ -19,7 +19,7 @@ public class LocalTests {
     @Test
     public void withClient() throws IOException {
         ConfigCatClient client = new ConfigCatClient.Builder()
-                .flagOverrides(OverrideDataSourceBuilder.classPathResource("test.json", false), OverrideBehaviour.LOCAL_ONLY)
+                .flagOverrides(OverrideDataSourceBuilder.classPathResource("test.json"), OverrideBehaviour.LOCAL_ONLY)
                 .build("localhost");
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
@@ -34,7 +34,7 @@ public class LocalTests {
     @Test
     public void withClient_Simple() throws IOException {
         ConfigCatClient client = new ConfigCatClient.Builder()
-                .flagOverrides(OverrideDataSourceBuilder.classPathResource("test-simple.json", false), OverrideBehaviour.LOCAL_ONLY)
+                .flagOverrides(OverrideDataSourceBuilder.classPathResource("test-simple.json"), OverrideBehaviour.LOCAL_ONLY)
                 .build("localhost");
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));

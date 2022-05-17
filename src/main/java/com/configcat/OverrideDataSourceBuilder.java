@@ -48,11 +48,10 @@ public class OverrideDataSourceBuilder {
      * Creates an override data source builder that describes a classpath resource data source.
      *
      * @param resourceName name of the classpath resource.
-     * @param autoReload   when it's true, the file will be reloaded when it gets modified.
      * @return the builder.
      */
-    public static OverrideDataSourceBuilder classPathResource(String resourceName, boolean autoReload) {
-        return new OverrideDataSourceBuilder(resourceName, true, autoReload);
+    public static OverrideDataSourceBuilder classPathResource(String resourceName) {
+        return new OverrideDataSourceBuilder(resourceName, true, false);
     }
 
     /**

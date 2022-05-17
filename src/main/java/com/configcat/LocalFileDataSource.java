@@ -4,9 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
+import sun.misc.IOUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.HashMap;
@@ -20,22 +21,26 @@ class LocalFileDataSource extends OverrideDataSource {
     private final Gson gson = new GsonBuilder().create();
     private Map<String, Setting> loadedSettings = new HashMap<>();
     private final FileWatcher watcher;
-    private final File file;
+    private final String filePath;
+    private final boolean isResource;
 
     public LocalFileDataSource(String filePath, boolean isResource, ConfigCatLogger logger, boolean autoReload) {
-        this.file = isResource
-                ? new File(getClass().getClassLoader().getResource(filePath).getFile())
-                : new File(filePath);
+        this.isResource = isResource;
         this.logger = logger;
+        this.filePath = filePath;
+
+        this.logger.debug("Reading " + this.filePath + " for local overrides.");
+
         this.reloadFileContent();
 
         FileWatcher fileWatcher = null;
-        if (autoReload) {
+        if (autoReload && !isResource) {
+            Path path = Paths.get(filePath);
             try {
-                fileWatcher = FileWatcher.create(this.file.toPath());
+                fileWatcher = FileWatcher.create(Paths.get(filePath));
                 fileWatcher.start(this::reloadFileContent);
             } catch (IOException e) {
-                this.logger.error("Error during initializing file watcher on " + this.file.toPath() + ".", e);
+                this.logger.error("Error during initializing file watcher on " + path + ".", e);
             }
         }
         this.watcher = fileWatcher;
@@ -58,7 +63,7 @@ class LocalFileDataSource extends OverrideDataSource {
         try {
             content = this.readFile();
         } catch (IOException e) {
-            this.logger.error("Error during reading " + this.file.toPath() + ".", e);
+            this.logger.error("Error during reading " + this.filePath + ".", e);
         }
 
         if (content != null && !content.isEmpty()) {
@@ -79,8 +84,18 @@ class LocalFileDataSource extends OverrideDataSource {
     }
 
     private String readFile() throws IOException {
-        byte[] content = Files.readAllBytes(this.file.toPath());
-        return new String(content, Charset.defaultCharset());
+        if (this.isResource) {
+            try (InputStream stream = getClass().getClassLoader().getResourceAsStream(this.filePath)) {
+                if (stream == null) {
+                    throw new IOException();
+                }
+                byte[] content = IOUtils.readAllBytes(stream);
+                return new String(content, Charset.defaultCharset());
+            }
+        } else {
+            byte[] content = Files.readAllBytes(Paths.get(this.filePath));
+            return new String(content, Charset.defaultCharset());
+        }
     }
 
     private static final class FileWatcher implements Runnable {
