@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
-import sun.misc.IOUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -89,8 +89,13 @@ class LocalFileDataSource extends OverrideDataSource {
                 if (stream == null) {
                     throw new IOException();
                 }
-                byte[] content = IOUtils.readAllBytes(stream);
-                return new String(content, Charset.defaultCharset());
+                byte[] buffer = new byte[4096];
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                int temp;
+                while ((temp = stream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, temp);
+                }
+                return new String(outputStream.toByteArray(), Charset.defaultCharset());
             }
         } else {
             byte[] content = Files.readAllBytes(Paths.get(this.filePath));
