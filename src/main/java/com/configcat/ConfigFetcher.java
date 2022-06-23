@@ -14,7 +14,7 @@ class ConfigFetcher implements Closeable {
     private final ConfigCatLogger logger;
     private final OkHttpClient httpClient;
     private final String mode;
-    private final String version = "7.1.1";
+    private static final String version = "7.1.2";
     private final ConfigJsonCache configJsonCache;
     private final String sdkKey;
     private final boolean urlIsCustom;
