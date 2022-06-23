@@ -30,9 +30,9 @@ repositories {
 }
 
 dependencies {
-    api 'com.squareup.okhttp3:okhttp:3.14.9'
-    api 'org.slf4j:slf4j-api:1.7.32'
-    api 'com.google.code.gson:gson:2.8.9'
+    api 'com.squareup.okhttp3:okhttp:4.10.0'
+    api 'org.slf4j:slf4j-api:1.7.36'
+    api 'com.google.code.gson:gson:2.9.0'
     api 'commons-codec:commons-codec:1.15'
     api 'de.skuzzle:semantic-version:2.1.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.1.0'

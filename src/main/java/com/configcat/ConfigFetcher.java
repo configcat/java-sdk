@@ -1,6 +1,7 @@
 package com.configcat;
 
 import okhttp3.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -14,7 +15,7 @@ class ConfigFetcher implements Closeable {
     private final ConfigCatLogger logger;
     private final OkHttpClient httpClient;
     private final String mode;
-    private static final String version = "7.1.2";
+    private static final String version = "7.1.3";
     private final ConfigJsonCache configJsonCache;
     private final String sdkKey;
     private final boolean urlIsCustom;
@@ -109,7 +110,7 @@ class ConfigFetcher implements Closeable {
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 if (!isClosed.get()) {
                     logger.error("An error occurred during fetching the latest configuration.", e);
                 }
@@ -117,7 +118,7 @@ class ConfigFetcher implements Closeable {
             }
 
             @Override
-            public void onResponse(Call call, Response response) {
+            public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
@@ -168,7 +169,7 @@ class ConfigFetcher implements Closeable {
     Request getRequest(String etag) {
         String url = this.url + "/configuration-files/" + this.sdkKey + "/" + CONFIG_JSON_NAME + ".json";
         Request.Builder builder = new Request.Builder()
-                .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/" + this.mode + "-" + this.version);
+                .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/" + this.mode + "-" + version);
 
         if (etag != null && !etag.isEmpty())
             builder.addHeader("If-None-Match", etag);
