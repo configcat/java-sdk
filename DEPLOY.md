@@ -3,7 +3,7 @@
 ## Preparation
 
 1. Run tests
-3. Increase the version in the `gradle.properties` file.
+3. Increase the version in the `gradle.properties` `src/main/java/com.configcat/ConfigFetcher.java` file.
 4. Commit & Push
 
 ## Publish
