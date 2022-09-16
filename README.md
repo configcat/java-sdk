@@ -26,7 +26,7 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 ```
 *Gradle:*
 ```groovy
-compile group: 'com.configcat', name: 'configcat-java-client', version: '7.+'
+implementation "com.configcat:configcat-java-client:7.+"
 ```
 
 ### 2. Go to the <a href="https://app.configcat.com/sdkkey" target="_blank">ConfigCat Dashboard</a> to get your *SDK Key*:
