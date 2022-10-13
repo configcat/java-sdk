@@ -13,7 +13,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
 
 public class ConfigCatClientTest {
 
@@ -21,6 +20,7 @@ public class ConfigCatClientTest {
 
     private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
     private static final String TEST_JSON_MULTIPLE = "{ f: { key1: { v: true, i: 'fakeId1', p: [] ,r: [] }, key2: { v: false, i: 'fakeId2', p: [] ,r: [] } } }";
+    public static final String TEST_JSON_DEFAULT_USER = "{'f':{'fakeKey':{'v':'defaultValue','i':'defaultId', 'r':[{'o':'0','a':'Identifier','t':2,'c':'test1','v':'fakeValue1','i':'test1Id'},{'o':'1','a':'Identifier','t':2,'c':'test2','v':'fakeValue2','i':'test2Id'}]}}}";
 
     @Test
     public void ensuresApiKeyIsNotNull() {
@@ -277,5 +277,44 @@ public class ConfigCatClientTest {
 
         assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class, null, false).get());
         assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class, "", false).get());
+    }
+
+    @Test
+    public void testDefaultUser() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        User user1 = User.newBuilder().build("test1");
+        User user2 = User.newBuilder().build("test2");
+
+        ConfigCatClient cl = ConfigCatClient.newBuilder()
+                .mode(PollingModes.manualPoll())
+                .baseUrl(server.url("/").toString())
+                .defaultUser(user2)
+                .build(APIKEY);
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_DEFAULT_USER));
+        cl.forceRefresh();
+
+        //test build param
+        assertEquals("fakeValue2", cl.getValue(String.class, "fakeKey", null,null));
+        cl.clearDefaultUser();
+
+        //without default user
+        assertEquals("fakeValue1", cl.getValue(String.class, "fakeKey", user1,null));
+        assertEquals("defaultValue", cl.getValue(String.class, "fakeKey", null,null));
+        assertEquals("fakeValue2", cl.getValue(String.class, "fakeKey", user2,null));
+
+        //manual set default user
+        cl.setDefaultUser(user2);
+        assertEquals("fakeValue1", cl.getValue(String.class, "fakeKey", user1,null));
+        assertEquals("fakeValue2", cl.getValue(String.class, "fakeKey", null,null));
+
+        //test clear
+        cl.clearDefaultUser();
+        assertEquals("defaultValue", cl.getValue(String.class, "fakeKey", null,null));
+
+        server.shutdown();
+        cl.close();
     }
 }
