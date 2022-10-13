@@ -24,6 +24,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private final OverrideBehaviour overrideBehaviour;
     private final String sdkKey;
 
+    private User defaultUser;
+
     private ConfigCatClient(String sdkKey, Builder builder) throws IllegalArgumentException {
         if (sdkKey == null || sdkKey.isEmpty())
             throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
@@ -77,6 +79,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             this.refreshPolicy = this.selectPolicy(pollingMode, fetcher, this.logger, configJsonCache);
         }
+        this.defaultUser = builder.defaultUser;
     }
 
     /**
@@ -244,7 +247,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         for (String key : keys) {
                             Setting setting = settings.get(key);
-                            JsonElement evaluated = this.rolloutEvaluator.evaluate(setting, key, user).getKey();
+
+                            JsonElement evaluated = this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user)).getKey();
                             Object value = this.parseObject(this.classBySettingType(setting.type), evaluated);
                             result.put(key, value);
                         }
@@ -327,6 +331,16 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
+    public void setDefaultUser(User defaultUser) {
+        this.defaultUser = defaultUser;
+    }
+
+    @Override
+    public void clearDefaultUser() {
+        this.defaultUser = null;
+    }
+
+    @Override
     public void close() throws IOException {
         this.refreshPolicy.close();
         this.overrideDataSource.close();
@@ -372,7 +386,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return defaultValue;
             }
 
-            return (T) this.parseObject(classOfT, this.rolloutEvaluator.evaluate(setting, key, user).getKey());
+            return (T) this.parseObject(classOfT, this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user)).getKey());
         } catch (Exception e) {
             this.logger.error("Evaluating getValue('" + key + "') failed. Returning defaultValue: [" + defaultValue + "]. "
                     + e.getMessage(), e);
@@ -392,7 +406,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 this.logger.error("Variation ID not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet()));
                 return defaultVariationId;
             }
-            return this.rolloutEvaluator.evaluate(setting, key, user).getValue();
+            return this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user)).getValue();
         } catch (Exception e) {
             this.logger.error("Evaluating getVariationId('" + key + "') failed. Returning defaultVariationId: [" + defaultVariationId + "]. "
                     + e.getMessage(), e);
@@ -473,6 +487,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     /**
+     * Checks the user for evaluation, if the user null return with the default user .
+     * @param user The user for evaluation.
+     * @return if the user null return with the default user else with the user.
+     */
+    private User getEvaluateUser(final User user){
+        return user != null ? user : defaultUser;
+    }
+    /**
      * Creates a new builder instance.
      *
      * @return the new builder.
@@ -493,6 +515,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private DataGovernance dataGovernance;
         private OverrideDataSourceBuilder localDataSourceBuilder;
         private OverrideBehaviour overrideBehaviour;
+        private User defaultUser;
 
         /**
          * Sets the underlying http client which will be used to fetch the latest configuration.
@@ -583,6 +606,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             this.localDataSourceBuilder = dataSourceBuilder;
             this.overrideBehaviour = behaviour;
+            return this;
+        }
+
+        /**
+         * Sets the default user.
+         *
+         * @param defaultUser the default user.
+         * @return the builder.
+         */
+        public Builder defaultUser(User defaultUser) {
+            this.defaultUser = defaultUser;
             return this;
         }
 
