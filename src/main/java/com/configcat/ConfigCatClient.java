@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 public final class ConfigCatClient implements ConfigurationProvider {
     private static final String BASE_URL_GLOBAL = "https://cdn-global.configcat.com";
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
-    private static final Set<String> SDK_KEYS = new HashSet<>();
+    private  static final Map<String, ConfigCatClient> INSTANCE = new HashMap<String, ConfigCatClient>();
 
     private final RefreshPolicy refreshPolicy;
     private final ConfigCatLogger logger;
@@ -24,48 +24,49 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private final OverrideBehaviour overrideBehaviour;
     private final String sdkKey;
 
+
     private User defaultUser;
 
-    private ConfigCatClient(String sdkKey, Builder builder) throws IllegalArgumentException {
+    private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException {
         if (sdkKey == null || sdkKey.isEmpty())
             throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
 
-        LogLevel logLevel = builder.logLevel == null ? LogLevel.WARNING : builder.logLevel;
-        DataGovernance dataGovernance = builder.dataGovernance == null ? DataGovernance.GLOBAL : builder.dataGovernance;
+        LogLevel logLevel = options.logLevel == null ? LogLevel.WARNING : options.logLevel;
+        DataGovernance dataGovernance = options.dataGovernance == null ? DataGovernance.GLOBAL : options.dataGovernance;
         this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), logLevel);
 
-        if (SDK_KEYS.contains(sdkKey)) {
-            this.logger.warn("A ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'. We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
-        }
+//        if (SDK_KEYS.contains(sdkKey)) {
+//            this.logger.warn("A ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'. We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
+//        }
 
-        SDK_KEYS.add(sdkKey);
+//        SDK_KEYS.add(sdkKey);
 
         this.sdkKey = sdkKey;
-        this.overrideDataSource = builder.localDataSourceBuilder != null
-                ? builder.localDataSourceBuilder.build(this.logger)
+        this.overrideDataSource = options.localDataSourceBuilder != null
+                ? options.localDataSourceBuilder.build(this.logger)
                 : new OverrideDataSource();
-        this.overrideBehaviour = builder.overrideBehaviour;
+        this.overrideBehaviour = options.overrideBehaviour;
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
-        ConfigCache cache = builder.cache == null
+        ConfigCache cache = options.cache == null
                 ? new NullConfigCache()
-                : builder.cache;
+                : options.cache;
 
         ConfigJsonCache configJsonCache = new ConfigJsonCache(this.logger, cache, sdkKey);
 
-        PollingMode pollingMode = builder.pollingMode == null
+        PollingMode pollingMode = options.pollingMode == null
                 ? PollingModes.autoPoll(60)
-                : builder.pollingMode;
+                : options.pollingMode;
 
         if (this.overrideBehaviour == OverrideBehaviour.LOCAL_ONLY) {
             this.refreshPolicy = new NullRefreshPolicy();
         } else {
-            boolean hasCustomBaseUrl = builder.baseUrl != null && !builder.baseUrl.isEmpty();
-            ConfigFetcher fetcher = new ConfigFetcher(builder.httpClient == null
+            boolean hasCustomBaseUrl = options.baseUrl != null && !options.baseUrl.isEmpty();
+            ConfigFetcher fetcher = new ConfigFetcher(options.httpClient == null
                     ? new OkHttpClient
                     .Builder()
                     .build()
-                    : builder.httpClient,
+                    : options.httpClient,
                     this.logger,
                     configJsonCache,
                     sdkKey,
@@ -73,13 +74,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
                             ? dataGovernance == DataGovernance.GLOBAL
                             ? BASE_URL_GLOBAL
                             : BASE_URL_EU
-                            : builder.baseUrl,
+                            : options.baseUrl,
                     hasCustomBaseUrl,
                     pollingMode.getPollingIdentifier());
 
             this.refreshPolicy = this.selectPolicy(pollingMode, fetcher, this.logger, configJsonCache);
         }
-        this.defaultUser = builder.defaultUser;
+        this.defaultUser = options.defaultUser;
     }
 
     /**
@@ -87,8 +88,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
      *
      * @param sdkKey the token which identifies your project configuration.
      */
+    @Deprecated
     public ConfigCatClient(String sdkKey) {
-        this(sdkKey, newBuilder());
+        this(sdkKey, new Options());
     }
 
     @Override
@@ -344,7 +346,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public void close() throws IOException {
         this.refreshPolicy.close();
         this.overrideDataSource.close();
-        SDK_KEYS.remove(this.sdkKey);
+        //TODO remove from instance. sync?
+        //SDK_KEYS.remove(this.sdkKey);
     }
 
     private CompletableFuture<Map<String, Setting>> getSettingsAsync() {
@@ -494,19 +497,44 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private User getEvaluateUser(final User user){
         return user != null ? user : defaultUser;
     }
-    /**
-     * Creates a new builder instance.
-     *
-     * @return the new builder.
-     */
-    public static Builder newBuilder() {
-        return new Builder();
+
+    public static ConfigCatClient get(final String sdkKey){
+        return ConfigCatClient.get(sdkKey, null);
+    }
+
+    public static ConfigCatClient get(final String sdkKey, final Options options){
+        if(sdkKey ==  null || sdkKey.isEmpty()){
+            throw new IllegalArgumentException("SDK Key not porvided for the client.");
+        }
+
+        synchronized (INSTANCE){
+            ConfigCatClient client;
+
+            Options clientOptions = options;
+            if(clientOptions == null){
+                clientOptions = new Options();
+            }
+            if (INSTANCE.containsKey(sdkKey)){
+                client = INSTANCE.get(sdkKey);
+                //TODO check if config is different
+                //TODO client store options???? check against old options or presented settings like default user?
+                //TODO andriod-sdk doesn't care about actual macthcing
+                //TODO if different LOG WARN
+                //client.logger.warn("A client is already configured with a different options, the new options will be ignored.");
+                return client;
+            }
+
+            client = new ConfigCatClient(sdkKey, clientOptions);
+            INSTANCE.put(sdkKey, client);
+
+            return client;
+        }
     }
 
     /**
-     * A builder that helps construct a {@link ConfigCatClient} instance.
+     * Options for configuring  {@link ConfigCatClient} instance.
      */
-    public static class Builder {
+    public static class Options {
         private OkHttpClient httpClient;
         private ConfigCache cache;
         private String baseUrl;
@@ -521,44 +549,36 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * Sets the underlying http client which will be used to fetch the latest configuration.
          *
          * @param httpClient the http client.
-         * @return the builder.
          */
-        public Builder httpClient(OkHttpClient httpClient) {
+        public void httpClient(OkHttpClient httpClient) {
             this.httpClient = httpClient;
-            return this;
         }
 
         /**
          * Sets the internal cache implementation.
          *
          * @param cache a {@link ConfigCache} implementation used to cache the configuration.
-         * @return the builder.
          */
-        public Builder cache(ConfigCache cache) {
+        public void cache(ConfigCache cache) {
             this.cache = cache;
-            return this;
         }
 
         /**
          * Sets the base ConfigCat CDN url.
          *
          * @param baseUrl the base ConfigCat CDN url.
-         * @return the builder.
          */
-        public Builder baseUrl(String baseUrl) {
+        public void baseUrl(String baseUrl) {
             this.baseUrl = baseUrl;
-            return this;
         }
 
         /**
          * Sets the internal refresh policy implementation.
          *
          * @param pollingMode the polling mode.
-         * @return the builder.
          */
-        public Builder mode(PollingMode pollingMode) {
+        public void mode(PollingMode pollingMode) {
             this.pollingMode = pollingMode;
-            return this;
         }
 
         /**
@@ -566,22 +586,18 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * https://app.configcat.com/organization/data-governance (Only Organization Admins have access)
          *
          * @param dataGovernance the {@link DataGovernance} parameter.
-         * @return the builder.
          */
-        public Builder dataGovernance(DataGovernance dataGovernance) {
+        public void dataGovernance(DataGovernance dataGovernance) {
             this.dataGovernance = dataGovernance;
-            return this;
         }
 
         /**
          * Default: Warning. Sets the internal log level.
          *
          * @param logLevel the {@link LogLevel} parameter.
-         * @return the builder.
          */
-        public Builder logLevel(LogLevel logLevel) {
+        public void logLevel(LogLevel logLevel) {
             this.logLevel = logLevel;
-            return this;
         }
 
         /**
@@ -591,11 +607,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * @param behaviour the override behaviour. It can be used to set preference on whether the local values should
          *                  override the remote values, or use local values only when a remote value doesn't exist,
          *                  or use it for local only mode.
-         * @return the builder.
          *
          * @throws IllegalArgumentException when the <tt>dataSourceBuilder</tt> or <tt>behaviour</tt> parameter is null.
          */
-        public Builder flagOverrides(OverrideDataSourceBuilder dataSourceBuilder, OverrideBehaviour behaviour) {
+        public void flagOverrides(OverrideDataSourceBuilder dataSourceBuilder, OverrideBehaviour behaviour) {
             if (dataSourceBuilder == null) {
                 throw new IllegalArgumentException("'dataSourceBuilder' cannot be null or empty.");
             }
@@ -606,28 +621,16 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             this.localDataSourceBuilder = dataSourceBuilder;
             this.overrideBehaviour = behaviour;
-            return this;
         }
 
         /**
          * Sets the default user.
          *
          * @param defaultUser the default user.
-         * @return the builder.
          */
-        public Builder defaultUser(User defaultUser) {
+        public void defaultUser(User defaultUser) {
             this.defaultUser = defaultUser;
-            return this;
-        }
-
-        /**
-         * Builds the configured {@link ConfigCatClient} instance.
-         *
-         * @param sdkKey the project token.
-         * @return the configured {@link ConfigCatClient} instance.
-         */
-        public ConfigCatClient build(String sdkKey) {
-            return new ConfigCatClient(sdkKey, this);
         }
     }
+
 }
