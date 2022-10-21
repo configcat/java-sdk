@@ -346,8 +346,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public void close() throws IOException {
         this.refreshPolicy.close();
         this.overrideDataSource.close();
-        //TODO remove from instance. sync?
-        //SDK_KEYS.remove(this.sdkKey);
+        synchronized (INSTANCE){
+            INSTANCE.remove(sdkKey);
+        }
     }
 
     private CompletableFuture<Map<String, Setting>> getSettingsAsync() {
@@ -504,7 +505,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     public static ConfigCatClient get(final String sdkKey, final Options options){
         if(sdkKey ==  null || sdkKey.isEmpty()){
-            throw new IllegalArgumentException("SDK Key not porvided for the client.");
+            throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
         }
 
         synchronized (INSTANCE){
@@ -518,6 +519,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 client = INSTANCE.get(sdkKey);
                 //TODO check if config is different
                 //TODO client store options???? check against old options or presented settings like default user?
+                //TODO write custom equals in optins if want to check it
                 //TODO andriod-sdk doesn't care about actual macthcing
                 //TODO if different LOG WARN
                 //client.logger.warn("A client is already configured with a different options, the new options will be ignored.");
@@ -536,11 +538,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
      */
     public static class Options {
         private OkHttpClient httpClient;
-        private ConfigCache cache;
+        private ConfigCache cache = new NullConfigCache();
         private String baseUrl;
-        private PollingMode pollingMode;
-        private LogLevel logLevel;
-        private DataGovernance dataGovernance;
+        private PollingMode pollingMode = PollingModes.autoPoll(60);
+        private LogLevel logLevel = LogLevel.WARNING;
+        private DataGovernance dataGovernance = DataGovernance.GLOBAL;
         private OverrideDataSourceBuilder localDataSourceBuilder;
         private OverrideBehaviour overrideBehaviour;
         private User defaultUser;
@@ -550,8 +552,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @param httpClient the http client.
          */
-        public void httpClient(OkHttpClient httpClient) {
+        public Options httpClient(OkHttpClient httpClient) {
             this.httpClient = httpClient;
+            return this;
         }
 
         /**
@@ -559,8 +562,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @param cache a {@link ConfigCache} implementation used to cache the configuration.
          */
-        public void cache(ConfigCache cache) {
+        public Options cache(ConfigCache cache) {
             this.cache = cache;
+            return this;
         }
 
         /**
@@ -568,8 +572,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @param baseUrl the base ConfigCat CDN url.
          */
-        public void baseUrl(String baseUrl) {
+        public Options baseUrl(String baseUrl) {
             this.baseUrl = baseUrl;
+            return this;
         }
 
         /**
@@ -577,8 +582,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @param pollingMode the polling mode.
          */
-        public void mode(PollingMode pollingMode) {
+        public Options mode(PollingMode pollingMode) {
             this.pollingMode = pollingMode;
+            return this;
         }
 
         /**
@@ -587,8 +593,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @param dataGovernance the {@link DataGovernance} parameter.
          */
-        public void dataGovernance(DataGovernance dataGovernance) {
+        public Options dataGovernance(DataGovernance dataGovernance) {
             this.dataGovernance = dataGovernance;
+            return this;
         }
 
         /**
@@ -596,8 +603,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @param logLevel the {@link LogLevel} parameter.
          */
-        public void logLevel(LogLevel logLevel) {
+        public Options logLevel(LogLevel logLevel) {
             this.logLevel = logLevel;
+            return this;
         }
 
         /**
@@ -610,7 +618,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @throws IllegalArgumentException when the <tt>dataSourceBuilder</tt> or <tt>behaviour</tt> parameter is null.
          */
-        public void flagOverrides(OverrideDataSourceBuilder dataSourceBuilder, OverrideBehaviour behaviour) {
+        public Options flagOverrides(OverrideDataSourceBuilder dataSourceBuilder, OverrideBehaviour behaviour) {
             if (dataSourceBuilder == null) {
                 throw new IllegalArgumentException("'dataSourceBuilder' cannot be null or empty.");
             }
@@ -621,6 +629,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             this.localDataSourceBuilder = dataSourceBuilder;
             this.overrideBehaviour = behaviour;
+            return this;
         }
 
         /**
@@ -628,8 +637,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @param defaultUser the default user.
          */
-        public void defaultUser(User defaultUser) {
+        public Options defaultUser(User defaultUser) {
             this.defaultUser = defaultUser;
+            return this;
         }
     }
 

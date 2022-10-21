@@ -31,11 +31,13 @@ public class ConfigCatClientIntegrationTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        this.client = ConfigCatClient.newBuilder()
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
                 .httpClient(new OkHttpClient.Builder().build())
                 .mode(PollingModes.lazyLoad(2, true))
-                .baseUrl(this.server.url("/").toString())
-                .build(APIKEY);
+                .baseUrl(this.server.url("/").toString());
+
+        this.client = ConfigCatClient.get(APIKEY, options);
+
     }
 
     @AfterEach
@@ -193,9 +195,10 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getConfigurationJsonStringWithDefaultConfigTimeout() {
-        ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build())
-                .build(APIKEY);
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
+                .httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build());
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
 
         // makes a call to a real url which would fail, null expected
         String config = cl.getValue(String.class, "test", null);
