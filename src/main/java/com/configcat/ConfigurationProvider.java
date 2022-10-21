@@ -184,4 +184,20 @@ public interface ConfigurationProvider extends Closeable {
      * @return the future which executes the refresh.
      */
     CompletableFuture<Void> forceRefreshAsync();
+
+    /**
+     * Sets defaultUser value.
+     * If no user specified in the following calls {getValue}, {getAllValues}, {getVariationId},
+     * {getAllVariationIds}, {getValueAsync},  {getAllValuesAsync}, {getVariationIdAsync}, {getAllVariationIdsAsync}
+     * the default user value will be used.
+     *
+     * @param defaultUser The new default user.
+     */
+    void setDefaultUser(User defaultUser);
+
+    /**
+     * Set default user value to null.
+     */
+    void clearDefaultUser();
+
 }
