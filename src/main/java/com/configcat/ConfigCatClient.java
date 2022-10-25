@@ -81,6 +81,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * Constructs a new client instance with the default configuration.
      *
      * @param sdkKey the token which identifies your project configuration.
+     * @deprecated Use the singleton client creation {@link ConfigCatClient#get(String)}
      */
     @Deprecated
     public ConfigCatClient(String sdkKey) {
