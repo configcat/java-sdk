@@ -10,13 +10,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
 public class ConfigCatClientIntegrationTest {
 
@@ -42,7 +40,7 @@ public class ConfigCatClientIntegrationTest {
 
     @AfterEach
     public void tearDown() throws IOException {
-        this.client.close();
+        ConfigCatClient.closeAll();
         this.server.shutdown();
     }
 
@@ -207,13 +205,13 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getConfigurationJsonStringWithDefaultConfig() throws InterruptedException, ExecutionException, TimeoutException {
-        ConfigCatClient cl = new ConfigCatClient(APIKEY);
+        ConfigCatClient cl = ConfigCatClient.get("APIKEY_DEFAULT");
         assertNull(cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
     }
 
     @Test
     public void getAllKeys() throws IOException {
-        ConfigCatClient cl = new ConfigCatClient("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
+        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
 
         Collection<String> keys = cl.getAllKeys();
 

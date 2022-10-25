@@ -35,12 +35,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
         DataGovernance dataGovernance = options.dataGovernance == null ? DataGovernance.GLOBAL : options.dataGovernance;
         this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), logLevel);
 
-//        if (SDK_KEYS.contains(sdkKey)) {
-//            this.logger.warn("A ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'. We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
-//        }
-
-//        SDK_KEYS.add(sdkKey);
-
         this.sdkKey = sdkKey;
         this.overrideDataSource = options.localDataSourceBuilder != null
                 ? options.localDataSourceBuilder.build(this.logger)
@@ -91,6 +85,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Deprecated
     public ConfigCatClient(String sdkKey) {
         this(sdkKey, new Options());
+        if(INSTANCE.containsKey(sdkKey)){
+            this.logger.warn("A singleton ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'.");
+        }
+        this.logger.warn("We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
     }
 
     @Override
@@ -344,10 +342,28 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public void close() throws IOException {
-        this.refreshPolicy.close();
-        this.overrideDataSource.close();
+        closeResources();
         synchronized (INSTANCE){
             INSTANCE.remove(sdkKey);
+        }
+    }
+
+    private void closeResources() throws IOException {
+        this.refreshPolicy.close();
+        this.overrideDataSource.close();
+    }
+
+    /**
+     * Close all ConfigCatClient instance.
+     *
+     * @throws IOException If client resource close fails.
+     */
+    public static void closeAll() throws IOException {
+        synchronized (INSTANCE){
+            for (ConfigCatClient client: INSTANCE.values()) {
+                client.closeResources();
+            }
+            INSTANCE.clear();
         }
     }
 
@@ -512,20 +528,18 @@ public final class ConfigCatClient implements ConfigurationProvider {
             ConfigCatClient client;
 
             Options clientOptions = options;
-            if(clientOptions == null){
-                clientOptions = new Options();
-            }
+
             if (INSTANCE.containsKey(sdkKey)){
                 client = INSTANCE.get(sdkKey);
-                //TODO check if config is different
-                //TODO client store options???? check against old options or presented settings like default user?
-                //TODO write custom equals in optins if want to check it
-                //TODO andriod-sdk doesn't care about actual macthcing
-                //TODO if different LOG WARN
-                //client.logger.warn("A client is already configured with a different options, the new options will be ignored.");
+                if(clientOptions != null){
+                    client.logger.warn("Client for '"+ sdkKey +"' is already created and will be reused; options passed are being ignored.");
+                }
                 return client;
             }
 
+            if(clientOptions == null){
+                clientOptions = new Options();
+            }
             client = new ConfigCatClient(sdkKey, clientOptions);
             INSTANCE.put(sdkKey, client);
 
@@ -551,6 +565,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * Sets the underlying http client which will be used to fetch the latest configuration.
          *
          * @param httpClient the http client.
+         * @return the options.
          */
         public Options httpClient(OkHttpClient httpClient) {
             this.httpClient = httpClient;
@@ -561,6 +576,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * Sets the internal cache implementation.
          *
          * @param cache a {@link ConfigCache} implementation used to cache the configuration.
+         * @return the options.
          */
         public Options cache(ConfigCache cache) {
             this.cache = cache;
@@ -571,6 +587,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * Sets the base ConfigCat CDN url.
          *
          * @param baseUrl the base ConfigCat CDN url.
+         * @return the options.
          */
         public Options baseUrl(String baseUrl) {
             this.baseUrl = baseUrl;
@@ -581,6 +598,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * Sets the internal refresh policy implementation.
          *
          * @param pollingMode the polling mode.
+         * @return the options.
          */
         public Options mode(PollingMode pollingMode) {
             this.pollingMode = pollingMode;
@@ -592,6 +610,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * https://app.configcat.com/organization/data-governance (Only Organization Admins have access)
          *
          * @param dataGovernance the {@link DataGovernance} parameter.
+         * @return the options.
          */
         public Options dataGovernance(DataGovernance dataGovernance) {
             this.dataGovernance = dataGovernance;
@@ -602,6 +621,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * Default: Warning. Sets the internal log level.
          *
          * @param logLevel the {@link LogLevel} parameter.
+         * @return the options.
          */
         public Options logLevel(LogLevel logLevel) {
             this.logLevel = logLevel;
@@ -615,6 +635,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * @param behaviour the override behaviour. It can be used to set preference on whether the local values should
          *                  override the remote values, or use local values only when a remote value doesn't exist,
          *                  or use it for local only mode.
+         * @return the options.
          *
          * @throws IllegalArgumentException when the <tt>dataSourceBuilder</tt> or <tt>behaviour</tt> parameter is null.
          */
@@ -636,6 +657,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * Sets the default user.
          *
          * @param defaultUser the default user.
+         * @return the options.
          */
         public Options defaultUser(User defaultUser) {
             this.defaultUser = defaultUser;

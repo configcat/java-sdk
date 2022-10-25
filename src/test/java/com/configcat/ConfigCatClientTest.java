@@ -281,7 +281,7 @@ public class ConfigCatClientTest {
 
     @Test
     public void getValueInvalidArguments() {
-        ConfigCatClient client = new ConfigCatClient("key");
+        ConfigCatClient client = ConfigCatClient.get("key");
         assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class, null, false));
         assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class, "", false));
 
@@ -327,5 +327,34 @@ public class ConfigCatClientTest {
 
         server.shutdown();
         cl.close();
+    }
+
+    @Test
+    void testSingleton() throws IOException {
+        ConfigCatClient client1 = ConfigCatClient.get("test");
+        ConfigCatClient client2 = ConfigCatClient.get("test");
+
+        assertSame(client1, client2);
+
+        ConfigCatClient.closeAll();
+
+        client1 = ConfigCatClient.get("test");
+
+        assertNotSame(client1, client2);
+    }
+
+    @Test
+    void testSingletonOptions() throws IOException {
+        ConfigCatClient.Options client1Options = new ConfigCatClient.Options()
+                .mode(PollingModes.autoPoll(60));
+        ConfigCatClient client1 = ConfigCatClient.get("test", client1Options);
+        ConfigCatClient.Options client2Options = new ConfigCatClient.Options()
+                .mode(PollingModes.manualPoll());
+        ConfigCatClient client2 = ConfigCatClient.get("test", client2Options);
+
+        assertSame(client1, client2);
+
+        ConfigCatClient.closeAll();
+
     }
 }
