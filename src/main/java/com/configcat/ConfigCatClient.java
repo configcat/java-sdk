@@ -514,10 +514,24 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return user != null ? user : defaultUser;
     }
 
+    /**
+     * Get a singleton ConfigCat Client for the sdk key, create a new client if not existed yet.
+     *
+     * @param sdkKey the client sdk key.
+     * @return a singleton client.
+     */
     public static ConfigCatClient get(final String sdkKey){
         return ConfigCatClient.get(sdkKey, null);
     }
 
+    /**
+     * Get a singleton ConfigCat Client for the sdk key with the options, create a new client if not existed yet.
+     * If the client already exist the options are ignored.
+     *
+     * @param sdkKey the client sdk key.
+     * @param options the client initializer options.
+     * @return a singleton client.
+     */
     public static ConfigCatClient get(final String sdkKey, final Options options){
         if(sdkKey ==  null || sdkKey.isEmpty()){
             throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
