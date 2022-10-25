@@ -330,6 +330,15 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.refreshPolicy.refreshAsync();
     }
 
+    public void setDefaultUser(User defaultUser) {
+        this.defaultUser = defaultUser;
+    }
+
+    @Override
+    public void clearDefaultUser() {
+        this.defaultUser = null;
+    }
+
     @Override
     public void close() throws IOException {
         closeResources();
