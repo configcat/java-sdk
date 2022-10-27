@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A client for handling configurations provided by ConfigCat.
@@ -15,17 +16,16 @@ import java.util.concurrent.CompletableFuture;
 public final class ConfigCatClient implements ConfigurationProvider {
     private static final String BASE_URL_GLOBAL = "https://cdn-global.configcat.com";
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
-    private  static final Map<String, ConfigCatClient> INSTANCE = new HashMap<String, ConfigCatClient>();
-
+    private static final Map<String, ConfigCatClient> INSTANCES = new HashMap<String, ConfigCatClient>();
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final RefreshPolicy refreshPolicy;
     private final ConfigCatLogger logger;
     private final RolloutEvaluator rolloutEvaluator;
     private final OverrideDataSource overrideDataSource;
     private final OverrideBehaviour overrideBehaviour;
     private final String sdkKey;
-
-
     private User defaultUser;
+
 
     private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException {
         if (sdkKey == null || sdkKey.isEmpty())
@@ -86,7 +86,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Deprecated
     public ConfigCatClient(String sdkKey) {
         this(sdkKey, new Options());
-        if(INSTANCE.containsKey(sdkKey)){
+        if(INSTANCES.containsKey(sdkKey)){
             this.logger.warn("A singleton ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'.");
         }
         this.logger.warn("We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
@@ -341,10 +341,26 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
+    public boolean isClosed() {
+        return isClosed.get();
+    }
+
+    @Override
     public void close() throws IOException {
-        closeResources();
-        synchronized (INSTANCE){
-            INSTANCE.remove(sdkKey);
+        if (!this.isClosed.compareAndSet(false, true)) {
+            return;
+        }
+        synchronized (INSTANCES){
+            if(INSTANCES.containsKey(sdkKey)){
+                if(!this.equals(INSTANCES.get(sdkKey))){
+                    return;
+                }
+                closeResources();
+                INSTANCES.remove(sdkKey);
+            }else {
+                // if client created with deprecated constructor, just close resources
+                closeResources();
+            }
         }
     }
 
@@ -354,16 +370,16 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     /**
-     * Close all ConfigCatClient instance.
+     * Close all ConfigCatClient instances.
      *
      * @throws IOException If client resource close fails.
      */
     public static void closeAll() throws IOException {
-        synchronized (INSTANCE){
-            for (ConfigCatClient client: INSTANCE.values()) {
+        synchronized (INSTANCES){
+            for (ConfigCatClient client: INSTANCES.values()) {
                 client.closeResources();
             }
-            INSTANCE.clear();
+            INSTANCES.clear();
         }
     }
 
@@ -538,13 +554,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
         }
 
-        synchronized (INSTANCE){
+        synchronized (INSTANCES){
             ConfigCatClient client;
 
             Options clientOptions = options;
 
-            if (INSTANCE.containsKey(sdkKey)){
-                client = INSTANCE.get(sdkKey);
+            if (INSTANCES.containsKey(sdkKey)){
+                client = INSTANCES.get(sdkKey);
                 if(clientOptions != null){
                     client.logger.warn("Client for '"+ sdkKey +"' is already created and will be reused; options passed are being ignored.");
                 }
@@ -555,7 +571,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 clientOptions = new Options();
             }
             client = new ConfigCatClient(sdkKey, clientOptions);
-            INSTANCE.put(sdkKey, client);
+            INSTANCES.put(sdkKey, client);
 
             return client;
         }

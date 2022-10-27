@@ -355,6 +355,45 @@ public class ConfigCatClientTest {
         assertSame(client1, client2);
 
         ConfigCatClient.closeAll();
+    }
+
+    @Test
+    void testClose() throws IOException {
+        ConfigCatClient client1 = ConfigCatClient.get("test");
+        assertFalse(client1.isClosed());
+        client1.close();
+        assertTrue(client1.isClosed());
+    }
+
+    @Test
+    void testSingletonCloseAffects() throws IOException {
+        ConfigCatClient client1 = ConfigCatClient.get("test");
+        client1.close();
+        assertTrue(client1.isClosed());
+
+        ConfigCatClient client2 = ConfigCatClient.get("test");
+        assertNotSame(client1, client2);
+        client1.close();
+        assertFalse(client2.isClosed());
+
+        ConfigCatClient client3 = ConfigCatClient.get("test");
+        assertSame(client2, client3);
+
+        client2.close();
+        assertTrue(client3.isClosed());
+
+    }
+
+    @Test
+    void testDeprecatedClientCloseAffects() throws IOException {
+        ConfigCatClient client1 = new ConfigCatClient("test");
+        ConfigCatClient client2 = ConfigCatClient.get("test");
+
+        assertNotSame(client1, client2);
+
+        client1.close();
+        assertTrue(client1.isClosed());
+        assertFalse(client2.isClosed());
 
     }
 }
