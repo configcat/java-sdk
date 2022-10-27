@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class ConfigCatClient implements ConfigurationProvider {
     private static final String BASE_URL_GLOBAL = "https://cdn-global.configcat.com";
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
-    private static final Map<String, ConfigCatClient> INSTANCES = new HashMap<String, ConfigCatClient>();
+    private static final Map<String, ConfigCatClient> INSTANCES = new HashMap<>();
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final RefreshPolicy refreshPolicy;
     private final ConfigCatLogger logger;
