@@ -36,8 +36,7 @@ public class RolloutIntegrationTests {
     }
 
     public RolloutIntegrationTests(String fileName, String apiKey, String kind) throws FileNotFoundException {
-        this.client = ConfigCatClient.newBuilder()
-                .build(apiKey);
+        this.client = ConfigCatClient.get(apiKey);
 
         ClassLoader classLoader = getClass().getClassLoader();
         this.csvScanner = new Scanner(new File(classLoader.getResource(fileName).getFile()));

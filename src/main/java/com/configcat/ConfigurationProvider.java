@@ -200,4 +200,9 @@ public interface ConfigurationProvider extends Closeable {
      */
     void clearDefaultUser();
 
+    /**
+     * Get the client closed status.
+     * @return True if the client is closed.
+     */
+    boolean isClosed();
 }
