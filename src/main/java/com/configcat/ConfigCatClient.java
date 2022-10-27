@@ -86,7 +86,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Deprecated
     public ConfigCatClient(String sdkKey) {
         this(sdkKey, new Options());
-        if(INSTANCES.containsKey(sdkKey)){
+        if (INSTANCES.containsKey(sdkKey)) {
             this.logger.warn("A singleton ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'.");
         }
         this.logger.warn("We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
@@ -350,14 +350,15 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (!this.isClosed.compareAndSet(false, true)) {
             return;
         }
-        synchronized (INSTANCES){
-            if(INSTANCES.containsKey(sdkKey)){
-                if(!this.equals(INSTANCES.get(sdkKey))){
+        synchronized (INSTANCES) {
+            ConfigCatClient client = INSTANCES.get(sdkKey);
+            if (client != null) {
+                if (!this.equals(client)) {
                     return;
                 }
                 closeResources();
                 INSTANCES.remove(sdkKey);
-            }else {
+            } else {
                 // if client created with deprecated constructor, just close resources
                 closeResources();
             }
@@ -375,8 +376,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * @throws IOException If client resource close fails.
      */
     public static void closeAll() throws IOException {
-        synchronized (INSTANCES){
-            for (ConfigCatClient client: INSTANCES.values()) {
+        synchronized (INSTANCES) {
+            for (ConfigCatClient client : INSTANCES.values()) {
                 client.closeResources();
             }
             INSTANCES.clear();
@@ -524,10 +525,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     /**
      * Checks the user for evaluation, if the user null return with the default user .
+     *
      * @param user The user for evaluation.
      * @return if the user null return with the default user else with the user.
      */
-    private User getEvaluateUser(final User user){
+    private User getEvaluateUser(final User user) {
         return user != null ? user : defaultUser;
     }
 
@@ -537,7 +539,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * @param sdkKey the client sdk key.
      * @return a singleton client.
      */
-    public static ConfigCatClient get(final String sdkKey){
+    public static ConfigCatClient get(final String sdkKey) {
         return ConfigCatClient.get(sdkKey, null);
     }
 
@@ -545,29 +547,27 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * Get a singleton ConfigCat Client for the sdk key with the options, create a new client if not existed yet.
      * If the client already exist the options are ignored.
      *
-     * @param sdkKey the client sdk key.
+     * @param sdkKey  the client sdk key.
      * @param options the client initializer options.
      * @return a singleton client.
      */
-    public static ConfigCatClient get(final String sdkKey, final Options options){
-        if(sdkKey ==  null || sdkKey.isEmpty()){
+    public static ConfigCatClient get(final String sdkKey, final Options options) {
+        if (sdkKey == null || sdkKey.isEmpty()) {
             throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
         }
 
-        synchronized (INSTANCES){
-            ConfigCatClient client;
-
+        synchronized (INSTANCES) {
             Options clientOptions = options;
 
-            if (INSTANCES.containsKey(sdkKey)){
-                client = INSTANCES.get(sdkKey);
-                if(clientOptions != null){
-                    client.logger.warn("Client for '"+ sdkKey +"' is already created and will be reused; options passed are being ignored.");
+            ConfigCatClient client = INSTANCES.get(sdkKey);
+            if (client != null) {
+                if (clientOptions != null) {
+                    client.logger.warn("Client for '" + sdkKey + "' is already created and will be reused; options passed are being ignored.");
                 }
                 return client;
             }
 
-            if(clientOptions == null){
+            if (clientOptions == null) {
                 clientOptions = new Options();
             }
             client = new ConfigCatClient(sdkKey, clientOptions);
@@ -662,11 +662,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * Sets feature flag and setting overrides.
          *
          * @param dataSourceBuilder builder that describes the overrides' data source.
-         * @param behaviour the override behaviour. It can be used to set preference on whether the local values should
-         *                  override the remote values, or use local values only when a remote value doesn't exist,
-         *                  or use it for local only mode.
+         * @param behaviour         the override behaviour. It can be used to set preference on whether the local
+         *                          values should override the remote values, or use local values only when a remote
+         *                          value doesn't exist, or use it for local only mode.
          * @return the options.
-         *
          * @throws IllegalArgumentException when the <tt>dataSourceBuilder</tt> or <tt>behaviour</tt> parameter is null.
          */
         public Options flagOverrides(OverrideDataSourceBuilder dataSourceBuilder, OverrideBehaviour behaviour) {
