@@ -29,6 +29,7 @@ class ConfigFetcher implements Closeable {
         ForceRedirect
     }
 
+    //TODO do we need the ConfigJsonCache or chace is enough
     ConfigFetcher(OkHttpClient httpClient,
                   ConfigCatLogger logger,
                   ConfigJsonCache configJsonCache,

@@ -202,7 +202,25 @@ public interface ConfigurationProvider extends Closeable {
 
     /**
      * Get the client closed status.
+     *
      * @return True if the client is closed.
      */
     boolean isClosed();
+
+    /**
+     * Set the client to online mode. HTTP calls are allowed.
+     */
+    void setOnline();
+
+    /**
+     * Set the client to offline mode. HTTP calls are not allowed.
+     */
+    void setOffline();
+
+    /**
+     * Get the client offline mode status.
+     *
+     * @return True if the client is in offline mode, otherwise false.
+     */
+    boolean isOffline();
 }

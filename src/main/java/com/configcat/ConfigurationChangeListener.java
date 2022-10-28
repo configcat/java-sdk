@@ -2,7 +2,7 @@ package com.configcat;
 
 /**
  * The interface which's implementors can be used to subscribe
- * to the configuration changed event on {@link AutoPollingPolicy}.
+ * to the configuration changed event on {@link ConfigService} with {@link AutoPollingMode}.
  */
 public interface ConfigurationChangeListener {
 

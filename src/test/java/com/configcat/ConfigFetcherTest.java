@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -20,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.never;
 
 public class ConfigFetcherTest {
     private MockWebServer server;
@@ -97,12 +94,13 @@ public class ConfigFetcherTest {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, configJsonCache,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        RefreshPolicyBase policy = new AutoPollingPolicy(fetcher, logger, configJsonCache, (AutoPollingMode) PollingModes.autoPoll(2));
-        assertEquals("fakeValue", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        ConfigService configService = new ConfigService("", fetcher, (AutoPollingMode) PollingModes.autoPoll(2), cache, logger, false);
+
+        assertEquals("fakeValue", configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
 
-        policy.close();
+        configService.close();
     }
 
     @Test
@@ -115,12 +113,12 @@ public class ConfigFetcherTest {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, configJsonCache,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        RefreshPolicyBase policy = new AutoPollingPolicy(fetcher, logger, configJsonCache, (AutoPollingMode) PollingModes.autoPoll(2));
-        assertEquals("fakeValue", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        ConfigService configService = new ConfigService("", fetcher, (AutoPollingMode) PollingModes.autoPoll(2), cache, logger, false);
+        assertEquals("fakeValue", configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
 
-        policy.close();
+        configService.close();
     }
 
     @Test

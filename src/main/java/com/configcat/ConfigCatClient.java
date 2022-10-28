@@ -5,7 +5,6 @@ import okhttp3.OkHttpClient;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,43 +17,34 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
     private static final Map<String, ConfigCatClient> INSTANCES = new HashMap<>();
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
-    private final RefreshPolicy refreshPolicy;
     private final ConfigCatLogger logger;
     private final RolloutEvaluator rolloutEvaluator;
     private final OverrideDataSource overrideDataSource;
     private final OverrideBehaviour overrideBehaviour;
     private final String sdkKey;
     private User defaultUser;
-
+    private ConfigService configService;
 
     private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException {
         if (sdkKey == null || sdkKey.isEmpty())
             throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
 
-        LogLevel logLevel = options.logLevel == null ? LogLevel.WARNING : options.logLevel;
-        DataGovernance dataGovernance = options.dataGovernance == null ? DataGovernance.GLOBAL : options.dataGovernance;
-        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), logLevel);
+        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel);
 
         this.sdkKey = sdkKey;
+        //TODO CS -  no oDS in android? why?
         this.overrideDataSource = options.localDataSourceBuilder != null
                 ? options.localDataSourceBuilder.build(this.logger)
                 : new OverrideDataSource();
         this.overrideBehaviour = options.overrideBehaviour;
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
-        ConfigCache cache = options.cache == null
-                ? new NullConfigCache()
-                : options.cache;
+        //TODO CS ?
+        ConfigJsonCache configJsonCache = new ConfigJsonCache(this.logger, options.cache, sdkKey);
 
-        ConfigJsonCache configJsonCache = new ConfigJsonCache(this.logger, cache, sdkKey);
 
-        PollingMode pollingMode = options.pollingMode == null
-                ? PollingModes.autoPoll(60)
-                : options.pollingMode;
-
-        if (this.overrideBehaviour == OverrideBehaviour.LOCAL_ONLY) {
-            this.refreshPolicy = new NullRefreshPolicy();
-        } else {
+        if (this.overrideBehaviour != OverrideBehaviour.LOCAL_ONLY) {
+            //TODO CS the whole fetcher can be in CS
             boolean hasCustomBaseUrl = options.baseUrl != null && !options.baseUrl.isEmpty();
             ConfigFetcher fetcher = new ConfigFetcher(options.httpClient == null
                     ? new OkHttpClient
@@ -65,15 +55,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     configJsonCache,
                     sdkKey,
                     !hasCustomBaseUrl
-                            ? dataGovernance == DataGovernance.GLOBAL
+                            ? options.dataGovernance == DataGovernance.GLOBAL
                             ? BASE_URL_GLOBAL
                             : BASE_URL_EU
                             : options.baseUrl,
                     hasCustomBaseUrl,
-                    pollingMode.getPollingIdentifier());
+                    options.pollingMode.getPollingIdentifier());
 
-            this.refreshPolicy = this.selectPolicy(pollingMode, fetcher, this.logger, configJsonCache);
+            //TODO CS null checks can be replaced?
+            this.configService = new ConfigService(sdkKey, fetcher, options.pollingMode, options.cache, logger, options.offline);
         }
+
         this.defaultUser = options.defaultUser;
     }
 
@@ -328,10 +320,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<Void> forceRefreshAsync() {
-        return this.refreshPolicy.refreshAsync();
+        return this.configService.refreshAsync();
     }
 
     public void setDefaultUser(User defaultUser) {
+        //TODO add logger after isClosed? is it matter?
         this.defaultUser = defaultUser;
     }
 
@@ -343,6 +336,30 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public boolean isClosed() {
         return isClosed.get();
+    }
+
+    @Override
+    public void setOnline() {
+        if (this.configService != null) {
+            this.configService.setOnline();
+        }
+        //TODO log - set to, isClosed
+    }
+
+    @Override
+    public void setOffline() {
+        if (this.configService != null) {
+            this.configService.setOffline();
+        }
+        //TODO log - set to, isClosed
+    }
+
+    @Override
+    public boolean isOffline() {
+        if (configService == null) {
+            return true;
+        }
+        return configService.isOffline();
     }
 
     @Override
@@ -366,7 +383,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private void closeResources() throws IOException {
-        this.refreshPolicy.close();
+        if (configService != null) {
+            this.configService.close();
+        }
         this.overrideDataSource.close();
     }
 
@@ -390,14 +409,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 case LOCAL_ONLY:
                     return CompletableFuture.completedFuture(this.overrideDataSource.getLocalConfiguration());
                 case REMOTE_OVER_LOCAL:
-                    return this.refreshPolicy.getSettingsAsync()
+                    return this.configService.getSettingsAsync()
                             .thenApply(settings -> {
                                 Map<String, Setting> localSettings = new HashMap<>(this.overrideDataSource.getLocalConfiguration());
                                 localSettings.putAll(settings);
                                 return localSettings;
                             });
                 case LOCAL_OVER_REMOTE:
-                    return this.refreshPolicy.getSettingsAsync()
+                    return this.configService.getSettingsAsync()
                             .thenApply(settings -> {
                                 Map<String, Setting> localSettings = this.overrideDataSource.getLocalConfiguration();
                                 Map<String, Setting> remoteSettings = new HashMap<>(settings);
@@ -407,7 +426,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             }
         }
 
-        return this.refreshPolicy.getSettingsAsync();
+        return this.configService.getSettingsAsync();
     }
 
     private <T> T getValueFromSettingsMap(Class<T> classOfT, Map<String, Setting> settings, String key, User user, T defaultValue) {
@@ -482,18 +501,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
         } catch (Exception e) {
             this.logger.error("Could not find the setting for the given variation ID: " + variationId);
             return null;
-        }
-    }
-
-    private RefreshPolicyBase selectPolicy(PollingMode mode, ConfigFetcher fetcher, ConfigCatLogger logger, ConfigJsonCache configJsonCache) {
-        if (mode instanceof AutoPollingMode) {
-            return new AutoPollingPolicy(fetcher, logger, configJsonCache, (AutoPollingMode) mode);
-        } else if (mode instanceof LazyLoadingMode) {
-            return new LazyLoadingPolicy(fetcher, logger, configJsonCache, (LazyLoadingMode) mode);
-        } else if (mode instanceof ManualPollingMode) {
-            return new ManualPollingPolicy(fetcher, logger, configJsonCache);
-        } else {
-            throw new InvalidParameterException("The polling mode parameter is invalid.");
         }
     }
 
@@ -590,6 +597,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private OverrideDataSourceBuilder localDataSourceBuilder;
         private OverrideBehaviour overrideBehaviour;
         private User defaultUser;
+        private boolean offline = false;
 
         /**
          * Sets the underlying http client which will be used to fetch the latest configuration.
@@ -692,6 +700,16 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.defaultUser = defaultUser;
             return this;
         }
-    }
 
+        /**
+         * Set client offline mode.
+         *
+         * @param offline the client offline mode value.
+         * @return the options.
+         */
+        public Options offline(boolean offline) {
+            this.offline = offline;
+            return this;
+        }
+    }
 }

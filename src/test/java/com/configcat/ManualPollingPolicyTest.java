@@ -13,11 +13,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class ManualPollingPolicyTest {
-    private RefreshPolicyBase policy;
+    private ConfigService configService;
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingPolicyTest.class));
     private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
@@ -27,15 +27,15 @@ public class ManualPollingPolicyTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, new NullConfigCache(), "");
         PollingMode mode = PollingModes.manualPoll();
+        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, new NullConfigCache(), "");
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, memoryCache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        this.policy = new ManualPollingPolicy(fetcher, logger, memoryCache);
+        this.configService = new ConfigService("", fetcher, mode, new NullConfigCache(), logger, false);
     }
 
     @AfterEach
     public void tearDown() throws IOException {
-        this.policy.close();
+        this.configService.close();
         this.server.shutdown();
     }
 
@@ -45,12 +45,12 @@ public class ManualPollingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
 
         //first call
-        this.policy.refreshAsync().get();
-        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        this.configService.refreshAsync().get();
+        assertEquals("test", this.configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
 
         //next call will get the new value
-        this.policy.refreshAsync().get();
-        assertEquals("test2", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        this.configService.refreshAsync().get();
+        assertEquals("test2", this.configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
     }
 
     @Test
@@ -58,18 +58,18 @@ public class ManualPollingPolicyTest {
         PollingMode mode = PollingModes.manualPoll();
         ConfigJsonCache cache = new ConfigJsonCache(logger, new FailingCache(), "");
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, cache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        RefreshPolicyBase lPolicy = new ManualPollingPolicy(fetcher, logger, cache);
+        ConfigService configService = new ConfigService("", fetcher, mode, new FailingCache(), logger, false);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
 
         //first call
-        lPolicy.refreshAsync().get();
-        assertEquals("test", lPolicy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        configService.refreshAsync().get();
+        assertEquals("test", configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
 
         //next call will get the new value
-        lPolicy.refreshAsync().get();
-        assertEquals("test2", lPolicy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        configService.refreshAsync().get();
+        assertEquals("test2", configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
     }
 
     @Test
@@ -78,12 +78,12 @@ public class ManualPollingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
-        this.policy.refreshAsync().get();
-        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        this.configService.refreshAsync().get();
+        assertEquals("test", this.configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
 
         //previous value returned because of the refresh failure
-        this.policy.refreshAsync().get();
-        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        this.configService.refreshAsync().get();
+        assertEquals("test", this.configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
     }
 
     @Test
@@ -95,9 +95,9 @@ public class ManualPollingPolicyTest {
         when(cache.read(anyString())).thenReturn(String.format(TEST_JSON, result));
         when(fetcher.fetchAsync())
                 .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.readFromJson(String.format(TEST_JSON, result), ""))));
-        ManualPollingPolicy policy = new ManualPollingPolicy(fetcher, logger, memoryCache);
-        policy.refreshAsync().get();
-        assertEquals(result, policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        ConfigService configService = new ConfigService("", fetcher, PollingModes.manualPoll(), new FailingCache(), logger, false);
+        configService.refreshAsync().get();
+        assertEquals(result, configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
         verify(cache, atMostOnce()).write(anyString(), eq(String.format(TEST_JSON, result)));
     }
 }
