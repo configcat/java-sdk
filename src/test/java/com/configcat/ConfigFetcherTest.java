@@ -46,9 +46,9 @@ public class ConfigFetcherTest {
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         FetchResponse fResult = fetcher.fetchAsync().get();
-        cache.writeToCache(fResult.config());
+        cache.writeToCache(fResult.entry());
 
-        assertEquals("fakeValue", fResult.config().entries.get("fakeKey").value.getAsString());
+        assertEquals("fakeValue", fResult.entry().config.entries.get("fakeKey").value.getAsString());
         assertTrue(fResult.isFetched());
         assertFalse(fResult.isNotModified());
         assertFalse(fResult.isFailed());
@@ -78,7 +78,8 @@ public class ConfigFetcherTest {
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(2, TimeUnit.SECONDS));
 
         assertTrue(fetch.fetchAsync().get().isFailed());
-        assertEquals(Config.empty, fetch.fetchAsync().get().config());
+        assertEquals(Entry.empty, fetch.fetchAsync().get().entry());
+        assertEquals(Config.empty, fetch.fetchAsync().get().entry().config);
 
         fetch.close();
     }
@@ -133,7 +134,7 @@ public class ConfigFetcherTest {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, configJsonCache,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        assertEquals("fakeValue", fetcher.fetchAsync().get().config().entries.get("fakeKey").value.getAsString());
+        assertEquals("fakeValue", fetcher.fetchAsync().get().entry().config.entries.get("fakeKey").value.getAsString());
 
         fetcher.close();
     }
@@ -146,7 +147,7 @@ public class ConfigFetcherTest {
         Gson gson = new GsonBuilder().create();
         Config config = gson.fromJson(TEST_JSON, Config.class);
 
-        when(cache.read(anyString())).thenReturn(gson.toJson(config));
+        when(cache.read(anyString())).thenReturn(gson.toJson(new Entry(config, "", System.currentTimeMillis())));
         doThrow(new Exception()).when(cache).write(anyString(), anyString());
 
         ConfigJsonCache configJsonCache = new ConfigJsonCache(logger, cache, "");
@@ -154,9 +155,9 @@ public class ConfigFetcherTest {
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         FetchResponse result = fetcher.fetchAsync().get();
-        configJsonCache.writeToCache(result.config());
+        configJsonCache.writeToCache(result.entry());
 
-        assertEquals("fakeValue", configJsonCache.readFromCache().entries.get("fakeKey").value.getAsString());
+        assertEquals("fakeValue", configJsonCache.readFromCache().config.entries.get("fakeKey").value.getAsString());
 
         fetcher.close();
     }
@@ -175,7 +176,7 @@ public class ConfigFetcherTest {
                 PollingModes.manualPoll().getPollingIdentifier());
 
         FetchResponse result = fetch.fetchAsync().get();
-        cache.writeToCache(result.config());
+        cache.writeToCache(result.entry());
 
         assertTrue(result.isFetched());
         assertTrue(fetch.fetchAsync().get().isNotModified());

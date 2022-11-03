@@ -29,7 +29,7 @@ public class ConfigService implements Closeable {
     private int cacheRefreshIntervalInSeconds;
     private boolean asyncRefresh;
     private AtomicBoolean isFetching;
-    private CompletableFuture<Config> fetchingFuture;
+    private CompletableFuture<Entry> fetchingFuture;
     private CompletableFuture<Void> init;
     //COMMON
     private AtomicBoolean initialized;
@@ -48,27 +48,23 @@ public class ConfigService implements Closeable {
         //TODO refactore PP inits
         if (pollingMode instanceof AutoPollingMode) {
             //TODO do what auto polling dose
-            AutoPollingMode config = (AutoPollingMode) pollingMode;
+            AutoPollingMode autoPollingMode = (AutoPollingMode) pollingMode;
+
             this.listeners = new ArrayList<>();
 
-            if (config.getListener() != null)
-                this.listeners.add(config.getListener());
+            if (autoPollingMode.getListener() != null)
+                this.listeners.add(autoPollingMode.getListener());
 
             this.initialized = new AtomicBoolean(false);
             this.initFuture = new CompletableFuture<>();
-
-            this.initScheduler = Executors.newSingleThreadScheduledExecutor();
-            this.initScheduler.schedule(() -> {
-                if (!this.initialized.getAndSet(true))
-                    this.initFuture.complete(null);
-            }, config.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
-
+            //TODO startPoll
             this.scheduler = Executors.newSingleThreadScheduledExecutor();
             this.scheduler.scheduleAtFixedRate(() -> {
                 try {
+                    //TODO fetch if older
                     FetchResponse response = this.configFetcher.fetchAsync().get();
                     if (response.isFetched()) {
-                        this.configJsonCache.writeToCache(response.config());
+                        this.configJsonCache.writeToCache(response.entry());
                         this.broadcastConfigurationChanged();
                     }
 
@@ -77,10 +73,17 @@ public class ConfigService implements Closeable {
                 } catch (Exception e) {
                     logger.error("Exception in AutoPollingCachePolicy", e);
                 }
-            }, 0, config.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
+            }, 0, autoPollingMode.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
+
+            this.initScheduler = Executors.newSingleThreadScheduledExecutor();
+            this.initScheduler.schedule(() -> {
+                if (!this.initialized.getAndSet(true))
+                    this.initFuture.complete(null);
+            }, autoPollingMode.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
 
         } else if (pollingMode instanceof LazyLoadingMode) {
             LazyLoadingMode config = (LazyLoadingMode) pollingMode;
+            //TODO what do we need from here actually?
             this.asyncRefresh = config.isAsyncRefresh();
             this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
             this.isFetching = new AtomicBoolean(false);
@@ -95,7 +98,7 @@ public class ConfigService implements Closeable {
         return this.configFetcher.fetchAsync()
                 .thenAcceptAsync(response -> {
                     if (response.isFetched()) {
-                        this.configJsonCache.writeToCache(response.config());
+                        this.configJsonCache.writeToCache(response.entry());
                     }
                 });
     }
@@ -104,9 +107,9 @@ public class ConfigService implements Closeable {
         //TODO implement
         if (pollingMode instanceof AutoPollingMode) {
             if (this.initFuture.isDone())
-                return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(config -> config.entries);
+                return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
 
-            return this.initFuture.thenApplyAsync(v -> this.configJsonCache.readFromCache()).thenApply(config -> config.entries);
+            return this.initFuture.thenApplyAsync(v -> this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
         }
         if (pollingMode instanceof LazyLoadingMode) {
             if (Instant.now().isAfter(lastRefreshedTime.plusSeconds(this.cacheRefreshIntervalInSeconds))) {
@@ -114,36 +117,36 @@ public class ConfigService implements Closeable {
 
                 if (isInitialized && !this.isFetching.compareAndSet(false, true))
                     return this.asyncRefresh && this.initialized.get()
-                            ? CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(config -> config.entries)
-                            : this.fetchingFuture.thenApply(config -> config.entries);
+                            ? CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries)
+                            : this.fetchingFuture.thenApply(entry -> entry.config.entries);
 
                 logger.debug("Cache expired, refreshing.");
                 if (isInitialized) {
                     this.fetchingFuture = this.fetch();
                     if (this.asyncRefresh) {
-                        return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(config -> config.entries);
+                        return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
                     }
-                    return this.fetchingFuture.thenApply(config -> config.entries);
+                    return this.fetchingFuture.thenApply(entry -> entry.config.entries);
                 } else {
                     if (this.isFetching.compareAndSet(false, true)) {
                         this.fetchingFuture = this.fetch();
                     }
-                    return this.init.thenApplyAsync(v -> this.configJsonCache.readFromCache()).thenApply(config -> config.entries);
+                    return this.init.thenApplyAsync(v -> this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
                 }
             }
 
-            return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(config -> config.entries);
+            return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
         }
         //MPP the last
-        return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(config -> config.entries);
+        return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
     }
 
     // LPP fetch
-    private CompletableFuture<Config> fetch() {
+    private CompletableFuture<Entry> fetch() {
         return this.configFetcher.fetchAsync()
                 .thenApplyAsync(response -> {
                     if (response.isFetched()) {
-                        this.configJsonCache.writeToCache(response.config());
+                        this.configJsonCache.writeToCache(response.entry());
                     }
 
                     if (!response.isFailed())

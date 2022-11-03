@@ -56,7 +56,8 @@ class ConfigFetcher implements Closeable {
                 return CompletableFuture.completedFuture(fetchResponse);
             }
             try {
-                Config config = fetchResponse.config();
+                Entry entry = fetchResponse.entry();
+                Config config = entry.config;
                 if (config.preferences == null) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
@@ -106,8 +107,8 @@ class ConfigFetcher implements Closeable {
             return this.currentFuture;
         }
 
-        Config cachedConfig = this.configJsonCache.readFromCache();
-        Request request = this.getRequest(cachedConfig.eTag);
+        Entry cachedEntry = this.configJsonCache.readFromCache();
+        Request request = this.getRequest(cachedEntry.eTag);
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -124,13 +125,14 @@ class ConfigFetcher implements Closeable {
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
-                        Config config = configJsonCache.readFromJson(content, eTag);
+                        Config config = configJsonCache.readConfigFromJson(content);
+
                         if (config == Config.empty) {
                             future.complete(FetchResponse.failed());
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
-                        future.complete(FetchResponse.fetched(config));
+                        future.complete(FetchResponse.fetched(new Entry(config, eTag, System.currentTimeMillis())));
                     } else if (response.code() == 304) {
                         logger.debug("Fetch was successful: config not modified.");
                         future.complete(FetchResponse.notModified());

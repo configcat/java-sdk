@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DataGovernanceTest {
     private static final String JsonTemplate = "{ p: { u: \"%s\", r: %d }, f: {} }";
@@ -28,7 +28,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(url, response.config().preferences.baseUrl);
+        assertEquals(url, response.entry().config.preferences.baseUrl);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -49,7 +49,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(url, response.config().preferences.baseUrl);
+        assertEquals(url, response.entry().config.preferences.baseUrl);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -71,7 +71,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(url, response.config().preferences.baseUrl);
+        assertEquals(url, response.entry().config.preferences.baseUrl);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -98,8 +98,8 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondServerUrl, response.config().preferences.baseUrl);
-        assertEquals(0, response.config().preferences.redirect);
+        assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
+        assertEquals(0, response.entry().config.preferences.redirect);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -128,8 +128,8 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondServerUrl, response.config().preferences.baseUrl);
-        assertEquals(0, response.config().preferences.redirect);
+        assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
+        assertEquals(0, response.entry().config.preferences.redirect);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -159,8 +159,8 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondServerUrl, response.config().preferences.baseUrl);
-        assertEquals(1, response.config().preferences.redirect);
+        assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
+        assertEquals(1, response.entry().config.preferences.redirect);
         assertEquals(2, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -186,8 +186,8 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondServerUrl, response.config().preferences.baseUrl);
-        assertEquals(1, response.config().preferences.redirect);
+        assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
+        assertEquals(1, response.entry().config.preferences.redirect);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(0, secondServer.getRequestCount());
 
@@ -216,8 +216,8 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondServerUrl, response.config().preferences.baseUrl);
-        assertEquals(0, response.config().preferences.redirect);
+        assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
+        assertEquals(0, response.entry().config.preferences.redirect);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 

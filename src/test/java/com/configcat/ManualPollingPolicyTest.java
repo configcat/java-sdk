@@ -94,7 +94,7 @@ public class ManualPollingPolicyTest {
         ConfigFetcher fetcher = mock(ConfigFetcher.class);
         when(cache.read(anyString())).thenReturn(String.format(TEST_JSON, result));
         when(fetcher.fetchAsync())
-                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, memoryCache.readFromJson(String.format(TEST_JSON, result), ""))));
+                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, new Entry(memoryCache.readConfigFromJson(String.format(TEST_JSON, result)), "", System.currentTimeMillis()))));
         ConfigService configService = new ConfigService("", fetcher, PollingModes.manualPoll(), new FailingCache(), logger, false);
         configService.refreshAsync().get();
         assertEquals(result, configService.getSettingsAsync().get().get("fakeKey").value.getAsString());

@@ -8,7 +8,7 @@ class FetchResponse {
     }
 
     private final Status status;
-    private final Config config;
+    private final Entry entry;
 
     public boolean isFetched() {
         return this.status == Status.FETCHED;
@@ -22,24 +22,24 @@ class FetchResponse {
         return this.status == Status.FAILED;
     }
 
-    public Config config() {
-        return this.config;
+    public Entry entry() {
+        return this.entry;
     }
 
-    FetchResponse(Status status, Config config) {
+    FetchResponse(Status status, Entry entry) {
         this.status = status;
-        this.config = config;
+        this.entry = entry;
     }
 
-    public static FetchResponse fetched(Config config) {
-        return new FetchResponse(Status.FETCHED, config == null ? Config.empty : config);
+    public static FetchResponse fetched(Entry entry) {
+        return new FetchResponse(Status.FETCHED, entry == null ? Entry.empty : entry);
     }
 
     public static FetchResponse notModified() {
-        return new FetchResponse(Status.NOT_MODIFIED, Config.empty);
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.empty);
     }
 
     public static FetchResponse failed() {
-        return new FetchResponse(Status.FAILED, Config.empty);
+        return new FetchResponse(Status.FAILED, Entry.empty);
     }
 }
