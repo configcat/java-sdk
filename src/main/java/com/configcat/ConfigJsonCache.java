@@ -46,7 +46,7 @@ class ConfigJsonCache {
             this.inMemoryEntiryString = fromCache;
             return entry;
         } catch (Exception e) {
-            this.logger.error("Config JSON parsing failed.", e);
+            this.logger.error("Entry JSON parsing failed.", e);
             return this.inMemoryEntry;
         }
     }

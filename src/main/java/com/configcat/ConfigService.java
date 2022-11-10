@@ -2,7 +2,6 @@ package com.configcat;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -25,12 +24,10 @@ public class ConfigService implements Closeable {
 
     private ArrayList<ConfigurationChangeListener> listeners;
     //LPP  - initialized is common
-    private Instant lastRefreshedTime;
     private int cacheRefreshIntervalInSeconds;
     private boolean asyncRefresh;
     private AtomicBoolean isFetching;
     private CompletableFuture<Entry> fetchingFuture;
-    private CompletableFuture<Void> init;
     //COMMON
     private AtomicBoolean initialized;
     private boolean offline;
@@ -48,32 +45,20 @@ public class ConfigService implements Closeable {
         //TODO refactore PP inits
         if (pollingMode instanceof AutoPollingMode) {
             //TODO do what auto polling dose
+            //TODO add offline here
             AutoPollingMode autoPollingMode = (AutoPollingMode) pollingMode;
 
+            //TODO add listener, this still should work. hooks will replace it
             this.listeners = new ArrayList<>();
-
             if (autoPollingMode.getListener() != null)
                 this.listeners.add(autoPollingMode.getListener());
 
+
             this.initialized = new AtomicBoolean(false);
+            //TODO no initFuture - just one runningTask
             this.initFuture = new CompletableFuture<>();
             //TODO startPoll
-            this.scheduler = Executors.newSingleThreadScheduledExecutor();
-            this.scheduler.scheduleAtFixedRate(() -> {
-                try {
-                    //TODO fetch if older
-                    FetchResponse response = this.configFetcher.fetchAsync().get();
-                    if (response.isFetched()) {
-                        this.configJsonCache.writeToCache(response.entry());
-                        this.broadcastConfigurationChanged();
-                    }
-
-                    if (!this.initialized.getAndSet(true))
-                        this.initFuture.complete(null);
-                } catch (Exception e) {
-                    logger.error("Exception in AutoPollingCachePolicy", e);
-                }
-            }, 0, autoPollingMode.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
+            startPolling(autoPollingMode);
 
             this.initScheduler = Executors.newSingleThreadScheduledExecutor();
             this.initScheduler.schedule(() -> {
@@ -82,16 +67,36 @@ public class ConfigService implements Closeable {
             }, autoPollingMode.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
 
         } else if (pollingMode instanceof LazyLoadingMode) {
+            //TODO simple else not esle if
             LazyLoadingMode config = (LazyLoadingMode) pollingMode;
             //TODO what do we need from here actually?
             this.asyncRefresh = config.isAsyncRefresh();
+            //TODO move this check to getSettings
             this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
             this.isFetching = new AtomicBoolean(false);
             this.initialized = new AtomicBoolean(false);
-            this.lastRefreshedTime = Instant.MIN;
-            this.init = new CompletableFuture<>();
+            this.initFuture = new CompletableFuture<>();
         }
-        // nothing to do if MPM
+        // nothing to do if MPM -- handle in else
+    }
+
+    private void startPolling(AutoPollingMode autoPollingMode) {
+        this.scheduler = Executors.newSingleThreadScheduledExecutor();
+        this.scheduler.scheduleAtFixedRate(() -> {
+            try {
+                //TODO fetch if older
+                FetchResponse response = this.configFetcher.fetchAsync().get();
+                if (response.isFetched()) {
+                    this.configJsonCache.writeToCache(response.entry());
+                    this.broadcastConfigurationChanged();
+                }
+                //TODO remove init from here
+                if (!this.initialized.getAndSet(true))
+                    this.initFuture.complete(null);
+            } catch (Exception e) {
+                logger.error("Exception in AutoPollingCachePolicy", e);
+            }
+        }, 0, autoPollingMode.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
     }
 
     public CompletableFuture<Void> refreshAsync() {
@@ -112,30 +117,30 @@ public class ConfigService implements Closeable {
             return this.initFuture.thenApplyAsync(v -> this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
         }
         if (pollingMode instanceof LazyLoadingMode) {
-            if (Instant.now().isAfter(lastRefreshedTime.plusSeconds(this.cacheRefreshIntervalInSeconds))) {
-                boolean isInitialized = this.init.isDone();
+            //TODO replace with entry fetch time
+            //if (Instant.now().isAfter(lastRefreshedTime.plusSeconds(this.cacheRefreshIntervalInSeconds))) {
+            boolean isInitialized = this.initFuture.isDone();
 
-                if (isInitialized && !this.isFetching.compareAndSet(false, true))
-                    return this.asyncRefresh && this.initialized.get()
-                            ? CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries)
-                            : this.fetchingFuture.thenApply(entry -> entry.config.entries);
+            if (isInitialized && !this.isFetching.compareAndSet(false, true))
+                return this.asyncRefresh && this.initialized.get()
+                        ? CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries)
+                        : this.fetchingFuture.thenApply(entry -> entry.config.entries);
 
-                logger.debug("Cache expired, refreshing.");
-                if (isInitialized) {
-                    this.fetchingFuture = this.fetch();
-                    if (this.asyncRefresh) {
-                        return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
-                    }
-                    return this.fetchingFuture.thenApply(entry -> entry.config.entries);
-                } else {
-                    if (this.isFetching.compareAndSet(false, true)) {
-                        this.fetchingFuture = this.fetch();
-                    }
-                    return this.init.thenApplyAsync(v -> this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
+            logger.debug("Cache expired, refreshing.");
+            if (isInitialized) {
+                this.fetchingFuture = this.fetch();
+                if (this.asyncRefresh) {
+                    return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
                 }
+                return this.fetchingFuture.thenApply(entry -> entry.config.entries);
+            } else {
+                if (this.isFetching.compareAndSet(false, true)) {
+                    this.fetchingFuture = this.fetch();
+                }
+                return this.initFuture.thenApplyAsync(v -> this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
             }
-
-            return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
+            //}
+            //return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
         }
         //MPP the last
         return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
@@ -143,17 +148,20 @@ public class ConfigService implements Closeable {
 
     // LPP fetch
     private CompletableFuture<Entry> fetch() {
+        //TODO fetch should check fetchtime from stored entry
+        //TODO add runnuing task. part of Init?
         return this.configFetcher.fetchAsync()
                 .thenApplyAsync(response -> {
                     if (response.isFetched()) {
                         this.configJsonCache.writeToCache(response.entry());
                     }
 
-                    if (!response.isFailed())
-                        this.lastRefreshedTime = Instant.now();
+                    //TODO entry fetch time handles
+                    //if (!response.isFailed())
+                    //   this.lastRefreshedTime = Instant.now();
 
                     if (this.initialized.compareAndSet(false, true)) {
-                        this.init.complete(null);
+                        this.initFuture.complete(null);
                     }
 
                     this.isFetching.set(false);
@@ -169,24 +177,24 @@ public class ConfigService implements Closeable {
 
     @Override
     public void close() throws IOException {
-        //APP
         if (pollingMode instanceof AutoPollingMode) {
             this.scheduler.shutdown();
             this.initScheduler.shutdown();
             this.listeners.clear();
         }
-        // COMMON
         this.configFetcher.close();
     }
 
     public void setOnline() {
         this.offline = false;
         //TODO implement -
+        // TODO call startPolling
     }
 
     public void setOffline() {
         this.offline = true;
         //TODO implement - call fetcher
+        //TODO stop scheduler
     }
 
     public boolean isOffline() {
