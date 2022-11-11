@@ -14,10 +14,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class LazyLoadingPolicySyncTest {
+public class LazyLoadingPolicyTest {
     private ConfigService configService;
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicySyncTest.class));
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicyTest.class));
     private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
     @BeforeEach

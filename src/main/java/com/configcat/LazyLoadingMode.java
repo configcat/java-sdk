@@ -2,20 +2,15 @@ package com.configcat;
 
 class LazyLoadingMode extends PollingMode {
     private final int cacheRefreshIntervalInSeconds;
-    private final boolean asyncRefresh;
 
-    LazyLoadingMode(int cacheRefreshIntervalInSeconds, boolean asyncRefresh) {
+    LazyLoadingMode(int cacheRefreshIntervalInSeconds) {
         this.cacheRefreshIntervalInSeconds = cacheRefreshIntervalInSeconds;
-        this.asyncRefresh = asyncRefresh;
     }
 
     int getCacheRefreshIntervalInSeconds() {
         return cacheRefreshIntervalInSeconds;
     }
 
-    boolean isAsyncRefresh() {
-        return asyncRefresh;
-    }
 
     @Override
     String getPollingIdentifier() {

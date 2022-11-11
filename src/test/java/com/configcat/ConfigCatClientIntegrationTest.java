@@ -31,7 +31,7 @@ public class ConfigCatClientIntegrationTest {
 
         ConfigCatClient.Options options = new ConfigCatClient.Options()
                 .httpClient(new OkHttpClient.Builder().build())
-                .mode(PollingModes.lazyLoad(2, true))
+                .mode(PollingModes.lazyLoad(2))
                 .baseUrl(this.server.url("/").toString());
 
         this.client = ConfigCatClient.get(APIKEY, options);

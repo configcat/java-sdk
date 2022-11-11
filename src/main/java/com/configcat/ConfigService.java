@@ -25,7 +25,6 @@ public class ConfigService implements Closeable {
     private ArrayList<ConfigurationChangeListener> listeners;
     //LPP  - initialized is common
     private int cacheRefreshIntervalInSeconds;
-    private boolean asyncRefresh;
     private AtomicBoolean isFetching;
     private CompletableFuture<Entry> fetchingFuture;
     //COMMON
@@ -69,8 +68,6 @@ public class ConfigService implements Closeable {
         } else if (pollingMode instanceof LazyLoadingMode) {
             //TODO simple else not esle if
             LazyLoadingMode config = (LazyLoadingMode) pollingMode;
-            //TODO what do we need from here actually?
-            this.asyncRefresh = config.isAsyncRefresh();
             //TODO move this check to getSettings
             this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
             this.isFetching = new AtomicBoolean(false);
@@ -122,16 +119,13 @@ public class ConfigService implements Closeable {
             boolean isInitialized = this.initFuture.isDone();
 
             if (isInitialized && !this.isFetching.compareAndSet(false, true))
-                return this.asyncRefresh && this.initialized.get()
+                return this.initialized.get()
                         ? CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries)
                         : this.fetchingFuture.thenApply(entry -> entry.config.entries);
 
             logger.debug("Cache expired, refreshing.");
             if (isInitialized) {
                 this.fetchingFuture = this.fetch();
-                if (this.asyncRefresh) {
-                    return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
-                }
                 return this.fetchingFuture.thenApply(entry -> entry.config.entries);
             } else {
                 if (this.isFetching.compareAndSet(false, true)) {
