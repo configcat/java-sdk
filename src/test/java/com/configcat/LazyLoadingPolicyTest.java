@@ -45,13 +45,13 @@ public class LazyLoadingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", this.configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
+        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").value.getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", this.configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
+        assertEquals("test2", this.configService.getSettings().get().settings().get("fakeKey").value.getAsString());
     }
 
     @Test
@@ -66,13 +66,13 @@ public class LazyLoadingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", configService1.getSettingsAsync().get().get("fakeKey").value.getAsString());
+        assertEquals("test", configService1.getSettings().get().settings().get("fakeKey").value.getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", configService1.getSettingsAsync().get().get("fakeKey").value.getAsString());
+        assertEquals("test2", configService1.getSettings().get().settings().get("fakeKey").value.getAsString());
     }
 
     @Test
@@ -81,12 +81,12 @@ public class LazyLoadingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
-        assertEquals("test", this.configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
+        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").value.getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //previous value returned because of the refresh failure
-        assertEquals("test", this.configService.getSettingsAsync().get().get("fakeKey").value.getAsString());
+        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").value.getAsString());
     }
 }

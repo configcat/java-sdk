@@ -112,10 +112,14 @@ class ConfigFetcher implements Closeable {
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                String message = "An error occurred during fetching the latest config.json.";
                 if (!isClosed.get()) {
-                    logger.error("An error occurred during fetching the latest configuration.", e);
+                    if (e instanceof SocketTimeoutException) {
+                        message = "Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
+                    }
+                    logger.error(message, e);
                 }
-                future.complete(FetchResponse.failed());
+                future.complete(FetchResponse.failed(message));
             }
 
             @Override
@@ -124,27 +128,29 @@ class ConfigFetcher implements Closeable {
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
-                        Config config = configJsonCache.readConfigFromJson(content);
-
-                        if (config == Config.empty) {
-                            future.complete(FetchResponse.failed());
+                        Result<Config> config = configJsonCache.readConfigFromJson(content);
+                        if (config.error() != null) {
+                            future.complete(FetchResponse.failed(config.error()));
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
-                        future.complete(FetchResponse.fetched(new Entry(config, eTag, System.currentTimeMillis())));
+                        future.complete(FetchResponse.fetched(new Entry(config.value(), eTag, System.currentTimeMillis())));
                     } else if (response.code() == 304) {
                         logger.debug("Fetch was successful: config not modified.");
                         future.complete(FetchResponse.notModified());
                     } else {
-                        logger.error("Double-check your API KEY at https://app.configcat.com/apikey. Received unexpected response: " + response.code());
-                        future.complete(FetchResponse.failed());
+                        String message = "Double-check your API KEY at https://app.configcat.com/apikey. Received unexpected response: " + response.code();
+                        logger.error(message);
+                        future.complete(FetchResponse.failed(message));
                     }
                 } catch (SocketTimeoutException e) {
-                    logger.error("Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]", e);
-                    future.complete(FetchResponse.failed());
+                    String message = "Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
+                    logger.error(message, e);
+                    future.complete(FetchResponse.failed(message));
                 } catch (Exception e) {
-                    logger.error("Exception in ConfigFetcher.getResponseAsync", e);
-                    future.complete(FetchResponse.failed());
+                    String message = "Exception in ConfigFetcher.getResponseAsync";
+                    logger.error(message, e);
+                    future.complete(FetchResponse.failed(message));
                 }
             }
         });

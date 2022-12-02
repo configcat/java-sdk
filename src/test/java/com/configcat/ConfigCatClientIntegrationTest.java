@@ -227,16 +227,16 @@ public class ConfigCatClientIntegrationTest {
         ConfigJsonCache memoryCache = new ConfigJsonCache(
                 new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClientIntegrationTest.class)), cache, "");
 
-        Config initialConfig = memoryCache.readConfigFromJson(String.format(TEST_JSON, "initial"));
-        memoryCache.writeToCache(new Entry(initialConfig, "etag1", System.currentTimeMillis()));
+        Result<Config> initialConfig = memoryCache.readConfigFromJson(String.format(TEST_JSON, "initial"));
+        memoryCache.writeToCache(new Entry(initialConfig.value(), "etag1", System.currentTimeMillis()));
 
-        Config updated = memoryCache.readConfigFromJson(String.format(TEST_JSON, "updated"));
-        memoryCache.writeToCache(new Entry(updated, "etag2", System.currentTimeMillis())); // this will fail
+        Result<Config> updated = memoryCache.readConfigFromJson(String.format(TEST_JSON, "updated"));
+        memoryCache.writeToCache(new Entry(updated.value(), "etag2", System.currentTimeMillis())); // this will fail
 
         Entry fromCache1 = memoryCache.readFromCache();
         assertEquals("etag1", fromCache1.eTag);
 
-        memoryCache.writeToCache(new Entry(updated, "etag2", System.currentTimeMillis()));
+        memoryCache.writeToCache(new Entry(updated.value(), "etag2", System.currentTimeMillis()));
 
         Entry fromCache2 = memoryCache.readFromCache();
         assertEquals("etag2", fromCache2.eTag);

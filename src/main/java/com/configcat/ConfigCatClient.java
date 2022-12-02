@@ -134,7 +134,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         return this.getSettingsAsync()
-                .thenApply(settings -> this.getValueFromSettingsMap(classOfT, settings, key, user, defaultValue));
+                .thenApply(settingResult -> this.getValueFromSettingsMap(classOfT, settingResult, key, user, defaultValue));
     }
 
     @Override
@@ -169,7 +169,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         return this.getSettingsAsync()
-                .thenApply(settings -> this.getVariationIdFromSettingsMap(settings, key, user, defaultVariationId));
+                .thenApply(settingResult -> this.getVariationIdFromSettingsMap(settingResult, key, user, defaultVariationId));
     }
 
     @Override
@@ -199,13 +199,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public CompletableFuture<Collection<String>> getAllVariationIdsAsync(User user) {
         return this.getSettingsAsync()
-                .thenApply(settings -> {
+                .thenApply(settingResult -> {
                     try {
-                        Collection<String> keys = settings.keySet();
+                        Collection<String> keys = settingResult.settings().keySet();
                         ArrayList<String> result = new ArrayList<>();
 
                         for (String key : keys) {
-                            result.add(this.getVariationIdFromSettingsMap(settings, key, user, null));
+                            result.add(this.getVariationIdFromSettingsMap(settingResult, key, user, null));
                         }
 
                         return result;
@@ -233,8 +233,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public CompletableFuture<Map<String, Object>> getAllValuesAsync(User user) {
         return this.getSettingsAsync()
-                .thenApply(settings -> {
+                .thenApply(settingResult -> {
                     try {
+                        Map<String, Setting> settings = settingResult.settings();
                         Collection<String> keys = settings.keySet();
                         Map<String, Object> result = new HashMap<>();
 
@@ -276,7 +277,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'variationId' cannot be null or empty.");
 
         return this.getSettingsAsync()
-                .thenApply(settings -> this.getKeyAndValueFromSettingsMap(classOfT, settings, variationId));
+                .thenApply(settingsResult -> this.getKeyAndValueFromSettingsMap(classOfT, settingsResult, variationId));
     }
 
     @Override
@@ -296,9 +297,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public CompletableFuture<Collection<String>> getAllKeysAsync() {
         return this.getSettingsAsync()
-                .thenApply(settings -> {
+                .thenApply(settingResult -> {
                     try {
-                        return settings.keySet();
+                        return settingResult.settings().keySet();
                     } catch (Exception e) {
                         this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
                         return new ArrayList<>();
@@ -319,8 +320,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public CompletableFuture<Void> forceRefreshAsync() {
-        return this.configService.refreshAsync();
+    public CompletableFuture<Result<Entry>> forceRefreshAsync() {
+        return this.configService.refresh();
     }
 
     public void setDefaultUser(User defaultUser) {
@@ -403,34 +404,41 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private CompletableFuture<Map<String, Setting>> getSettingsAsync() {
+    private CompletableFuture<SettingResult> getSettingsAsync() {
         if (this.overrideBehaviour != null) {
             switch (this.overrideBehaviour) {
                 case LOCAL_ONLY:
-                    return CompletableFuture.completedFuture(this.overrideDataSource.getLocalConfiguration());
+                    return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), ConfigService.DISTANT_PAST));
                 case REMOTE_OVER_LOCAL:
-                    return this.configService.getSettingsAsync()
-                            .thenApply(settings -> {
+                    if (configService == null)
+                        return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), ConfigService.DISTANT_PAST));
+                    return this.configService.getSettings()
+                            .thenApply(settingResult -> {
                                 Map<String, Setting> localSettings = new HashMap<>(this.overrideDataSource.getLocalConfiguration());
-                                localSettings.putAll(settings);
-                                return localSettings;
+                                localSettings.putAll(settingResult.settings());
+                                return new SettingResult(localSettings, settingResult.fetchTime());
                             });
                 case LOCAL_OVER_REMOTE:
-                    return this.configService.getSettingsAsync()
-                            .thenApply(settings -> {
+                    if (configService == null)
+                        return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), ConfigService.DISTANT_PAST));
+                    return this.configService.getSettings()
+                            .thenApply(settingResult -> {
                                 Map<String, Setting> localSettings = this.overrideDataSource.getLocalConfiguration();
-                                Map<String, Setting> remoteSettings = new HashMap<>(settings);
+                                Map<String, Setting> remoteSettings = new HashMap<>(settingResult.settings());
                                 remoteSettings.putAll(localSettings);
-                                return remoteSettings;
+                                return new SettingResult(remoteSettings, settingResult.fetchTime());
                             });
             }
         }
 
-        return this.configService.getSettingsAsync();
+        return configService == null
+                ? CompletableFuture.completedFuture(new SettingResult(new HashMap<>(), ConfigService.DISTANT_PAST))
+                : configService.getSettings();
     }
 
-    private <T> T getValueFromSettingsMap(Class<T> classOfT, Map<String, Setting> settings, String key, User user, T defaultValue) {
+    private <T> T getValueFromSettingsMap(Class<T> classOfT, SettingResult settingResult, String key, User user, T defaultValue) {
         try {
+            Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
                 this.logger.error("Config JSON is not present. Returning defaultValue: [" + defaultValue + "].");
                 return defaultValue;
@@ -450,8 +458,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private String getVariationIdFromSettingsMap(Map<String, Setting> settings, String key, User user, String defaultVariationId) {
+    private String getVariationIdFromSettingsMap(SettingResult settingResult, String key, User user, String defaultVariationId) {
         try {
+            Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
                 this.logger.error("Config JSON is not present. Returning defaultVariationId: [" + defaultVariationId + "].");
                 return defaultVariationId;
@@ -470,8 +479,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private <T> Map.Entry<String, T> getKeyAndValueFromSettingsMap(Class<T> classOfT, Map<String, Setting> settings, String variationId) {
+    private <T> Map.Entry<String, T> getKeyAndValueFromSettingsMap(Class<T> classOfT, SettingResult settingResult, String variationId) {
         try {
+            Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
                 this.logger.error("Config JSON is not present. Returning null.");
                 return null;

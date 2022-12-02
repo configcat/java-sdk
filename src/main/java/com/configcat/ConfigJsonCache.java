@@ -20,17 +20,18 @@ class ConfigJsonCache {
         this.cacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CACHE_BASE, sdkKey))));
     }
 
-    public Config readConfigFromJson(String json) {
+    public Result<Config> readConfigFromJson(String json) {
         if (json == null || json.isEmpty()) {
-            return Config.empty;
+            return Result.success(Config.empty);
         }
 
         try {
             Config config = this.deserialize(json, Config.class);
-            return config;
+            return Result.success(config);
         } catch (Exception e) {
-            this.logger.error("Config JSON parsing failed.", e);
-            return Config.empty;
+            String message = "JSON parsing failed. " + e.getMessage();
+            this.logger.error(message);
+            return Result.error(message);
         }
     }
 

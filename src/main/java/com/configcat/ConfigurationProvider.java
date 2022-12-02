@@ -183,7 +183,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @return the future which executes the refresh.
      */
-    CompletableFuture<Void> forceRefreshAsync();
+    CompletableFuture<Result<Entry>> forceRefreshAsync();
 
     /**
      * Sets defaultUser value.

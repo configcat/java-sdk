@@ -9,6 +9,8 @@ class FetchResponse {
 
     private final Status status;
     private final Entry entry;
+    private final String error;
+
 
     public boolean isFetched() {
         return this.status == Status.FETCHED;
@@ -26,20 +28,25 @@ class FetchResponse {
         return this.entry;
     }
 
-    FetchResponse(Status status, Entry entry) {
+    public String error() {
+        return this.error;
+    }
+
+    FetchResponse(Status status, Entry entry, String error) {
         this.status = status;
         this.entry = entry;
+        this.error = error;
     }
 
     public static FetchResponse fetched(Entry entry) {
-        return new FetchResponse(Status.FETCHED, entry == null ? Entry.empty : entry);
+        return new FetchResponse(Status.FETCHED, entry == null ? Entry.empty : entry, null);
     }
 
     public static FetchResponse notModified() {
-        return new FetchResponse(Status.NOT_MODIFIED, Entry.empty);
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.empty, null);
     }
 
-    public static FetchResponse failed() {
-        return new FetchResponse(Status.FAILED, Entry.empty);
+    public static FetchResponse failed(String error) {
+        return new FetchResponse(Status.FAILED, Entry.empty, error);
     }
 }

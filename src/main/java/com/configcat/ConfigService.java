@@ -3,195 +3,205 @@ package com.configcat;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ConfigService implements Closeable {
+
+    static final long DISTANT_FUTURE = Long.MAX_VALUE;
+    static final long DISTANT_PAST = 0;
 
     private final ConfigFetcher configFetcher;
     private final ConfigJsonCache configJsonCache;
     private final ConfigCatLogger logger;
     private final PollingMode pollingMode;
-
     //APP
-    private ScheduledExecutorService scheduler;
+    private ScheduledExecutorService pollScheduler;
     private ScheduledExecutorService initScheduler;
-    private CompletableFuture<Void> initFuture;
-
     private ArrayList<ConfigurationChangeListener> listeners;
-    //LPP  - initialized is common
-    private int cacheRefreshIntervalInSeconds;
-    private AtomicBoolean isFetching;
-    private CompletableFuture<Entry> fetchingFuture;
+    private CompletableFuture<Result<Entry>> runningTask;
     //COMMON
-    private AtomicBoolean initialized;
+    private AtomicBoolean initialized = new AtomicBoolean(false);
     private boolean offline;
+    private final ReentrantLock lock = new ReentrantLock(true);
 
 
     public ConfigService(String sdkKey, ConfigFetcher configFetcher, PollingMode pollingMode, ConfigCache configCache, ConfigCatLogger logger, boolean offline) {
-        //TODO store sdkKey
         this.configFetcher = configFetcher;
         this.pollingMode = pollingMode;
         this.configJsonCache = new ConfigJsonCache(logger, configCache, sdkKey);
         this.logger = logger;
         this.offline = offline;
-        //TODO init what we need. check on offline
-
-        //TODO refactore PP inits
         if (pollingMode instanceof AutoPollingMode) {
-            //TODO do what auto polling dose
-            //TODO add offline here
             AutoPollingMode autoPollingMode = (AutoPollingMode) pollingMode;
 
-            //TODO add listener, this still should work. hooks will replace it
             this.listeners = new ArrayList<>();
-            if (autoPollingMode.getListener() != null)
+            if (autoPollingMode.getListener() != null) {
                 this.listeners.add(autoPollingMode.getListener());
+            }
 
-
-            this.initialized = new AtomicBoolean(false);
-            //TODO no initFuture - just one runningTask
-            this.initFuture = new CompletableFuture<>();
-            //TODO startPoll
-            startPolling(autoPollingMode);
+            if (!offline) {
+                startPoll(autoPollingMode);
+            }
 
             this.initScheduler = Executors.newSingleThreadScheduledExecutor();
             this.initScheduler.schedule(() -> {
-                if (!this.initialized.getAndSet(true))
-                    this.initFuture.complete(null);
+                if (initialized.compareAndSet(false, true)) {
+                    String message = "Max init wait time for the very first fetch reached (" + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
+                    logger.warn(message);
+                    completeRunningTask(Result.error(message));
+                }
             }, autoPollingMode.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
 
-        } else if (pollingMode instanceof LazyLoadingMode) {
-            //TODO simple else not esle if
-            LazyLoadingMode config = (LazyLoadingMode) pollingMode;
-            //TODO move this check to getSettings
-            this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
-            this.isFetching = new AtomicBoolean(false);
-            this.initialized = new AtomicBoolean(false);
-            this.initFuture = new CompletableFuture<>();
+        } else {
+            this.initialized.compareAndSet(false, true);
         }
-        // nothing to do if MPM -- handle in else
     }
 
-    private void startPolling(AutoPollingMode autoPollingMode) {
-        this.scheduler = Executors.newSingleThreadScheduledExecutor();
-        this.scheduler.scheduleAtFixedRate(() -> {
-            try {
-                //TODO fetch if older
-                FetchResponse response = this.configFetcher.fetchAsync().get();
-                if (response.isFetched()) {
-                    this.configJsonCache.writeToCache(response.entry());
-                    this.broadcastConfigurationChanged();
-                }
-                //TODO remove init from here
-                if (!this.initialized.getAndSet(true))
-                    this.initFuture.complete(null);
-            } catch (Exception e) {
-                logger.error("Exception in AutoPollingCachePolicy", e);
-            }
-        }, 0, autoPollingMode.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
+    private void startPoll(AutoPollingMode autoPollingMode) {
+        long ageThreshold = (long) ((autoPollingMode.getAutoPollRateInSeconds() * 1000L) * 0.7);
+        this.pollScheduler = Executors.newSingleThreadScheduledExecutor();
+        this.pollScheduler.scheduleAtFixedRate(() -> fetchIfOlder(System.currentTimeMillis() - ageThreshold, false),
+                0, autoPollingMode.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
     }
 
-    public CompletableFuture<Void> refreshAsync() {
-        return this.configFetcher.fetchAsync()
-                .thenAcceptAsync(response -> {
-                    if (response.isFetched()) {
-                        this.configJsonCache.writeToCache(response.entry());
-                    }
-                });
+
+    public CompletableFuture<Result<Entry>> refresh() {
+        return fetchIfOlder(DISTANT_FUTURE, false);
     }
 
-    public CompletableFuture<Map<String, Setting>> getSettingsAsync() {
-        //TODO implement
-        if (pollingMode instanceof AutoPollingMode) {
-            if (this.initFuture.isDone())
-                return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
-
-            return this.initFuture.thenApplyAsync(v -> this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
-        }
+    public CompletableFuture<SettingResult> getSettings() {
         if (pollingMode instanceof LazyLoadingMode) {
-            //TODO replace with entry fetch time
-            //if (Instant.now().isAfter(lastRefreshedTime.plusSeconds(this.cacheRefreshIntervalInSeconds))) {
-            boolean isInitialized = this.initFuture.isDone();
-
-            if (isInitialized && !this.isFetching.compareAndSet(false, true))
-                return this.initialized.get()
-                        ? CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries)
-                        : this.fetchingFuture.thenApply(entry -> entry.config.entries);
-
-            logger.debug("Cache expired, refreshing.");
-            if (isInitialized) {
-                this.fetchingFuture = this.fetch();
-                return this.fetchingFuture.thenApply(entry -> entry.config.entries);
-            } else {
-                if (this.isFetching.compareAndSet(false, true)) {
-                    this.fetchingFuture = this.fetch();
-                }
-                return this.initFuture.thenApplyAsync(v -> this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
-            }
-            //}
-            //return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
+            LazyLoadingMode lazyLoadingMode = (LazyLoadingMode) pollingMode;
+            return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
+                    .thenApply(entryResult -> {
+                        Entry result = entryResult.value();
+                        return new SettingResult(result.config.entries, result.fetchTime);
+                    });
+        } else {
+            return fetchIfOlder(DISTANT_PAST, true)
+                    .thenApply(entryResult -> {
+                        Entry result = entryResult.value();
+                        return new SettingResult(result.config.entries, result.fetchTime);
+                    });
         }
-        //MPP the last
-        return CompletableFuture.completedFuture(this.configJsonCache.readFromCache()).thenApply(entry -> entry.config.entries);
+
     }
 
-    // LPP fetch
-    private CompletableFuture<Entry> fetch() {
-        //TODO fetch should check fetchtime from stored entry
-        //TODO add runnuing task. part of Init?
-        return this.configFetcher.fetchAsync()
-                .thenApplyAsync(response -> {
-                    if (response.isFetched()) {
-                        this.configJsonCache.writeToCache(response.entry());
-                    }
+    private CompletableFuture<Result<Entry>> fetchIfOlder(long time, boolean preferCached) {
+        lock.lock();
+        try {
+            // Sync up with the cache and use it when it's not expired.
+            Entry entryFromCache = configJsonCache.readFromCache();
+            // Cache isn't expired
+            if (entryFromCache.fetchTime > time ||
+                    // Use cache anyway (get calls on auto & manual poll must not initiate fetch).
+                    // The initialized check ensures that we subscribe for the ongoing fetch during the
+                    // max init wait time window in case of auto poll.
+                    preferCached && initialized.get() ||
+                    // If we are in offline mode we are not allowed to initiate fetch. Return with cache
+                    offline) {
+                return CompletableFuture.completedFuture(Result.success(entryFromCache));
+            }
+            //Result.error("The SDK is in offline mode, it can't initiate HTTP calls."));
 
-                    //TODO entry fetch time handles
-                    //if (!response.isFailed())
-                    //   this.lastRefreshedTime = Instant.now();
+            if (runningTask == null) {
+                // No fetch is running, initiate a new one.
+                runningTask = new CompletableFuture<>();
+                configFetcher.fetchAsync()
+                        .thenAccept(this::processResponse);
+            }
 
-                    if (this.initialized.compareAndSet(false, true)) {
-                        this.initFuture.complete(null);
-                    }
+            return runningTask;
 
-                    this.isFetching.set(false);
-
-                    return this.configJsonCache.readFromCache();
-                });
+        } finally {
+            lock.unlock();
+        }
     }
 
     private synchronized void broadcastConfigurationChanged() {
-        for (ConfigurationChangeListener listener : this.listeners)
-            listener.onConfigurationChanged();
+        if (this.listeners != null) {
+            for (ConfigurationChangeListener listener : this.listeners) {
+                listener.onConfigurationChanged();
+            }
+        }
     }
 
     @Override
     public void close() throws IOException {
+        //TODO atomic boolean here?
         if (pollingMode instanceof AutoPollingMode) {
-            this.scheduler.shutdown();
-            this.initScheduler.shutdown();
+            if (pollScheduler != null) this.pollScheduler.shutdown();
+            if (initScheduler != null) this.initScheduler.shutdown();
             this.listeners.clear();
         }
         this.configFetcher.close();
     }
 
     public void setOnline() {
-        this.offline = false;
-        //TODO implement -
-        // TODO call startPolling
+        lock.lock();
+        try {
+            if (!offline) return;
+            offline = false;
+            if (pollingMode instanceof AutoPollingMode) {
+                startPoll((AutoPollingMode) pollingMode);
+            }
+            logger.debug("Switched to ONLINE mode.");
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void setOffline() {
         this.offline = true;
-        //TODO implement - call fetcher
-        //TODO stop scheduler
+        //TODO implement - call fetcher - why?
+        lock.lock();
+        try {
+            if (offline) return;
+            offline = true;
+            if (pollScheduler != null) pollScheduler.shutdown();
+            if (initScheduler != null) initScheduler.shutdown();
+            logger.debug("Switched to OFFLINE mode.");
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean isOffline() {
         return offline;
     }
+
+    private void processResponse(FetchResponse response) {
+        lock.lock();
+        try {
+            this.initialized.compareAndSet(false, true);
+            if (response.isFetched()) {
+                Entry entry = response.entry();
+                configJsonCache.writeToCache(entry);
+                this.broadcastConfigurationChanged();
+                completeRunningTask(Result.success(entry));
+            } else if (response.isNotModified()) {
+                Entry entry = response.entry();
+                entry.fetchTime = System.currentTimeMillis();
+                configJsonCache.writeToCache(entry);
+                completeRunningTask(Result.success(entry));
+            } else {
+                Entry entry = configJsonCache.readFromCache();
+                //if actual fetch failed always use cache
+                completeRunningTask(Result.success(entry));
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void completeRunningTask(Result<Entry> result) {
+        runningTask.complete(result);
+        runningTask = null;
+    }
+
 }
