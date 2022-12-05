@@ -19,13 +19,12 @@ public class ConfigService implements Closeable {
     private final ConfigJsonCache configJsonCache;
     private final ConfigCatLogger logger;
     private final PollingMode pollingMode;
-    //APP
     private ScheduledExecutorService pollScheduler;
     private ScheduledExecutorService initScheduler;
     private ArrayList<ConfigurationChangeListener> listeners;
     private CompletableFuture<Result<Entry>> runningTask;
-    //COMMON
-    private AtomicBoolean initialized = new AtomicBoolean(false);
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
+    private final AtomicBoolean closed = new AtomicBoolean(false);
     private boolean offline;
     private final ReentrantLock lock = new ReentrantLock(true);
 
@@ -70,8 +69,12 @@ public class ConfigService implements Closeable {
     }
 
 
-    public CompletableFuture<Result<Entry>> refresh() {
-        return fetchIfOlder(DISTANT_FUTURE, false);
+    public CompletableFuture<RefreshResult> refresh() {
+        if (offline) {
+            logger.warn("Client is in offline mode, it can't initiate HTTP calls.");
+        }
+        return fetchIfOlder(DISTANT_FUTURE, false)
+                .thenApply(entryResult -> new RefreshResult(entryResult.error() == null, entryResult.error()));
     }
 
     public CompletableFuture<SettingResult> getSettings() {
@@ -107,7 +110,6 @@ public class ConfigService implements Closeable {
                     offline) {
                 return CompletableFuture.completedFuture(Result.success(entryFromCache));
             }
-            //Result.error("The SDK is in offline mode, it can't initiate HTTP calls."));
 
             if (runningTask == null) {
                 // No fetch is running, initiate a new one.
@@ -133,7 +135,9 @@ public class ConfigService implements Closeable {
 
     @Override
     public void close() throws IOException {
-        //TODO atomic boolean here?
+        if (!this.closed.compareAndSet(false, true)) {
+            return;
+        }
         if (pollingMode instanceof AutoPollingMode) {
             if (pollScheduler != null) this.pollScheduler.shutdown();
             if (initScheduler != null) this.initScheduler.shutdown();
@@ -143,6 +147,9 @@ public class ConfigService implements Closeable {
     }
 
     public void setOnline() {
+        if (closed.get()) {
+            logger.warn("Client has already been closed, this 'setOnline' has no effect.");
+        }
         lock.lock();
         try {
             if (!offline) return;
@@ -157,8 +164,10 @@ public class ConfigService implements Closeable {
     }
 
     public void setOffline() {
+        if (closed.get()) {
+            logger.warn("Client has already been closed, this 'setOffline' has no effect.");
+        }
         this.offline = true;
-        //TODO implement - call fetcher - why?
         lock.lock();
         try {
             if (offline) return;

@@ -308,19 +308,20 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public void forceRefresh() {
+    public RefreshResult forceRefresh() {
         try {
-            this.forceRefreshAsync().get();
+            return this.forceRefreshAsync().get();
         } catch (InterruptedException e) {
             this.logger.error("Thread interrupted.", e);
             Thread.currentThread().interrupt();
         } catch (Exception e) {
             this.logger.error("An error occurred during the refresh.", e);
         }
+        return new RefreshResult(false, "An error occurred during the refresh.");
     }
 
     @Override
-    public CompletableFuture<Result<Entry>> forceRefreshAsync() {
+    public CompletableFuture<RefreshResult> forceRefreshAsync() {
         return this.configService.refresh();
     }
 
@@ -352,7 +353,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (this.configService != null) {
             this.configService.setOffline();
         }
-        //TODO log - set to, isClosed
     }
 
     @Override

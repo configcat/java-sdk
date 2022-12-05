@@ -175,15 +175,17 @@ public interface ConfigurationProvider extends Closeable {
 
     /**
      * Initiates a force refresh synchronously on the cached configuration.
+     *
+     * @return the refresh result.
      */
-    void forceRefresh();
+    RefreshResult forceRefresh();
 
     /**
      * Initiates a force refresh asynchronously on the cached configuration.
      *
      * @return the future which executes the refresh.
      */
-    CompletableFuture<Result<Entry>> forceRefreshAsync();
+    CompletableFuture<RefreshResult> forceRefreshAsync();
 
     /**
      * Sets defaultUser value.
