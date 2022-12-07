@@ -40,21 +40,19 @@ public class AutoPollingPolicyTest {
     }
 
     @Test
-    public void get() throws InterruptedException, ExecutionException {
+    public void get() throws InterruptedException, ExecutionException, IOException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         ConfigCache cache = new NullConfigCache();
-        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
         PollingMode pollingMode = PollingModes.autoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
                 logger,
-                memoryCache,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, (AutoPollingMode) pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
 
 
         //first call
@@ -65,47 +63,46 @@ public class AutoPollingPolicyTest {
 
         //next call will get the new value
         assertEquals("test2", configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+
+        configService.close();
     }
 
     @Test
-    public void getFail() throws InterruptedException, ExecutionException {
+    public void getFail() throws InterruptedException, ExecutionException, IOException {
         this.server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         ConfigCache cache = new NullConfigCache();
-        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
         PollingMode pollingMode = PollingModes.autoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
                 logger,
-                memoryCache,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, (AutoPollingMode) pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
 
         //first call
         assertTrue(configService.getSettings().get().settings().isEmpty());
+
+        configService.close();
     }
 
     @Test
-    public void getMany() throws InterruptedException, ExecutionException {
+    public void getMany() throws InterruptedException, ExecutionException, IOException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test3")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test4")));
 
         ConfigCache cache = new NullConfigCache();
-        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
         PollingMode pollingMode = PollingModes.autoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
                 logger,
-                memoryCache,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, (AutoPollingMode) pollingMode, cache, logger, false);
-
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
 
         //first calls
         assertEquals("test", configService.getSettings().get().settings().get("fakeKey").value.getAsString());
@@ -129,24 +126,24 @@ public class AutoPollingPolicyTest {
 
         //next call will get the new value
         assertEquals("test4", configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+
+        configService.close();
     }
 
     @Test
-    public void getWithFailedRefresh() throws InterruptedException, ExecutionException {
+    public void getWithFailedRefresh() throws InterruptedException, ExecutionException, IOException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         ConfigCache cache = new NullConfigCache();
-        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
         PollingMode pollingMode = PollingModes.autoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
                 logger,
-                memoryCache,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, (AutoPollingMode) pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
 
         //first call
         assertEquals("test", configService.getSettings().get().settings().get("fakeKey").value.getAsString());
@@ -156,18 +153,23 @@ public class AutoPollingPolicyTest {
 
         //previous value returned because of the refresh failure
         assertEquals("test", configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+
+        configService.close();
     }
 
     @Test
     public void configChanged() throws IOException, InterruptedException {
         AtomicBoolean isCalled = new AtomicBoolean();
         ConfigCache cache = new NullConfigCache();
-        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
         PollingMode pollingMode = PollingModes
                 .autoPoll(2, () -> isCalled.set(true));
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, memoryCache,
-                "", server.url("/").toString(), false, pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, (AutoPollingMode) pollingMode, cache, logger, false);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                logger,
+                "",
+                server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
@@ -187,18 +189,143 @@ public class AutoPollingPolicyTest {
         doThrow(new Exception()).when(cache).read(anyString());
         doThrow(new Exception()).when(cache).write(anyString(), anyString());
 
-        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
         PollingMode pollingMode = PollingModes.autoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
                 logger,
-                memoryCache,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, (AutoPollingMode) pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
 
         assertEquals("test", configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+
+        configService.close();
+    }
+
+    @Test
+    void testInitWaitTimeTimeout() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")).setBodyDelay(2, TimeUnit.SECONDS));
+
+        PollingMode pollingMode = PollingModes.autoPoll(60, 1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false);
+
+        long start = System.currentTimeMillis();
+        assertTrue(configService.getSettings().get().settings().isEmpty());
+        long duration = System.currentTimeMillis() - start;
+        assertTrue(duration < 1500);
+
+        configService.close();
+    }
+
+    @Test
+    void testPollIntervalRespectsCacheExpiration() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+
+        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+
+        PollingMode pollingMode = PollingModes.autoPoll(2);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
+
+        configService.getSettings().get();
+
+        assertEquals(0, this.server.getRequestCount());
+
+        Helpers.waitFor(3000, () -> this.server.getRequestCount() == 1);
+
+        configService.close();
+    }
+
+    @Test
+    void testOnlineOffline() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+
+        PollingMode pollingMode = PollingModes.autoPoll(2);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false);
+
+        Thread.sleep(2500);
+
+        configService.setOffline();
+        assertTrue(configService.isOffline());
+        assertEquals(2, this.server.getRequestCount());
+
+        Thread.sleep(2000);
+
+        assertEquals(2, this.server.getRequestCount());
+        configService.setOnline();
+        assertFalse(configService.isOffline());
+
+        Helpers.waitFor(() -> this.server.getRequestCount() >= 3);
+
+        configService.close();
+    }
+
+    @Test
+    void testInitOffline() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+
+        PollingMode pollingMode = PollingModes.autoPoll(2);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, true);
+
+        assertTrue(configService.isOffline());
+        assertEquals(0, this.server.getRequestCount());
+
+        Thread.sleep(2000);
+
+        assertEquals(0, this.server.getRequestCount());
+        configService.setOnline();
+        assertFalse(configService.isOffline());
+
+        Helpers.waitFor(() -> this.server.getRequestCount() >= 2);
+
+        configService.close();
+    }
+
+    @Test
+    void testInitWaitTimeIgnoredWhenCacheIsNotExpired() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")).setBodyDelay(2, TimeUnit.SECONDS));
+
+        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+
+        PollingMode pollingMode = PollingModes.autoPoll(60, 1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
+
+        long start = System.currentTimeMillis();
+        assertFalse(configService.getSettings().get().settings().isEmpty());
+        long duration = System.currentTimeMillis() - start;
+        assertTrue(duration < 1000);
 
         configService.close();
     }

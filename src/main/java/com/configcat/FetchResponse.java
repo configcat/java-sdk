@@ -10,6 +10,7 @@ class FetchResponse {
     private final Status status;
     private final Entry entry;
     private final String error;
+    private final boolean fetchTimeUpdatable;
 
 
     public boolean isFetched() {
@@ -24,6 +25,10 @@ class FetchResponse {
         return this.status == Status.FAILED;
     }
 
+    public boolean isFetchTimeUpdatable() {
+        return fetchTimeUpdatable;
+    }
+
     public Entry entry() {
         return this.entry;
     }
@@ -32,21 +37,30 @@ class FetchResponse {
         return this.error;
     }
 
-    FetchResponse(Status status, Entry entry, String error) {
+    FetchResponse(Status status, Entry entry, String error, boolean fetchTimeUpdatable) {
         this.status = status;
         this.entry = entry;
         this.error = error;
+        this.fetchTimeUpdatable = fetchTimeUpdatable;
     }
 
     public static FetchResponse fetched(Entry entry) {
-        return new FetchResponse(Status.FETCHED, entry == null ? Entry.empty : entry, null);
+        return new FetchResponse(Status.FETCHED, entry == null ? Entry.empty : entry, null, false);
     }
 
     public static FetchResponse notModified() {
-        return new FetchResponse(Status.NOT_MODIFIED, Entry.empty, null);
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.empty, null, false);
+    }
+
+    public static FetchResponse notModified(boolean fetchTimeUpdatable) {
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.empty, null, fetchTimeUpdatable);
     }
 
     public static FetchResponse failed(String error) {
-        return new FetchResponse(Status.FAILED, Entry.empty, error);
+        return new FetchResponse(Status.FAILED, Entry.empty, error, false);
+    }
+
+    public static FetchResponse failed(String error, boolean fetchTimeUpdatable) {
+        return new FetchResponse(Status.FAILED, Entry.empty, error, fetchTimeUpdatable);
     }
 }

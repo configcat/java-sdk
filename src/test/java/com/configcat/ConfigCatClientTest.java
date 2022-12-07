@@ -308,22 +308,22 @@ public class ConfigCatClientTest {
         cl.forceRefresh();
 
         //test build param
-        assertEquals("fakeValue2", cl.getValue(String.class, "fakeKey", null,null));
+        assertEquals("fakeValue2", cl.getValue(String.class, "fakeKey", null, null));
         cl.clearDefaultUser();
 
         //without default user
-        assertEquals("fakeValue1", cl.getValue(String.class, "fakeKey", user1,null));
-        assertEquals("defaultValue", cl.getValue(String.class, "fakeKey", null,null));
-        assertEquals("fakeValue2", cl.getValue(String.class, "fakeKey", user2,null));
+        assertEquals("fakeValue1", cl.getValue(String.class, "fakeKey", user1, null));
+        assertEquals("defaultValue", cl.getValue(String.class, "fakeKey", null, null));
+        assertEquals("fakeValue2", cl.getValue(String.class, "fakeKey", user2, null));
 
         //manual set default user
         cl.setDefaultUser(user2);
-        assertEquals("fakeValue1", cl.getValue(String.class, "fakeKey", user1,null));
-        assertEquals("fakeValue2", cl.getValue(String.class, "fakeKey", null,null));
+        assertEquals("fakeValue1", cl.getValue(String.class, "fakeKey", user1, null));
+        assertEquals("fakeValue2", cl.getValue(String.class, "fakeKey", null, null));
 
         //test clear
         cl.clearDefaultUser();
-        assertEquals("defaultValue", cl.getValue(String.class, "fakeKey", null,null));
+        assertEquals("defaultValue", cl.getValue(String.class, "fakeKey", null, null));
 
         server.shutdown();
         cl.close();
@@ -395,5 +395,193 @@ public class ConfigCatClientTest {
         assertTrue(client1.isClosed());
         assertFalse(client2.isClosed());
 
+    }
+
+    @Test
+    void testAutoPollRefreshFail() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
+                .mode(PollingModes.manualPoll())
+                .baseUrl(server.url("/").toString());
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
+
+        cl.forceRefresh();
+        assertEquals("", cl.getValue(String.class, "fakeKey", ""));
+
+        server.close();
+        cl.close();
+    }
+
+    @Test
+    void testLazyRefreshFail() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
+                .mode(PollingModes.manualPoll())
+                .baseUrl(server.url("/").toString());
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
+
+        cl.forceRefresh();
+        assertEquals("", cl.getValue(String.class, "fakeKey", ""));
+
+        server.close();
+        cl.close();
+    }
+
+    @Test
+    void testManualPollRefreshFail() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
+                .mode(PollingModes.manualPoll())
+                .baseUrl(server.url("/").toString());
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
+
+        cl.forceRefresh();
+        assertEquals("", cl.getValue(String.class, "fakeKey", ""));
+
+        server.close();
+        cl.close();
+    }
+
+    @Test
+    void testAutoPollUserAgentHeader() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
+                .mode(PollingModes.autoPoll(2))
+                .baseUrl(server.url("/").toString());
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
+
+        cl.forceRefresh();
+
+        assertEquals("ConfigCat-Java/a-" + Constants.VERSION, server.takeRequest().getHeader("X-ConfigCat-UserAgent"));
+
+        server.shutdown();
+        cl.close();
+    }
+
+    @Test
+    void testLazyUserAgentHeader() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
+                .mode(PollingModes.lazyLoad(2))
+                .baseUrl(server.url("/").toString());
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
+
+        cl.forceRefresh();
+
+        assertEquals("ConfigCat-Java/l-" + Constants.VERSION, server.takeRequest().getHeader("X-ConfigCat-UserAgent"));
+
+        server.shutdown();
+        cl.close();
+    }
+
+    @Test
+    void testManualAgentHeader() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
+                .mode(PollingModes.manualPoll())
+                .baseUrl(server.url("/").toString());
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
+
+        cl.forceRefresh();
+
+        assertEquals("ConfigCat-Java/m-" + Constants.VERSION, server.takeRequest().getHeader("X-ConfigCat-UserAgent"));
+
+        server.shutdown();
+        cl.close();
+    }
+
+    @Test
+    void testOnlineOffline() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
+                .mode(PollingModes.manualPoll())
+                .baseUrl(server.url("/").toString());
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
+
+        assertFalse(cl.isOffline());
+
+        cl.forceRefresh();
+
+        assertEquals(1, server.getRequestCount());
+
+        cl.setOffline();
+        assertTrue(cl.isOffline());
+
+        cl.forceRefresh();
+
+        assertEquals(1, server.getRequestCount());
+
+        cl.setOnline();
+        cl.forceRefresh();
+
+        assertEquals(2, server.getRequestCount());
+
+        server.shutdown();
+        cl.close();
+    }
+
+    @Test
+    void testInitOffline() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
+                .mode(PollingModes.manualPoll())
+                .baseUrl(server.url("/").toString())
+                .offline(true);
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
+
+        assertTrue(cl.isOffline());
+
+        cl.forceRefresh();
+
+        assertEquals(0, server.getRequestCount());
+
+        cl.setOnline();
+        cl.forceRefresh();
+
+        assertEquals(1, server.getRequestCount());
+
+        server.shutdown();
+        cl.close();
     }
 }

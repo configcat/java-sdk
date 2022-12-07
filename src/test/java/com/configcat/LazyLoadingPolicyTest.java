@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class LazyLoadingPolicyTest {
     private ConfigService configService;
@@ -25,11 +25,15 @@ public class LazyLoadingPolicyTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, new NullConfigCache(), "");
         LazyLoadingMode mode = (LazyLoadingMode) PollingModes
                 .lazyLoad(5);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, memoryCache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                mode.getPollingIdentifier());
         this.configService = new ConfigService("", fetcher, mode, new NullConfigCache(), logger, false);
     }
 
@@ -58,8 +62,12 @@ public class LazyLoadingPolicyTest {
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes
                 .lazyLoad(5);
-        ConfigJsonCache cache = new ConfigJsonCache(logger, new FailingCache(), "");
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, cache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                logger
+                , "",
+                this.server.url("/").toString(),
+                false,
+                mode.getPollingIdentifier());
         ConfigService configService1 = new ConfigService("", fetcher, mode, new FailingCache(), logger, false);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
@@ -88,5 +96,118 @@ public class LazyLoadingPolicyTest {
 
         //previous value returned because of the refresh failure
         assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+    }
+
+    @Test
+    void testCacheExpirationRespectedInTTLCalc() throws InterruptedException, ExecutionException {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+
+        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+
+        PollingMode mode = PollingModes
+                .lazyLoad(1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false);
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertFalse(service.getSettings().get().settings().isEmpty());
+
+        assertEquals(0, this.server.getRequestCount());
+
+        Thread.sleep(1000);
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertFalse(service.getSettings().get().settings().isEmpty());
+
+        assertEquals(1, this.server.getRequestCount());
+    }
+
+    @Test
+    void testCacheExpirationRespectedInTTLCalc304() throws InterruptedException, ExecutionException {
+        this.server.enqueue(new MockResponse().setResponseCode(304).setBody(""));
+
+        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+
+        PollingMode mode = PollingModes
+                .lazyLoad(1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false);
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertFalse(service.getSettings().get().settings().isEmpty());
+
+        assertEquals(0, this.server.getRequestCount());
+
+        Thread.sleep(1000);
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertFalse(service.getSettings().get().settings().isEmpty());
+
+        assertEquals(1, this.server.getRequestCount());
+    }
+
+    @Test
+    void testOnlineOffline() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+
+        PollingMode pollingMode = PollingModes.lazyLoad(1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false);
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertEquals(1, this.server.getRequestCount());
+
+        service.setOffline();
+        assertTrue(service.isOffline());
+
+        Thread.sleep(1500);
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertEquals(1, this.server.getRequestCount());
+
+        service.setOnline();
+        assertFalse(service.isOffline());
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertEquals(2, this.server.getRequestCount());
+
+        service.close();
+    }
+
+    @Test
+    void testInitOffline() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+
+        PollingMode pollingMode = PollingModes.lazyLoad(1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, true);
+
+        assertTrue(service.getSettings().get().settings().isEmpty());
+        assertEquals(0, this.server.getRequestCount());
+
+        Thread.sleep(1500);
+
+        assertTrue(service.getSettings().get().settings().isEmpty());
+        assertEquals(0, this.server.getRequestCount());
+
+        service.setOnline();
+        assertFalse(service.isOffline());
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertEquals(1, this.server.getRequestCount());
+
+        service.close();
     }
 }

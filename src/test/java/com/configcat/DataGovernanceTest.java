@@ -25,7 +25,7 @@ public class DataGovernanceTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.fetchAsync().get();
+        FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
         assertEquals(url, response.entry().config.preferences.baseUrl);
@@ -46,7 +46,7 @@ public class DataGovernanceTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.fetchAsync().get();
+        FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
         assertEquals(url, response.entry().config.preferences.baseUrl);
@@ -68,7 +68,7 @@ public class DataGovernanceTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.fetchAsync().get();
+        FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
         assertEquals(url, response.entry().config.preferences.baseUrl);
@@ -95,7 +95,7 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.fetchAsync().get();
+        FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
         assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
@@ -125,7 +125,7 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.fetchAsync().get();
+        FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
         assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
@@ -156,7 +156,7 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.fetchAsync().get();
+        FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
         assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
@@ -183,7 +183,7 @@ public class DataGovernanceTest {
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
         // Act
-        FetchResponse response = fetcher.fetchAsync().get();
+        FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
         assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
@@ -213,7 +213,7 @@ public class DataGovernanceTest {
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.fetchAsync().get();
+        FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
         assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
@@ -235,6 +235,6 @@ public class DataGovernanceTest {
     }
 
     private ConfigFetcher createFetcher(String url, boolean isCustomUrl) {
-        return new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigJsonCache(logger, new NullConfigCache(), ""), "", url, isCustomUrl, "m");
+        return new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", url, isCustomUrl, "m");
     }
 }

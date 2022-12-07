@@ -1,7 +1,6 @@
 package com.configcat;
 
 final class Result<T> {
-    //TODO place Result somewhere else
     private final T value;
     private final String error;
 

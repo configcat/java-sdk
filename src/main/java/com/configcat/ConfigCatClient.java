@@ -32,19 +32,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel);
 
         this.sdkKey = sdkKey;
-        //TODO CS -  no oDS in android? why?
         this.overrideDataSource = options.localDataSourceBuilder != null
                 ? options.localDataSourceBuilder.build(this.logger)
                 : new OverrideDataSource();
         this.overrideBehaviour = options.overrideBehaviour;
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
-        //TODO CS ?
-        ConfigJsonCache configJsonCache = new ConfigJsonCache(this.logger, options.cache, sdkKey);
-
-
         if (this.overrideBehaviour != OverrideBehaviour.LOCAL_ONLY) {
-            //TODO CS the whole fetcher can be in CS
             boolean hasCustomBaseUrl = options.baseUrl != null && !options.baseUrl.isEmpty();
             ConfigFetcher fetcher = new ConfigFetcher(options.httpClient == null
                     ? new OkHttpClient
@@ -52,7 +46,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     .build()
                     : options.httpClient,
                     this.logger,
-                    configJsonCache,
                     sdkKey,
                     !hasCustomBaseUrl
                             ? options.dataGovernance == DataGovernance.GLOBAL
@@ -62,7 +55,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     hasCustomBaseUrl,
                     options.pollingMode.getPollingIdentifier());
 
-            //TODO CS null checks can be replaced?
             this.configService = new ConfigService(sdkKey, fetcher, options.pollingMode, options.cache, logger, options.offline);
         }
 
@@ -326,7 +318,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     public void setDefaultUser(User defaultUser) {
-        //TODO add logger after isClosed? is it matter?
+        if (isClosed()) {
+            logger.warn("Client has already been closed, this 'setDefaultUser' has no effect.");
+            return;
+        }
         this.defaultUser = defaultUser;
     }
 
@@ -342,16 +337,19 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public void setOnline() {
-        if (this.configService != null) {
+        if (this.configService != null && !isClosed()) {
             this.configService.setOnline();
+        } else {
+            logger.warn("Client has already been closed, this 'setOnline' has no effect.");
         }
-        //TODO log - set to, isClosed
     }
 
     @Override
     public void setOffline() {
-        if (this.configService != null) {
+        if (this.configService != null && !isClosed()) {
             this.configService.setOffline();
+        } else {
+            logger.warn("Client has already been closed, this 'setOffline' has no effect.");
         }
     }
 
@@ -408,10 +406,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (this.overrideBehaviour != null) {
             switch (this.overrideBehaviour) {
                 case LOCAL_ONLY:
-                    return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), ConfigService.DISTANT_PAST));
+                    return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), Constants.DISTANT_PAST));
                 case REMOTE_OVER_LOCAL:
                     if (configService == null)
-                        return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), ConfigService.DISTANT_PAST));
+                        return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), Constants.DISTANT_PAST));
                     return this.configService.getSettings()
                             .thenApply(settingResult -> {
                                 Map<String, Setting> localSettings = new HashMap<>(this.overrideDataSource.getLocalConfiguration());
@@ -420,7 +418,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                             });
                 case LOCAL_OVER_REMOTE:
                     if (configService == null)
-                        return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), ConfigService.DISTANT_PAST));
+                        return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), Constants.DISTANT_PAST));
                     return this.configService.getSettings()
                             .thenApply(settingResult -> {
                                 Map<String, Setting> localSettings = this.overrideDataSource.getLocalConfiguration();
@@ -432,7 +430,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         return configService == null
-                ? CompletableFuture.completedFuture(new SettingResult(new HashMap<>(), ConfigService.DISTANT_PAST))
+                ? CompletableFuture.completedFuture(new SettingResult(new HashMap<>(), Constants.DISTANT_PAST))
                 : configService.getSettings();
     }
 

@@ -6,7 +6,6 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -211,7 +210,11 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getAllKeys() throws IOException {
-        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
+        ConfigCatClient.Options options = new ConfigCatClient.Options()
+                .logLevel(LogLevel.INFO)
+                .dataGovernance(DataGovernance.EU_ONLY);
+
+        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options);
 
         Collection<String> keys = cl.getAllKeys();
 
@@ -219,28 +222,5 @@ public class ConfigCatClientIntegrationTest {
         assertTrue(keys.contains("stringDefaultCat"));
 
         cl.close();
-    }
-
-    @Test
-    public void ensureFailingCacheWriteDoesNotPreventFurtherWrites() {
-        FailingWriteCache cache = new FailingWriteCache();
-        ConfigJsonCache memoryCache = new ConfigJsonCache(
-                new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClientIntegrationTest.class)), cache, "");
-
-        Result<Config> initialConfig = memoryCache.readConfigFromJson(String.format(TEST_JSON, "initial"));
-        memoryCache.writeToCache(new Entry(initialConfig.value(), "etag1", System.currentTimeMillis()));
-
-        Result<Config> updated = memoryCache.readConfigFromJson(String.format(TEST_JSON, "updated"));
-        memoryCache.writeToCache(new Entry(updated.value(), "etag2", System.currentTimeMillis())); // this will fail
-
-        Entry fromCache1 = memoryCache.readFromCache();
-        assertEquals("etag1", fromCache1.eTag);
-
-        memoryCache.writeToCache(new Entry(updated.value(), "etag2", System.currentTimeMillis()));
-
-        Entry fromCache2 = memoryCache.readFromCache();
-        assertEquals("etag2", fromCache2.eTag);
-
-        assertEquals(2, cache.successCounter.get());
     }
 }

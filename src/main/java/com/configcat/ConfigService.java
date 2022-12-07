@@ -1,5 +1,8 @@
 package com.configcat;
 
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,11 +15,14 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ConfigService implements Closeable {
 
-    static final long DISTANT_FUTURE = Long.MAX_VALUE;
-    static final long DISTANT_PAST = 0;
+    private static final String CACHE_BASE = "java_" + Constants.CONFIG_JSON_NAME + "_%s";
 
+    private Entry cachedEntry = Entry.empty;
+    private String cachedEntryString = "";
+    private final ConfigCache cache;
+
+    private final String cacheKey;
     private final ConfigFetcher configFetcher;
-    private final ConfigJsonCache configJsonCache;
     private final ConfigCatLogger logger;
     private final PollingMode pollingMode;
     private ScheduledExecutorService pollScheduler;
@@ -29,10 +35,16 @@ public class ConfigService implements Closeable {
     private final ReentrantLock lock = new ReentrantLock(true);
 
 
-    public ConfigService(String sdkKey, ConfigFetcher configFetcher, PollingMode pollingMode, ConfigCache configCache, ConfigCatLogger logger, boolean offline) {
+    public ConfigService(String sdkKey,
+                         ConfigFetcher configFetcher,
+                         PollingMode pollingMode,
+                         ConfigCache cache,
+                         ConfigCatLogger logger,
+                         boolean offline) {
         this.configFetcher = configFetcher;
         this.pollingMode = pollingMode;
-        this.configJsonCache = new ConfigJsonCache(logger, configCache, sdkKey);
+        this.cacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CACHE_BASE, sdkKey))));
+        this.cache = cache;
         this.logger = logger;
         this.offline = offline;
         if (pollingMode instanceof AutoPollingMode) {
@@ -73,7 +85,7 @@ public class ConfigService implements Closeable {
         if (offline) {
             logger.warn("Client is in offline mode, it can't initiate HTTP calls.");
         }
-        return fetchIfOlder(DISTANT_FUTURE, false)
+        return fetchIfOlder(Constants.DISTANT_FUTURE, false)
                 .thenApply(entryResult -> new RefreshResult(entryResult.error() == null, entryResult.error()));
     }
 
@@ -82,13 +94,13 @@ public class ConfigService implements Closeable {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode) pollingMode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
                     .thenApply(entryResult -> {
-                        Entry result = entryResult.value();
+                        Entry result = entryResult.value() == null ? cachedEntry : entryResult.value();
                         return new SettingResult(result.config.entries, result.fetchTime);
                     });
         } else {
-            return fetchIfOlder(DISTANT_PAST, true)
+            return fetchIfOlder(Constants.DISTANT_PAST, true)
                     .thenApply(entryResult -> {
-                        Entry result = entryResult.value();
+                        Entry result = entryResult.value() == null ? cachedEntry : entryResult.value();
                         return new SettingResult(result.config.entries, result.fetchTime);
                     });
         }
@@ -99,22 +111,31 @@ public class ConfigService implements Closeable {
         lock.lock();
         try {
             // Sync up with the cache and use it when it's not expired.
-            Entry entryFromCache = configJsonCache.readFromCache();
-            // Cache isn't expired
-            if (entryFromCache.fetchTime > time ||
-                    // Use cache anyway (get calls on auto & manual poll must not initiate fetch).
-                    // The initialized check ensures that we subscribe for the ongoing fetch during the
-                    // max init wait time window in case of auto poll.
-                    preferCached && initialized.get() ||
-                    // If we are in offline mode we are not allowed to initiate fetch. Return with cache
-                    offline) {
-                return CompletableFuture.completedFuture(Result.success(entryFromCache));
+            if (cachedEntry.isEmpty() || cachedEntry.fetchTime > time) {
+                Entry fromCache = readCache();
+                if (!fromCache.isEmpty() && !fromCache.eTag.equals(cachedEntry.eTag)) {
+                    cachedEntry = fromCache;
+                }
+                // Cache isn't expired
+                if (cachedEntry.fetchTime > time) {
+                    return CompletableFuture.completedFuture(Result.success(cachedEntry));
+                }
+            }
+            // Use cache anyway (get calls on auto & manual poll must not initiate fetch).
+            // The initialized check ensures that we subscribe for the ongoing fetch during the
+            // max init wait time window in case of auto poll.
+            if (preferCached && initialized.get()) {
+                return CompletableFuture.completedFuture(Result.success(cachedEntry));
+            }
+            // If we are in offline mode we are not allowed to initiate fetch.
+            if (offline) {
+                return CompletableFuture.completedFuture(Result.error("The SDK is in offline mode, it can't initiate HTTP calls."));
             }
 
             if (runningTask == null) {
                 // No fetch is running, initiate a new one.
                 runningTask = new CompletableFuture<>();
-                configFetcher.fetchAsync()
+                configFetcher.fetchAsync(cachedEntry.eTag)
                         .thenAccept(this::processResponse);
             }
 
@@ -190,18 +211,22 @@ public class ConfigService implements Closeable {
             this.initialized.compareAndSet(false, true);
             if (response.isFetched()) {
                 Entry entry = response.entry();
-                configJsonCache.writeToCache(entry);
+                cachedEntry = entry;
+                writeCache(entry);
                 this.broadcastConfigurationChanged();
                 completeRunningTask(Result.success(entry));
             } else if (response.isNotModified()) {
-                Entry entry = response.entry();
-                entry.fetchTime = System.currentTimeMillis();
-                configJsonCache.writeToCache(entry);
-                completeRunningTask(Result.success(entry));
+                if (response.isFetchTimeUpdatable()) {
+                    cachedEntry.fetchTime = System.currentTimeMillis();
+                }
+                writeCache(cachedEntry);
+                completeRunningTask(Result.success(cachedEntry));
             } else {
-                Entry entry = configJsonCache.readFromCache();
+                if (response.isFetchTimeUpdatable()) {
+                    cachedEntry.fetchTime = System.currentTimeMillis();
+                }
                 //if actual fetch failed always use cache
-                completeRunningTask(Result.success(entry));
+                completeRunningTask(Result.error(response.error()));
             }
         } finally {
             lock.unlock();
@@ -213,4 +238,28 @@ public class ConfigService implements Closeable {
         runningTask = null;
     }
 
+    private Entry readCache() {
+        try {
+            String json = cache.read(cacheKey);
+            if (json != null && json.equals(cachedEntryString)) {
+                return Entry.empty;
+            }
+            cachedEntryString = json;
+            Entry deserialized = Utils.gson.fromJson(json, Entry.class);
+            return deserialized == null || deserialized.config == null ? Entry.empty : deserialized;
+        } catch (Exception e) {
+            this.logger.error("An error occurred during the cache read.", e);
+            return Entry.empty;
+        }
+    }
+
+    private void writeCache(Entry entry) {
+        try {
+            String configToCache = Utils.gson.toJson(entry);
+            cachedEntryString = configToCache;
+            cache.write(cacheKey, configToCache);
+        } catch (Exception e) {
+            logger.error("An error occurred during the cache write.", e);
+        }
+    }
 }
