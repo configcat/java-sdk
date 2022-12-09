@@ -159,9 +159,21 @@ class RolloutRule {
 
 class PercentageRule {
     @SerializedName(value = "v")
-    public JsonElement value;
+    private JsonElement value;
     @SerializedName(value = "p")
-    public double percentage;
+    private double percentage;
     @SerializedName(value = "i")
-    public String variationId;
+    private String variationId;
+
+    public JsonElement getValue() {
+        return value;
+    }
+
+    public double getPercentage() {
+        return percentage;
+    }
+
+    public String getVariationId() {
+        return variationId;
+    }
 }

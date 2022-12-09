@@ -130,6 +130,61 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
+    public <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue) {
+        return this.getValueDetails(classOfT, key, null, defaultValue);
+    }
+
+    @Override
+    public <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue) {
+        if (key == null || key.isEmpty())
+            throw new IllegalArgumentException("'key' cannot be null or empty.");
+
+        if (classOfT != String.class &&
+                classOfT != Integer.class &&
+                classOfT != int.class &&
+                classOfT != Double.class &&
+                classOfT != double.class &&
+                classOfT != Boolean.class &&
+                classOfT != boolean.class)
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+
+        try {
+            return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
+        } catch (InterruptedException e) {
+            String error = "Thread interrupted.";
+            this.logger.error(error, e);
+            Thread.currentThread().interrupt();
+            return EvaluationDetails.fromError(key, defaultValue, error + ": " + e.getMessage(), user);
+        } catch (Exception e) {
+            return EvaluationDetails.fromError(key, defaultValue, e.getMessage(), user);
+        }
+    }
+
+    @Override
+    public <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, T defaultValue) {
+        return this.getValueDetailsAsync(classOfT, key, null, defaultValue);
+    }
+
+    @Override
+    public <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, User user, T defaultValue) {
+        if (key == null || key.isEmpty())
+            throw new IllegalArgumentException("'key' cannot be null or empty.");
+
+        if (classOfT != String.class &&
+                classOfT != Integer.class &&
+                classOfT != int.class &&
+                classOfT != Double.class &&
+                classOfT != double.class &&
+                classOfT != Boolean.class &&
+                classOfT != boolean.class)
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+
+        return this.getSettingsAsync()
+                .thenApply(settingsResult -> this.evaluate(classOfT, settingsResult.settings().get(key),
+                        key, user != null ? user : this.defaultUser, settingsResult.fetchTime()));
+    }
+
+    @Override
     public String getVariationId(String key, String defaultVariationId) {
         return this.getVariationId(key, null, defaultVariationId);
     }
@@ -590,6 +645,21 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             return client;
         }
+    }
+
+    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
+        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user);
+        EvaluationDetails<Object> details = new EvaluationDetails<>(
+                this.parseObject(classOfT, evaluationResult.value),
+                key,
+                evaluationResult.variationId,
+                user,
+                false,
+                null,
+                fetchTime,
+                evaluationResult.targetingRule,
+                evaluationResult.percentageRule);
+        return details.asTypeSpecific();
     }
 
     /**

@@ -2,8 +2,8 @@ package com.configcat;
 
 import com.google.gson.JsonElement;
 import de.skuzzle.semantic.Version;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,8 +49,8 @@ class RolloutEvaluator {
                     this.logger.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
                 }
 
-                logEntries.add("Returning " + setting.value + ".");
-                return new EvaluationResult(setting.value, setting.variationId, null, null);
+                logEntries.add("Returning " + setting.getValue() + ".");
+                return new EvaluationResult(setting.getValue(), setting.getVariationId(), null, null);
             }
 
             logEntries.add("User object: " + user + "");
@@ -211,15 +211,15 @@ class RolloutEvaluator {
 
                     bucket += rule.getPercentage();
                     if (scaled < bucket) {
-                        logEntries.add("Evaluating % options. Returning " + rule.value + ".");
+                        logEntries.add("Evaluating % options. Returning " + rule.getValue() + ".");
 
-                        return new EvaluationResult(rule.value, rule.variationId, null, rule);
+                        return new EvaluationResult(rule.getValue(), rule.getVariationId(), null, rule);
                     }
                 }
             }
 
             logEntries.add("Returning " + setting.getValue() + ".");
-            return new EvaluationResult(setting.getValue(), setting.variationId, null, null);
+            return new EvaluationResult(setting.getValue(), setting.getVariationId(), null, null);
         } finally {
             this.logger.info(logEntries.toPrint());
         }
