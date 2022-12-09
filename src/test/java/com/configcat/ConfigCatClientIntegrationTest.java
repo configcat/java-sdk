@@ -223,4 +223,25 @@ public class ConfigCatClientIntegrationTest {
 
         cl.close();
     }
+
+    @Test
+    void testEvalDetails() {
+        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
+
+        User user = new User.Builder()
+                .email("test@configcat.com")
+                .build("test@configcat.com");
+
+        EvaluationDetails<String> details = cl.getValueDetails(String.class, "stringContainsDogDefaultCat", user, "");
+        assertEquals("stringContainsDogDefaultCat", details.getKey());
+        assertEquals("Dog", details.getValue());
+        assertFalse(details.isDefaultValue());
+        assertNull(details.getError());
+        assertEquals("d0cd8f06", details.getVariationId());
+        assertEquals("Email", details.getMatchedEvaluationRule().comparisonAttribute);
+        assertEquals("@configcat.com", details.getMatchedEvaluationRule().comparisonValue);
+        assertNull(details.getMatchedEvaluationPercentageRule());
+        assertEquals(2, details.getMatchedEvaluationRule().comparator);
+        assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
+    }
 }

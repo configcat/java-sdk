@@ -56,7 +56,7 @@ class Setting {
     @SerializedName(value = "t")
     public int type;
     @SerializedName(value = "p")
-    public RolloutPercentageItem[] percentageItems;
+    public PercentageRule[] percentageItems;
     @SerializedName(value = "r")
     public RolloutRule[] rolloutRules;
     @SerializedName(value = "i")
@@ -76,7 +76,7 @@ class RolloutRule {
     public String variationId;
 }
 
-class RolloutPercentageItem {
+class PercentageRule {
     @SerializedName(value = "v")
     public JsonElement value;
     @SerializedName(value = "p")

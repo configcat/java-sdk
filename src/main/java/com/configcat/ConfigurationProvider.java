@@ -56,12 +56,59 @@ public interface ConfigurationProvider extends Closeable {
     <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, User user, T defaultValue);
 
     /**
+     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
+     *
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the configuration value.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired config value.
+     * @return the evaluation details.
+     */
+    <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue);
+
+    /**
+     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
+     *
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the configuration value.
+     * @param user         the user object to identify the caller.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired config value.
+     * @return the evaluation details.
+     */
+    <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue);
+
+    /**
+     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
+     *
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the configuration value.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired config value.
+     * @return a future which computes the the evaluation details.
+     */
+    <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, T defaultValue);
+
+    /**
+     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
+     *
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the configuration value.
+     * @param user         the user object to identify the caller.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired config value.
+     * @return a future which computes the the evaluation details.
+     */
+    <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, User user, T defaultValue);
+
+    /**
      * Gets the Variation ID (analytics) of a feature flag or setting synchronously based on its key.
      *
      * @param key                the identifier of the configuration value.
      * @param defaultVariationId in case of any failure, this value will be returned.
      * @return the Variation ID.
      */
+    @Deprecated
     String getVariationId(String key, String defaultVariationId);
 
     /**
@@ -72,6 +119,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param defaultVariationId in case of any failure, this value will be returned.
      * @return the Variation ID.
      */
+    @Deprecated
     String getVariationId(String key, User user, String defaultVariationId);
 
     /**
@@ -81,6 +129,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param defaultVariationId in case of any failure, this value will be returned.
      * @return a future which computes the Variation ID.
      */
+    @Deprecated
     CompletableFuture<String> getVariationIdAsync(String key, String defaultVariationId);
 
     /**
@@ -91,6 +140,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param defaultVariationId in case of any failure, this value will be returned.
      * @return a future which computes the Variation ID.
      */
+    @Deprecated
     CompletableFuture<String> getVariationIdAsync(String key, User user, String defaultVariationId);
 
     /**
@@ -98,6 +148,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @return a collection of all Variation IDs.
      */
+    @Deprecated
     Collection<String> getAllVariationIds();
 
     /**
@@ -105,6 +156,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @return a future which computes the collection of all Variation IDs.
      */
+    @Deprecated
     CompletableFuture<Collection<String>> getAllVariationIdsAsync();
 
     /**
@@ -113,6 +165,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param user the user object to identify the caller.
      * @return a collection of all Variation IDs.
      */
+    @Deprecated
     Collection<String> getAllVariationIds(User user);
 
     /**
@@ -121,6 +174,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param user the user object to identify the caller.
      * @return a future which computes the collection of all Variation IDs.
      */
+    @Deprecated
     CompletableFuture<Collection<String>> getAllVariationIdsAsync(User user);
 
     /**
