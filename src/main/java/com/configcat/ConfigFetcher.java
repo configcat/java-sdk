@@ -51,17 +51,17 @@ class ConfigFetcher implements Closeable {
             }
             try {
                 Entry entry = fetchResponse.entry();
-                Config config = entry.config;
-                if (config.preferences == null) {
+                Config config = entry.getConfig();
+                if (config.getPreferences() == null) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
-                String newUrl = config.preferences.baseUrl;
+                String newUrl = config.getPreferences().getBaseUrl();
                 if (newUrl.equals(this.url)) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
-                int redirect = config.preferences.redirect;
+                int redirect = config.getPreferences().getRedirect();
 
                 // we have a custom url set, and we didn't get a forced redirect
                 if (this.urlIsCustom && redirect != RedirectMode.ForceRedirect.ordinal()) {
@@ -114,6 +114,7 @@ class ConfigFetcher implements Closeable {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
+                    logger.error("onReposnse");
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
@@ -183,7 +184,7 @@ class ConfigFetcher implements Closeable {
         } catch (Exception e) {
             String message = "JSON parsing failed. " + e.getMessage();
             this.logger.error(message);
-            return Result.error(message);
+            return Result.error(message, null);
         }
     }
 }

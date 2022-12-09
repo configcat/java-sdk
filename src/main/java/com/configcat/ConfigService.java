@@ -17,7 +17,7 @@ public class ConfigService implements Closeable {
 
     private static final String CACHE_BASE = "java_" + Constants.CONFIG_JSON_NAME + "_%s";
 
-    private Entry cachedEntry = Entry.empty;
+    private Entry cachedEntry = Entry.EMPTY;
     private String cachedEntryString = "";
     private final ConfigCache cache;
 
@@ -29,9 +29,9 @@ public class ConfigService implements Closeable {
     private ScheduledExecutorService initScheduler;
     private ArrayList<ConfigurationChangeListener> listeners;
     private CompletableFuture<Result<Entry>> runningTask;
-    private final AtomicBoolean initialized = new AtomicBoolean(false);
+    private boolean initialized = false;
     private final AtomicBoolean closed = new AtomicBoolean(false);
-    private boolean offline;
+    private final AtomicBoolean offline;
     private final ReentrantLock lock = new ReentrantLock(true);
 
 
@@ -46,8 +46,9 @@ public class ConfigService implements Closeable {
         this.cacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CACHE_BASE, sdkKey))));
         this.cache = cache;
         this.logger = logger;
-        this.offline = offline;
-        if (pollingMode instanceof AutoPollingMode) {
+        this.offline = new AtomicBoolean(offline);
+
+        if (pollingMode instanceof AutoPollingMode && !offline) {
             AutoPollingMode autoPollingMode = (AutoPollingMode) pollingMode;
 
             this.listeners = new ArrayList<>();
@@ -55,21 +56,25 @@ public class ConfigService implements Closeable {
                 this.listeners.add(autoPollingMode.getListener());
             }
 
-            if (!offline) {
-                startPoll(autoPollingMode);
-            }
+            startPoll(autoPollingMode);
 
             this.initScheduler = Executors.newSingleThreadScheduledExecutor();
             this.initScheduler.schedule(() -> {
-                if (initialized.compareAndSet(false, true)) {
-                    String message = "Max init wait time for the very first fetch reached (" + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
-                    logger.warn(message);
-                    completeRunningTask(Result.error(message));
+                lock.lock();
+                try {
+                    if (!initialized) {
+                        initialized = true;
+                        String message = "Max init wait time for the very first fetch reached (" + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
+                        logger.warn(message);
+                        completeRunningTask(Result.error(message, cachedEntry));
+                    }
+                } finally {
+                    lock.unlock();
                 }
             }, autoPollingMode.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
 
         } else {
-            this.initialized.compareAndSet(false, true);
+            this.initialized = true;
         }
     }
 
@@ -82,8 +87,10 @@ public class ConfigService implements Closeable {
 
 
     public CompletableFuture<RefreshResult> refresh() {
-        if (offline) {
-            logger.warn("Client is in offline mode, it can't initiate HTTP calls.");
+        if (offline.get()) {
+            String offlineWarning = "Client is in offline mode, it can't initiate HTTP calls.";
+            logger.warn(offlineWarning);
+            return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning));
         }
         return fetchIfOlder(Constants.DISTANT_FUTURE, false)
                 .thenApply(entryResult -> new RefreshResult(entryResult.error() == null, entryResult.error()));
@@ -94,14 +101,12 @@ public class ConfigService implements Closeable {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode) pollingMode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
                     .thenApply(entryResult -> {
-                        Entry result = entryResult.value() == null ? cachedEntry : entryResult.value();
-                        return new SettingResult(result.config.entries, result.fetchTime);
+                        return new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime());
                     });
         } else {
             return fetchIfOlder(Constants.DISTANT_PAST, true)
                     .thenApply(entryResult -> {
-                        Entry result = entryResult.value() == null ? cachedEntry : entryResult.value();
-                        return new SettingResult(result.config.entries, result.fetchTime);
+                        return new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime());
                     });
         }
 
@@ -111,31 +116,32 @@ public class ConfigService implements Closeable {
         lock.lock();
         try {
             // Sync up with the cache and use it when it's not expired.
-            if (cachedEntry.isEmpty() || cachedEntry.fetchTime > time) {
+            if (cachedEntry.isEmpty() || cachedEntry.getFetchTime() > time) {
                 Entry fromCache = readCache();
-                if (!fromCache.isEmpty() && !fromCache.eTag.equals(cachedEntry.eTag)) {
+                if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.getETag())) {
                     cachedEntry = fromCache;
                 }
                 // Cache isn't expired
-                if (cachedEntry.fetchTime > time) {
+                if (cachedEntry.getFetchTime() > time) {
+                    initialized = true;
                     return CompletableFuture.completedFuture(Result.success(cachedEntry));
                 }
             }
             // Use cache anyway (get calls on auto & manual poll must not initiate fetch).
             // The initialized check ensures that we subscribe for the ongoing fetch during the
             // max init wait time window in case of auto poll.
-            if (preferCached && initialized.get()) {
+            if (preferCached && initialized) {
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
             // If we are in offline mode we are not allowed to initiate fetch.
-            if (offline) {
-                return CompletableFuture.completedFuture(Result.error("The SDK is in offline mode, it can't initiate HTTP calls."));
+            if (offline.get()) {
+                return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
 
             if (runningTask == null) {
                 // No fetch is running, initiate a new one.
                 runningTask = new CompletableFuture<>();
-                configFetcher.fetchAsync(cachedEntry.eTag)
+                configFetcher.fetchAsync(cachedEntry.getETag())
                         .thenAccept(this::processResponse);
             }
 
@@ -162,7 +168,7 @@ public class ConfigService implements Closeable {
         if (pollingMode instanceof AutoPollingMode) {
             if (pollScheduler != null) this.pollScheduler.shutdown();
             if (initScheduler != null) this.initScheduler.shutdown();
-            this.listeners.clear();
+            if (listeners != null) this.listeners.clear();
         }
         this.configFetcher.close();
     }
@@ -173,8 +179,7 @@ public class ConfigService implements Closeable {
         }
         lock.lock();
         try {
-            if (!offline) return;
-            offline = false;
+            if (!offline.compareAndSet(true, false)) return;
             if (pollingMode instanceof AutoPollingMode) {
                 startPoll((AutoPollingMode) pollingMode);
             }
@@ -188,11 +193,9 @@ public class ConfigService implements Closeable {
         if (closed.get()) {
             logger.warn("Client has already been closed, this 'setOffline' has no effect.");
         }
-        this.offline = true;
         lock.lock();
         try {
-            if (offline) return;
-            offline = true;
+            if (!offline.compareAndSet(false, true)) return;
             if (pollScheduler != null) pollScheduler.shutdown();
             if (initScheduler != null) initScheduler.shutdown();
             logger.debug("Switched to OFFLINE mode.");
@@ -202,13 +205,13 @@ public class ConfigService implements Closeable {
     }
 
     public boolean isOffline() {
-        return offline;
+        return offline.get();
     }
 
     private void processResponse(FetchResponse response) {
         lock.lock();
         try {
-            this.initialized.compareAndSet(false, true);
+            this.initialized = true;
             if (response.isFetched()) {
                 Entry entry = response.entry();
                 cachedEntry = entry;
@@ -217,16 +220,16 @@ public class ConfigService implements Closeable {
                 completeRunningTask(Result.success(entry));
             } else if (response.isNotModified()) {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry.fetchTime = System.currentTimeMillis();
+                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
                 }
                 writeCache(cachedEntry);
                 completeRunningTask(Result.success(cachedEntry));
             } else {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry.fetchTime = System.currentTimeMillis();
+                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
                 }
                 //if actual fetch failed always use cache
-                completeRunningTask(Result.error(response.error()));
+                completeRunningTask(Result.error(response.error(), cachedEntry));
             }
         } finally {
             lock.unlock();
@@ -242,14 +245,14 @@ public class ConfigService implements Closeable {
         try {
             String json = cache.read(cacheKey);
             if (json != null && json.equals(cachedEntryString)) {
-                return Entry.empty;
+                return Entry.EMPTY;
             }
             cachedEntryString = json;
             Entry deserialized = Utils.gson.fromJson(json, Entry.class);
-            return deserialized == null || deserialized.config == null ? Entry.empty : deserialized;
+            return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
             this.logger.error("An error occurred during the cache read.", e);
-            return Entry.empty;
+            return Entry.EMPTY;
         }
     }
 

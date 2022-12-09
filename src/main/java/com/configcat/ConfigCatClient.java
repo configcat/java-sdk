@@ -130,61 +130,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue) {
-        return this.getValueDetails(classOfT, key, null, defaultValue);
-    }
-
-    @Override
-    public <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue) {
-        if (key == null || key.isEmpty())
-            throw new IllegalArgumentException("'key' cannot be null or empty.");
-
-        if (classOfT != String.class &&
-                classOfT != Integer.class &&
-                classOfT != int.class &&
-                classOfT != Double.class &&
-                classOfT != double.class &&
-                classOfT != Boolean.class &&
-                classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
-
-        try {
-            return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
-        } catch (InterruptedException e) {
-            String error = "Thread interrupted.";
-            this.logger.error(error, e);
-            Thread.currentThread().interrupt();
-            return EvaluationDetails.fromError(key, defaultValue, error + ": " + e.getMessage(), user);
-        } catch (Exception e) {
-            return EvaluationDetails.fromError(key, defaultValue, e.getMessage(), user);
-        }
-    }
-
-    @Override
-    public <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, T defaultValue) {
-        return this.getValueDetailsAsync(classOfT, key, null, defaultValue);
-    }
-
-    @Override
-    public <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, User user, T defaultValue) {
-        if (key == null || key.isEmpty())
-            throw new IllegalArgumentException("'key' cannot be null or empty.");
-
-        if (classOfT != String.class &&
-                classOfT != Integer.class &&
-                classOfT != int.class &&
-                classOfT != Double.class &&
-                classOfT != double.class &&
-                classOfT != Boolean.class &&
-                classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
-
-        return this.getSettingsAsync()
-                .thenApply(settingsResult -> this.evaluate(classOfT, settingsResult.settings().get(key),
-                        key, user != null ? user : this.defaultUser, settingsResult.fetchTime()));
-    }
-
-    @Override
     public String getVariationId(String key, String defaultVariationId) {
         return this.getVariationId(key, null, defaultVariationId);
     }
@@ -290,7 +235,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                             Setting setting = settings.get(key);
 
                             JsonElement evaluated = this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user)).value;
-                            Object value = this.parseObject(this.classBySettingType(setting.type), evaluated);
+                            Object value = this.parseObject(this.classBySettingType(setting.getType()), evaluated);
                             result.put(key, value);
                         }
 
@@ -543,19 +488,19 @@ public final class ConfigCatClient implements ConfigurationProvider {
             for (Map.Entry<String, Setting> node : settings.entrySet()) {
                 String settingKey = node.getKey();
                 Setting setting = node.getValue();
-                if (variationId.equals(setting.variationId)) {
-                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.value));
+                if (variationId.equals(setting.getVariationId())) {
+                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.getValue()));
                 }
 
-                for (RolloutRule rolloutRule : setting.rolloutRules) {
-                    if (variationId.equals(rolloutRule.variationId)) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.value));
+                for (RolloutRule rolloutRule : setting.getRolloutRules()) {
+                    if (variationId.equals(rolloutRule.getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.getValue()));
                     }
                 }
 
-                for (PercentageRule percentageRule : setting.percentageItems) {
-                    if (variationId.equals(percentageRule.variationId)) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.value));
+                for (PercentageRule percentageRule : setting.getPercentageItems()) {
+                    if (variationId.equals(percentageRule.getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.getValue()));
                     }
                 }
             }
@@ -645,21 +590,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             return client;
         }
-    }
-
-    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
-        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user);
-        EvaluationDetails<Object> details = new EvaluationDetails<>(
-                this.parseObject(classOfT, evaluationResult.value),
-                key,
-                evaluationResult.variationId,
-                user,
-                false,
-                null,
-                fetchTime,
-                evaluationResult.targetingRule,
-                evaluationResult.percentageRule);
-        return details.asTypeSpecific();
     }
 
     /**

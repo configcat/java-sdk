@@ -2,8 +2,8 @@ package com.configcat;
 
 import com.google.gson.JsonElement;
 import de.skuzzle.semantic.Version;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.codec.binary.Hex;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,8 +44,8 @@ class RolloutEvaluator {
         try {
 
             if (user == null) {
-                if ((setting.rolloutRules != null && setting.rolloutRules.length > 0) ||
-                        (setting.percentageItems != null && setting.percentageItems.length > 0)) {
+                if ((setting.getRolloutRules() != null && setting.getRolloutRules().length > 0) ||
+                        (setting.getPercentageItems() != null && setting.getPercentageItems().length > 0)) {
                     this.logger.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
                 }
 
@@ -54,14 +54,14 @@ class RolloutEvaluator {
             }
 
             logEntries.add("User object: " + user + "");
-            if (setting.rolloutRules != null) {
-                for (RolloutRule rule : setting.rolloutRules) {
+            if (setting.getRolloutRules() != null) {
+                for (RolloutRule rule : setting.getRolloutRules()) {
 
-                    String comparisonAttribute = rule.comparisonAttribute;
-                    String comparisonValue = rule.comparisonValue;
-                    int comparator = rule.comparator;
-                    JsonElement value = rule.value;
-                    String variationId = rule.variationId;
+                    String comparisonAttribute = rule.getComparisonAttribute();
+                    String comparisonValue = rule.getComparisonValue();
+                    int comparator = rule.getComparator();
+                    JsonElement value = rule.getValue();
+                    String variationId = rule.getVariationId();
                     String userValue = user.getAttribute(comparisonAttribute);
 
                     if (comparisonValue == null || comparisonValue.isEmpty() ||
@@ -199,7 +199,7 @@ class RolloutEvaluator {
                 }
             }
 
-            if (setting.percentageItems != null && setting.percentageItems.length > 0) {
+            if (setting.getPercentageItems() != null && setting.getPercentageItems().length > 0) {
                 String hashCandidate = key + user.getIdentifier();
                 int scale = 100;
                 String hexHash = new String(Hex.encodeHex(DigestUtils.sha1(hashCandidate))).substring(0, 7);
@@ -207,9 +207,9 @@ class RolloutEvaluator {
                 int scaled = longHash % scale;
 
                 int bucket = 0;
-                for (PercentageRule rule : setting.percentageItems) {
+                for (PercentageRule rule : setting.getPercentageItems()) {
 
-                    bucket += rule.percentage;
+                    bucket += rule.getPercentage();
                     if (scaled < bucket) {
                         logEntries.add("Evaluating % options. Returning " + rule.value + ".");
 
@@ -218,8 +218,8 @@ class RolloutEvaluator {
                 }
             }
 
-            logEntries.add("Returning " + setting.value + ".");
-            return new EvaluationResult(setting.value, setting.variationId, null, null);
+            logEntries.add("Returning " + setting.getValue() + ".");
+            return new EvaluationResult(setting.getValue(), setting.variationId, null, null);
         } finally {
             this.logger.info(logEntries.toPrint());
         }
