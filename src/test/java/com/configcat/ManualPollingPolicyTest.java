@@ -49,11 +49,11 @@ public class ManualPollingPolicyTest {
 
         //first call
         this.configService.refresh().get();
-        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         //next call will get the new value
         this.configService.refresh().get();
-        assertEquals("test2", this.configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test2", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
     }
 
     @Test
@@ -72,11 +72,11 @@ public class ManualPollingPolicyTest {
 
         //first call
         configService.refresh().get();
-        assertEquals("test", configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         //next call will get the new value
         configService.refresh().get();
-        assertEquals("test2", configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test2", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
     }
 
     @Test
@@ -86,11 +86,11 @@ public class ManualPollingPolicyTest {
 
         //first call
         this.configService.refresh().get();
-        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         //previous value returned because of the refresh failure
         this.configService.refresh().get();
-        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
     }
 
     @Test
@@ -104,10 +104,10 @@ public class ManualPollingPolicyTest {
         ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false);
 
         service.refresh().get();
-        assertEquals("test", service.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         service.refresh().get();
-        assertEquals("test2", service.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test2", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         assertEquals(1, cache.getMap().size());
 

@@ -235,7 +235,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                             Setting setting = settings.get(key);
 
                             JsonElement evaluated = this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user)).getKey();
-                            Object value = this.parseObject(this.classBySettingType(setting.type), evaluated);
+                            Object value = this.parseObject(this.classBySettingType(setting.getType()), evaluated);
                             result.put(key, value);
                         }
 
@@ -493,19 +493,19 @@ public final class ConfigCatClient implements ConfigurationProvider {
             for (Map.Entry<String, Setting> node : settings.entrySet()) {
                 String settingKey = node.getKey();
                 Setting setting = node.getValue();
-                if (variationId.equals(setting.variationId)) {
-                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.value));
+                if (variationId.equals(setting.getVariationId())) {
+                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.getValue()));
                 }
 
-                for (RolloutRule rolloutRule : setting.rolloutRules) {
-                    if (variationId.equals(rolloutRule.variationId)) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.value));
+                for (RolloutRule rolloutRule : setting.getRolloutRules()) {
+                    if (variationId.equals(rolloutRule.getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.getValue()));
                     }
                 }
 
-                for (RolloutPercentageItem percentageRule : setting.percentageItems) {
-                    if (variationId.equals(percentageRule.variationId)) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.value));
+                for (RolloutPercentageItem percentageRule : setting.getPercentageItems()) {
+                    if (variationId.equals(percentageRule.getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.getValue()));
                     }
                 }
             }

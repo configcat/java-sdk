@@ -28,7 +28,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
-        assertEquals(url, response.entry().config.preferences.baseUrl);
+        assertEquals(url, response.entry().getConfig().getPreferences().getBaseUrl());
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -49,7 +49,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
-        assertEquals(url, response.entry().config.preferences.baseUrl);
+        assertEquals(url, response.entry().getConfig().getPreferences().getBaseUrl());
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -71,7 +71,7 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
-        assertEquals(url, response.entry().config.preferences.baseUrl);
+        assertEquals(url, response.entry().getConfig().getPreferences().getBaseUrl());
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -98,8 +98,8 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
-        assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
-        assertEquals(0, response.entry().config.preferences.redirect);
+        assertEquals(secondServerUrl, response.entry().getConfig().getPreferences().getBaseUrl());
+        assertEquals(0, response.entry().getConfig().getPreferences().getRedirect());
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -128,8 +128,8 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
-        assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
-        assertEquals(0, response.entry().config.preferences.redirect);
+        assertEquals(secondServerUrl, response.entry().getConfig().getPreferences().getBaseUrl());
+        assertEquals(0, response.entry().getConfig().getPreferences().getRedirect());
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -159,8 +159,8 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
-        assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
-        assertEquals(1, response.entry().config.preferences.redirect);
+        assertEquals(secondServerUrl, response.entry().getConfig().getPreferences().getBaseUrl());
+        assertEquals(1, response.entry().getConfig().getPreferences().getRedirect());
         assertEquals(2, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -186,8 +186,8 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
-        assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
-        assertEquals(1, response.entry().config.preferences.redirect);
+        assertEquals(secondServerUrl, response.entry().getConfig().getPreferences().getBaseUrl());
+        assertEquals(1, response.entry().getConfig().getPreferences().getRedirect());
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(0, secondServer.getRequestCount());
 
@@ -216,8 +216,8 @@ public class DataGovernanceTest {
         FetchResponse response = fetcher.fetchAsync(null).get();
 
         // Assert
-        assertEquals(secondServerUrl, response.entry().config.preferences.baseUrl);
-        assertEquals(0, response.entry().config.preferences.redirect);
+        assertEquals(secondServerUrl, response.entry().getConfig().getPreferences().getBaseUrl());
+        assertEquals(0, response.entry().getConfig().getPreferences().getRedirect());
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 

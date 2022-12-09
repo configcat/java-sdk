@@ -45,12 +45,12 @@ public class ConfigFetcherTest {
 
         FetchResponse fResult = fetcher.fetchAsync(null).get();
 
-        assertEquals("fakeValue", fResult.entry().config.entries.get("fakeKey").value.getAsString());
+        assertEquals("fakeValue", fResult.entry().getConfig().getEntries().get("fakeKey").getValue().getAsString());
         assertTrue(fResult.isFetched());
         assertFalse(fResult.isNotModified());
         assertFalse(fResult.isFailed());
 
-        FetchResponse notModifiedResponse = fetcher.fetchAsync(fResult.entry().eTag).get();
+        FetchResponse notModifiedResponse = fetcher.fetchAsync(fResult.entry().getETag()).get();
         assertTrue(notModifiedResponse.isNotModified());
         assertFalse(notModifiedResponse.isFailed());
         assertFalse(notModifiedResponse.isFetched());
@@ -75,7 +75,7 @@ public class ConfigFetcherTest {
         FetchResponse response = fetch.fetchAsync(null).get();
         assertTrue(response.isFailed());
         assertTrue(response.entry().isEmpty());
-        assertEquals(Config.empty, response.entry().config);
+        assertTrue(response.entry().getConfig().isEmpty());
 
         fetch.close();
     }
@@ -100,7 +100,7 @@ public class ConfigFetcherTest {
 
         ConfigService configService = new ConfigService("", fetcher, PollingModes.autoPoll(2), cache, logger, false);
 
-        assertEquals("fakeValue", configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("fakeValue", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
 
@@ -125,7 +125,7 @@ public class ConfigFetcherTest {
                 PollingModes.manualPoll().getPollingIdentifier());
 
         ConfigService configService = new ConfigService("", fetcher, PollingModes.autoPoll(2), cache, logger, false);
-        assertEquals("fakeValue", configService.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("fakeValue", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
 
@@ -149,7 +149,7 @@ public class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync(null).get();
         assertTrue(response.isFetched());
-        assertEquals("fakeValue", response.entry().config.entries.get("fakeKey").value.getAsString());
+        assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getValue().getAsString());
 
         fetcher.close();
     }
@@ -168,7 +168,7 @@ public class ConfigFetcherTest {
         FetchResponse result = fetch.fetchAsync(null).get();
 
         assertTrue(result.isFetched());
-        assertTrue(fetch.fetchAsync(result.entry().eTag).get().isNotModified());
+        assertTrue(fetch.fetchAsync(result.entry().getETag()).get().isNotModified());
 
         fetch.close();
     }

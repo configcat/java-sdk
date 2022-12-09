@@ -71,7 +71,7 @@ class LocalFileDataSource extends OverrideDataSource {
             if (simplifiedConfig != null && simplifiedConfig.entries != null && simplifiedConfig.entries.size() > 0) {
                 for (Map.Entry<String, JsonElement> entry : simplifiedConfig.entries.entrySet()) {
                     Setting setting = new Setting();
-                    setting.value = entry.getValue();
+                    setting.setValue(entry.getValue());
                     this.loadedSettings.put(entry.getKey(), setting);
                 }
 
@@ -79,7 +79,7 @@ class LocalFileDataSource extends OverrideDataSource {
             }
 
             Config config = this.gson.fromJson(content, Config.class);
-            this.loadedSettings = config != null ? config.entries : new HashMap<>();
+            this.loadedSettings = config != null ? config.getEntries() : new HashMap<>();
         }
     }
 

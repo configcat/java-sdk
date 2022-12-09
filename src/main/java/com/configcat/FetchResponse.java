@@ -45,22 +45,22 @@ class FetchResponse {
     }
 
     public static FetchResponse fetched(Entry entry) {
-        return new FetchResponse(Status.FETCHED, entry == null ? Entry.getEmpty() : entry, null, false);
+        return new FetchResponse(Status.FETCHED, entry == null ? Entry.EMPTY : entry, null, false);
     }
 
     public static FetchResponse notModified() {
-        return new FetchResponse(Status.NOT_MODIFIED, Entry.getEmpty(), null, false);
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, false);
     }
 
     public static FetchResponse notModified(boolean fetchTimeUpdatable) {
-        return new FetchResponse(Status.NOT_MODIFIED, Entry.getEmpty(), null, fetchTimeUpdatable);
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, fetchTimeUpdatable);
     }
 
     public static FetchResponse failed(String error) {
-        return new FetchResponse(Status.FAILED, Entry.getEmpty(), error, false);
+        return new FetchResponse(Status.FAILED, Entry.EMPTY, error, false);
     }
 
     public static FetchResponse failed(String error, boolean fetchTimeUpdatable) {
-        return new FetchResponse(Status.FAILED, Entry.getEmpty(), error, fetchTimeUpdatable);
+        return new FetchResponse(Status.FAILED, Entry.EMPTY, error, fetchTimeUpdatable);
     }
 }

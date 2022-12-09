@@ -17,7 +17,7 @@ public class ConfigService implements Closeable {
 
     private static final String CACHE_BASE = "java_" + Constants.CONFIG_JSON_NAME + "_%s";
 
-    private Entry cachedEntry = Entry.getEmpty();
+    private Entry cachedEntry = Entry.EMPTY;
     private String cachedEntryString = "";
     private final ConfigCache cache;
 
@@ -101,12 +101,12 @@ public class ConfigService implements Closeable {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode) pollingMode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
                     .thenApply(entryResult -> {
-                        return new SettingResult(entryResult.value().config.entries, entryResult.value().fetchTime);
+                        return new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime());
                     });
         } else {
             return fetchIfOlder(Constants.DISTANT_PAST, true)
                     .thenApply(entryResult -> {
-                        return new SettingResult(entryResult.value().config.entries, entryResult.value().fetchTime);
+                        return new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime());
                     });
         }
 
@@ -116,13 +116,13 @@ public class ConfigService implements Closeable {
         lock.lock();
         try {
             // Sync up with the cache and use it when it's not expired.
-            if (cachedEntry.isEmpty() || cachedEntry.fetchTime > time) {
+            if (cachedEntry.isEmpty() || cachedEntry.getFetchTime() > time) {
                 Entry fromCache = readCache();
-                if (!fromCache.isEmpty() && !fromCache.eTag.equals(cachedEntry.eTag)) {
+                if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.getETag())) {
                     cachedEntry = fromCache;
                 }
                 // Cache isn't expired
-                if (cachedEntry.fetchTime > time) {
+                if (cachedEntry.getFetchTime() > time) {
                     initialized = true;
                     return CompletableFuture.completedFuture(Result.success(cachedEntry));
                 }
@@ -141,7 +141,7 @@ public class ConfigService implements Closeable {
             if (runningTask == null) {
                 // No fetch is running, initiate a new one.
                 runningTask = new CompletableFuture<>();
-                configFetcher.fetchAsync(cachedEntry.eTag)
+                configFetcher.fetchAsync(cachedEntry.getETag())
                         .thenAccept(this::processResponse);
             }
 
@@ -220,13 +220,13 @@ public class ConfigService implements Closeable {
                 completeRunningTask(Result.success(entry));
             } else if (response.isNotModified()) {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry.fetchTime = System.currentTimeMillis();
+                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
                 }
                 writeCache(cachedEntry);
                 completeRunningTask(Result.success(cachedEntry));
             } else {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry.fetchTime = System.currentTimeMillis();
+                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
                 }
                 //if actual fetch failed always use cache
                 completeRunningTask(Result.error(response.error(), cachedEntry));
@@ -245,14 +245,14 @@ public class ConfigService implements Closeable {
         try {
             String json = cache.read(cacheKey);
             if (json != null && json.equals(cachedEntryString)) {
-                return Entry.getEmpty();
+                return Entry.EMPTY;
             }
             cachedEntryString = json;
             Entry deserialized = Utils.gson.fromJson(json, Entry.class);
-            return deserialized == null || deserialized.config == null ? Entry.getEmpty() : deserialized;
+            return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
             this.logger.error("An error occurred during the cache read.", e);
-            return Entry.getEmpty();
+            return Entry.EMPTY;
         }
     }
 
