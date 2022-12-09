@@ -314,7 +314,12 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<RefreshResult> forceRefreshAsync() {
-        return this.configService.refresh();
+        if (configService == null) {
+            return CompletableFuture.completedFuture(new RefreshResult(false,
+                    "The ConfigCat SDK is in local-only mode. Calling .forceRefresh() has no effect."));
+        }
+
+        return configService.refresh();
     }
 
     public void setDefaultUser(User defaultUser) {

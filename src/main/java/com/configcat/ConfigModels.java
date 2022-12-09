@@ -28,10 +28,12 @@ class Entry {
     }
 
     boolean isEmpty() {
-        return this == empty;
+        return config == Config.empty && eTag == "" && fetchTime == 0;
     }
 
-    public static final Entry empty = new Entry(Config.empty, "", 0);
+    public static Entry getEmpty() {
+        return new Entry(Config.empty, "", 0);
+    }
 }
 
 class Config {

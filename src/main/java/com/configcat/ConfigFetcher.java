@@ -114,6 +114,7 @@ class ConfigFetcher implements Closeable {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
+                    logger.error("onReposnse");
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
@@ -183,7 +184,7 @@ class ConfigFetcher implements Closeable {
         } catch (Exception e) {
             String message = "JSON parsing failed. " + e.getMessage();
             this.logger.error(message);
-            return Result.error(message);
+            return Result.error(message, null);
         }
     }
 }
