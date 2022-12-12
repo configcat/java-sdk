@@ -303,6 +303,44 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
+    public List<EvaluationDetails<?>> getAllValuesDetails(User user) {
+        try {
+            return this.getAllValuesDetailsAsync(user).get();
+        } catch (InterruptedException e) {
+            this.logger.error("Thread interrupted.", e);
+            Thread.currentThread().interrupt();
+            return new ArrayList<>();
+        } catch (Exception e) {
+            this.logger.error("An error occurred during getting all detailed values. Returning empty map.", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public CompletableFuture<List<EvaluationDetails<?>>> getAllValuesDetailsAsync(User user) {
+        return this.getSettingsAsync()
+                .thenApply(settingResult -> {
+                    try {
+                        Map<String, Setting> settings = settingResult.settings();
+                        List<EvaluationDetails<?>> result = new ArrayList<>();
+
+                        for (String key : settings.keySet()) {
+                            Setting setting = settings.get(key);
+
+                            EvaluationDetails<?> evaluationDetails = this.evaluate(this.classBySettingType(setting.getType()), setting,
+                                    key, user != null ? user : this.defaultUser, settingResult.fetchTime());
+                            result.add(evaluationDetails);
+                        }
+
+                        return result;
+                    } catch (Exception e) {
+                        this.logger.error("An error occurred during getting all detailed values. Returning empty map.", e);
+                        return new ArrayList<>();
+                    }
+                });
+    }
+
+    @Override
     public <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId) {
         if (variationId == null || variationId.isEmpty())
             throw new IllegalArgumentException("'variationId' cannot be null or empty.");

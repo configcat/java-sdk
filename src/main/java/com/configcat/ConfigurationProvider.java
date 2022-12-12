@@ -2,6 +2,7 @@ package com.configcat;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -192,6 +193,22 @@ public interface ConfigurationProvider extends Closeable {
      * @return a future which computes the collection of all values.
      */
     CompletableFuture<Map<String, Object>> getAllValuesAsync(User user);
+
+    /**
+     * Gets the detailed values of all feature flags or settings synchronously.
+     *
+     * @param user the user object to identify the caller.
+     * @return a collection of all detailed values.
+     */
+    List<EvaluationDetails<?>> getAllValuesDetails(User user);
+
+    /**
+     * Gets the detailed values of all feature flags or settings asynchronously.
+     *
+     * @param user the user object to identify the caller.
+     * @return a future which computes the collection of all detailed values.
+     */
+    CompletableFuture<List<EvaluationDetails<?>>> getAllValuesDetailsAsync(User user);
 
     /**
      * Gets the key of a setting and its value identified by the given Variation ID (analytics).
