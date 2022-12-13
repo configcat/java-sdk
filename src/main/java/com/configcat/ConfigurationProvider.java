@@ -296,4 +296,11 @@ public interface ConfigurationProvider extends Closeable {
      * @return True if the client is in offline mode, otherwise false.
      */
     boolean isOffline();
+
+    /**
+     * Access to hooks for event subscription.
+     *
+     * @return the hooks object used for event subscription.
+     */
+    ConfigCatHooks getHooks();
 }

@@ -4,6 +4,21 @@ package com.configcat;
  * Describes the polling modes.
  */
 public final class PollingModes {
+
+    private static final int DEFAULT_AUTO_POLL_INTERVAL_IN_SECONDS = 60;
+    private static final int DEFAULT_MAX_INIT_WAIT_TIME_IN_SECONDS = 5;
+    private static final int DEFAULT_CACHE_REFRESH_INTERVAL_IN_SECONDS = 60;
+
+
+    /**
+     * Creates a configured auto polling configuration with default parameters.
+     *
+     * @return the auto polling configuration.
+     */
+    public static PollingMode autoPoll() {
+        return new AutoPollingMode(DEFAULT_AUTO_POLL_INTERVAL_IN_SECONDS, DEFAULT_MAX_INIT_WAIT_TIME_IN_SECONDS);
+    }
+
     /**
      * Creates a configured auto polling configuration.
      *
@@ -11,7 +26,7 @@ public final class PollingModes {
      * @return the auto polling configuration.
      */
     public static PollingMode autoPoll(int autoPollIntervalInSeconds) {
-        return new AutoPollingMode(autoPollIntervalInSeconds, 5, null);
+        return new AutoPollingMode(autoPollIntervalInSeconds, DEFAULT_MAX_INIT_WAIT_TIME_IN_SECONDS);
     }
 
     /**
@@ -22,30 +37,16 @@ public final class PollingModes {
      * @return the auto polling configuration.
      */
     public static PollingMode autoPoll(int autoPollIntervalInSeconds, int maxInitWaitTimeSeconds) {
-        return new AutoPollingMode(autoPollIntervalInSeconds, maxInitWaitTimeSeconds, null);
+        return new AutoPollingMode(autoPollIntervalInSeconds, maxInitWaitTimeSeconds);
     }
 
     /**
-     * Creates a configured auto polling configuration.
+     * Creates a configured lazy loading polling configuration with default parameters.
      *
-     * @param autoPollIntervalInSeconds Sets at least how often this policy should fetch the latest configuration and refresh the cache.
-     * @param listener                  Sets a configuration changed listener.
-     * @return the auto polling configuration.
+     * @return the lazy loading polling configuration.
      */
-    public static PollingMode autoPoll(int autoPollIntervalInSeconds, ConfigurationChangeListener listener) {
-        return new AutoPollingMode(autoPollIntervalInSeconds, 5, listener);
-    }
-
-    /**
-     * Creates a configured auto polling configuration.
-     *
-     * @param autoPollIntervalInSeconds Sets at least how often this policy should fetch the latest configuration and refresh the cache.
-     * @param maxInitWaitTimeSeconds    Sets the maximum waiting time between initialization and the first config acquisition in seconds.
-     * @param listener                  Sets a configuration changed listener.
-     * @return the auto polling configuration.
-     */
-    public static PollingMode autoPoll(int autoPollIntervalInSeconds, int maxInitWaitTimeSeconds, ConfigurationChangeListener listener) {
-        return new AutoPollingMode(autoPollIntervalInSeconds, maxInitWaitTimeSeconds, listener);
+    public static PollingMode lazyLoad() {
+        return new LazyLoadingMode(DEFAULT_CACHE_REFRESH_INTERVAL_IN_SECONDS);
     }
 
     /**

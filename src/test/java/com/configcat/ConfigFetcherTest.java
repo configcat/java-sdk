@@ -98,7 +98,7 @@ public class ConfigFetcherTest {
                 false,
                 PollingModes.manualPoll().getPollingIdentifier());
 
-        ConfigService configService = new ConfigService("", fetcher, PollingModes.autoPoll(2), cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, PollingModes.autoPoll(2), cache, logger, false, new ConfigCatHooks());
 
         assertEquals("fakeValue", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
@@ -124,7 +124,7 @@ public class ConfigFetcherTest {
                 false,
                 PollingModes.manualPoll().getPollingIdentifier());
 
-        ConfigService configService = new ConfigService("", fetcher, PollingModes.autoPoll(2), cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, PollingModes.autoPoll(2), cache, logger, false, new ConfigCatHooks());
         assertEquals("fakeValue", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));

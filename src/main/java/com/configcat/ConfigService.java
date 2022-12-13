@@ -5,7 +5,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,12 +26,12 @@ public class ConfigService implements Closeable {
     private final PollingMode pollingMode;
     private ScheduledExecutorService pollScheduler;
     private ScheduledExecutorService initScheduler;
-    private ArrayList<ConfigurationChangeListener> listeners;
     private CompletableFuture<Result<Entry>> runningTask;
     private boolean initialized = false;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicBoolean offline;
     private final ReentrantLock lock = new ReentrantLock(true);
+    private final ConfigCatHooks configCatHooks;
 
 
     public ConfigService(String sdkKey,
@@ -40,21 +39,18 @@ public class ConfigService implements Closeable {
                          PollingMode pollingMode,
                          ConfigCache cache,
                          ConfigCatLogger logger,
-                         boolean offline) {
+                         boolean offline,
+                         ConfigCatHooks configCatHooks) {
         this.configFetcher = configFetcher;
         this.pollingMode = pollingMode;
         this.cacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CACHE_BASE, sdkKey))));
         this.cache = cache;
         this.logger = logger;
         this.offline = new AtomicBoolean(offline);
+        this.configCatHooks = configCatHooks;
 
         if (pollingMode instanceof AutoPollingMode && !offline) {
             AutoPollingMode autoPollingMode = (AutoPollingMode) pollingMode;
-
-            this.listeners = new ArrayList<>();
-            if (autoPollingMode.getListener() != null) {
-                this.listeners.add(autoPollingMode.getListener());
-            }
 
             startPoll(autoPollingMode);
 
@@ -64,6 +60,7 @@ public class ConfigService implements Closeable {
                 try {
                     if (!initialized) {
                         initialized = true;
+                        configCatHooks.invokeOnClientReady();
                         String message = "Max init wait time for the very first fetch reached (" + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
                         logger.warn(message);
                         completeRunningTask(Result.error(message, cachedEntry));
@@ -74,7 +71,14 @@ public class ConfigService implements Closeable {
             }, autoPollingMode.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
 
         } else {
-            this.initialized = true;
+            setInitialized();
+        }
+    }
+
+    private void setInitialized() {
+        if (!initialized) {
+            initialized = true;
+            configCatHooks.invokeOnClientReady();
         }
     }
 
@@ -100,14 +104,10 @@ public class ConfigService implements Closeable {
         if (pollingMode instanceof LazyLoadingMode) {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode) pollingMode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
-                    .thenApply(entryResult -> {
-                        return new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime());
-                    });
+                    .thenApply(entryResult -> new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime()));
         } else {
             return fetchIfOlder(Constants.DISTANT_PAST, true)
-                    .thenApply(entryResult -> {
-                        return new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime());
-                    });
+                    .thenApply(entryResult -> new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime()));
         }
 
     }
@@ -119,11 +119,12 @@ public class ConfigService implements Closeable {
             if (cachedEntry.isEmpty() || cachedEntry.getFetchTime() > time) {
                 Entry fromCache = readCache();
                 if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.getETag())) {
+                    configCatHooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
                     cachedEntry = fromCache;
                 }
                 // Cache isn't expired
                 if (cachedEntry.getFetchTime() > time) {
-                    initialized = true;
+                    setInitialized();
                     return CompletableFuture.completedFuture(Result.success(cachedEntry));
                 }
             }
@@ -152,14 +153,6 @@ public class ConfigService implements Closeable {
         }
     }
 
-    private synchronized void broadcastConfigurationChanged() {
-        if (this.listeners != null) {
-            for (ConfigurationChangeListener listener : this.listeners) {
-                listener.onConfigurationChanged();
-            }
-        }
-    }
-
     @Override
     public void close() throws IOException {
         if (!this.closed.compareAndSet(false, true)) {
@@ -168,7 +161,6 @@ public class ConfigService implements Closeable {
         if (pollingMode instanceof AutoPollingMode) {
             if (pollScheduler != null) this.pollScheduler.shutdown();
             if (initScheduler != null) this.initScheduler.shutdown();
-            if (listeners != null) this.listeners.clear();
         }
         this.configFetcher.close();
     }
@@ -211,13 +203,13 @@ public class ConfigService implements Closeable {
     private void processResponse(FetchResponse response) {
         lock.lock();
         try {
-            this.initialized = true;
+            setInitialized();
             if (response.isFetched()) {
                 Entry entry = response.entry();
                 cachedEntry = entry;
                 writeCache(entry);
-                this.broadcastConfigurationChanged();
                 completeRunningTask(Result.success(entry));
+                configCatHooks.invokeOnConfigChanged(entry.getConfig().getEntries());
             } else if (response.isNotModified()) {
                 if (response.isFetchTimeUpdatable()) {
                     cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
