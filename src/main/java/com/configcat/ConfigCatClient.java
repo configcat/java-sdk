@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * A client for handling configurations provided by ConfigCat.
@@ -674,31 +675,32 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     /**
-     * Get a singleton ConfigCat Client for the sdk key with the options, create a new client if not existed yet.
-     * If the client already exist the options are ignored.
+     * Creates a new or gets an already existing ConfigCatClient for the given sdkKey.
      *
-     * @param sdkKey  the client sdk key.
-     * @param options the client initializer options.
-     * @return a singleton client.
+     * @param sdkKey          the SDK Key for to communicate with the ConfigCat services.
+     * @param optionsCallback the options callback to configure the created ConfigCatClient instance.
+     * @return the ConfigCatClient instance.
      */
-    public static ConfigCatClient get(final String sdkKey, final Options options) {
+    public static ConfigCatClient get(String sdkKey, Consumer<Options> optionsCallback) {
         if (sdkKey == null || sdkKey.isEmpty()) {
             throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
         }
 
         synchronized (INSTANCES) {
-            Options clientOptions = options;
+            Options clientOptions = new Options();
 
             ConfigCatClient client = INSTANCES.get(sdkKey);
             if (client != null) {
-                if (clientOptions != null) {
+                if (optionsCallback != null) {
                     client.logger.warn("Client for '" + sdkKey + "' is already created and will be reused; options passed are being ignored.");
                 }
                 return client;
             }
 
-            if (clientOptions == null) {
-                clientOptions = new Options();
+            if (optionsCallback != null) {
+                Options options = new Options();
+                optionsCallback.accept(options);
+                clientOptions = options;
             }
             client = new ConfigCatClient(sdkKey, clientOptions);
             INSTANCES.put(sdkKey, client);
@@ -706,6 +708,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return client;
         }
     }
+
 
     private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
         EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user);

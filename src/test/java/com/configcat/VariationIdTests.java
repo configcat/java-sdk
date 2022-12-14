@@ -24,11 +24,11 @@ public class VariationIdTests {
         this.server = new MockWebServer();
         this.server.start();
 
-        ConfigCatClient.Options options = new ConfigCatClient.Options();
-        options.httpClient(new OkHttpClient.Builder().build());
-        options.pollingMode(PollingModes.lazyLoad(2));
-        options.baseUrl(this.server.url("/").toString());
-        this.client = ConfigCatClient.get("TEST_KEY", options);
+        this.client = ConfigCatClient.get("TEST_KEY", options -> {
+            options.httpClient(new OkHttpClient.Builder().build());
+            options.pollingMode(PollingModes.lazyLoad(2));
+            options.baseUrl(this.server.url("/").toString());
+        });
     }
 
     @AfterEach

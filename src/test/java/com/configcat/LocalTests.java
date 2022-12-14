@@ -17,9 +17,8 @@ public class LocalTests {
 
     @Test
     public void withClient() throws IOException {
-        ConfigCatClient.Options options = new ConfigCatClient.Options();
-        options.flagOverrides(OverrideDataSourceBuilder.classPathResource("test.json"), OverrideBehaviour.LOCAL_ONLY);
-        ConfigCatClient client = ConfigCatClient.get("localhost", options);
+        ConfigCatClient client = ConfigCatClient.get("localhost", options ->
+                options.flagOverrides(OverrideDataSourceBuilder.classPathResource("test.json"), OverrideBehaviour.LOCAL_ONLY));
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
         assertFalse(client.getValue(Boolean.class, "disabledFeature", User.newBuilder().build("test"), true));
@@ -32,9 +31,9 @@ public class LocalTests {
 
     @Test
     public void withClient_Simple() throws IOException {
-        ConfigCatClient.Options options = new ConfigCatClient.Options();
-        options.flagOverrides(OverrideDataSourceBuilder.classPathResource("test-simple.json"), OverrideBehaviour.LOCAL_ONLY);
-        ConfigCatClient client = ConfigCatClient.get("localhost", options);
+
+        ConfigCatClient client = ConfigCatClient.get("localhost", options ->
+                options.flagOverrides(OverrideDataSourceBuilder.classPathResource("test-simple.json"), OverrideBehaviour.LOCAL_ONLY));
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
         assertFalse(client.getValue(Boolean.class, "disabledFeature", User.newBuilder().build("test"), true));
@@ -53,9 +52,8 @@ public class LocalTests {
         map.put("intSetting", 5);
         map.put("doubleSetting", 3.14);
         map.put("stringSetting", "test");
-        ConfigCatClient.Options options = new ConfigCatClient.Options();
-        options.flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.LOCAL_ONLY);
-        ConfigCatClient client = ConfigCatClient.get("localhost", options);
+
+        ConfigCatClient client = ConfigCatClient.get("localhost", options -> options.flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.LOCAL_ONLY));
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
         assertFalse(client.getValue(Boolean.class, "disabledFeature", User.newBuilder().build("test"), true));
@@ -72,9 +70,9 @@ public class LocalTests {
         if (newFile.createNewFile()) {
             try {
                 this.writeContent(newFile, String.format(TEST_JSON, "test"));
-                ConfigCatClient.Options options = new ConfigCatClient.Options();
-                options.flagOverrides(OverrideDataSourceBuilder.localFile("src/test/resources/auto_created.txt", true), OverrideBehaviour.LOCAL_ONLY);
-                ConfigCatClient client = ConfigCatClient.get("localhost", options);
+
+                ConfigCatClient client = ConfigCatClient.get("localhost", options ->
+                        options.flagOverrides(OverrideDataSourceBuilder.localFile("src/test/resources/auto_created.txt", true), OverrideBehaviour.LOCAL_ONLY));
 
                 assertEquals("test", client.getValue(String.class, "fakeKey", ""));
                 this.writeContent(newFile, String.format(TEST_JSON, "modified"));
@@ -97,11 +95,12 @@ public class LocalTests {
         Map<String, Object> map = new HashMap<>();
         map.put("fakeKey", true);
         map.put("nonexisting", true);
-        ConfigCatClient.Options options = new ConfigCatClient.Options();
-        options.pollingMode(PollingModes.manualPoll());
-        options.baseUrl(server.url("/").toString());
-        options.flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.LOCAL_OVER_REMOTE);
-        ConfigCatClient client = ConfigCatClient.get("localhost", options);
+
+        ConfigCatClient client = ConfigCatClient.get("localhost", options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.baseUrl(server.url("/").toString());
+            options.flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.LOCAL_OVER_REMOTE);
+        });
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, false)));
 
@@ -121,11 +120,12 @@ public class LocalTests {
         Map<String, Object> map = new HashMap<>();
         map.put("fakeKey", true);
         map.put("nonexisting", true);
-        ConfigCatClient.Options options = new ConfigCatClient.Options();
-        options.pollingMode(PollingModes.manualPoll());
-        options.baseUrl(server.url("/").toString());
-        options.flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.REMOTE_OVER_LOCAL);
-        ConfigCatClient client = ConfigCatClient.get("localhost", options);
+
+        ConfigCatClient client = ConfigCatClient.get("localhost", options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.baseUrl(server.url("/").toString());
+            options.flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.REMOTE_OVER_LOCAL);
+        });
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, false)));
 
