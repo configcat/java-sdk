@@ -131,7 +131,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param key                the identifier of the configuration value.
      * @param defaultVariationId in case of any failure, this value will be returned.
      * @return a future which computes the Variation ID.
-     * @deprecated This method is obsolete and will be removed in a future major version. Please use getValueDetails() instead.
+     * @deprecated This method is obsolete and will be removed in a future major version. Please use getValueDetailsAsync() instead.
      */
     @Deprecated
     CompletableFuture<String> getVariationIdAsync(String key, String defaultVariationId);
@@ -143,7 +143,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param user               the user object to identify the caller.
      * @param defaultVariationId in case of any failure, this value will be returned.
      * @return a future which computes the Variation ID.
-     * @deprecated This method is obsolete and will be removed in a future major version. Please use getValueDetails() instead.
+     * @deprecated This method is obsolete and will be removed in a future major version. Please use getValueDetailsAsync() instead.
      */
     @Deprecated
     CompletableFuture<String> getVariationIdAsync(String key, User user, String defaultVariationId);
@@ -161,7 +161,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the Variation IDs (analytics) of all feature flags or settings asynchronously.
      *
      * @return a future which computes the collection of all Variation IDs.
-     * @deprecated This method is obsolete and will be removed in a future major version. Please use getAllValueDetails() instead.
+     * @deprecated This method is obsolete and will be removed in a future major version. Please use getAllValueDetailsAsync() instead.
      */
     @Deprecated
     CompletableFuture<Collection<String>> getAllVariationIdsAsync();
