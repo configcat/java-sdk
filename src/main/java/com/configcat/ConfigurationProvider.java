@@ -171,6 +171,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param user the user object to identify the caller.
      * @return a collection of all Variation IDs.
+     * @deprecated This method is obsolete and will be removed in a future major version. Please use getAllValueDetails() instead.
      */
     @Deprecated
     Collection<String> getAllVariationIds(User user);
@@ -180,6 +181,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param user the user object to identify the caller.
      * @return a future which computes the collection of all Variation IDs.
+     * @deprecated This method is obsolete and will be removed in a future major version. Please use getAllValueDetails() instead.
      */
     @Deprecated
     CompletableFuture<Collection<String>> getAllVariationIdsAsync(User user);
