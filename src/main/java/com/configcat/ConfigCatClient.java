@@ -488,7 +488,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.configService.close();
         }
         this.overrideDataSource.close();
-        this.configCatHooks.invokeOnClientClosed();
         this.configCatHooks.clear();
     }
 

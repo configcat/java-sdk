@@ -11,7 +11,6 @@ public class ConfigCatHooks {
     private final List<Runnable> onClientReady = new ArrayList<>();
     private final List<Consumer<EvaluationDetails<Object>>> onFlagEvaluated = new ArrayList<>();
     private final List<Consumer<String>> onError = new ArrayList<>();
-    private final List<Runnable> onClientClosed = new ArrayList<>();
 
     /**
      * Subscribes to the onReady event. This event is sent when the SDK reaches the ready state.
@@ -25,17 +24,6 @@ public class ConfigCatHooks {
     public void addOnClientReady(Runnable callback) {
         synchronized (sync) {
             this.onClientReady.add(callback);
-        }
-    }
-
-    /**
-     * Subscribes to the onClosed event. This event is sent when a client is closed in the SDK.
-     *
-     * @param callback the method to call when the event fires.
-     */
-    public void addOnClientClosed(Runnable callback) {
-        synchronized (sync) {
-            this.onClientClosed.add(callback);
         }
     }
 
@@ -82,14 +70,6 @@ public class ConfigCatHooks {
         }
     }
 
-    void invokeOnClientClosed() {
-        synchronized (sync) {
-            for (Runnable func : this.onClientClosed) {
-                func.run();
-            }
-        }
-    }
-
     void invokeOnError(String error) {
         synchronized (sync) {
             for (Consumer<String> func : this.onError) {
@@ -120,7 +100,6 @@ public class ConfigCatHooks {
             this.onError.clear();
             this.onFlagEvaluated.clear();
             this.onClientReady.clear();
-            this.onClientClosed.clear();
         }
     }
 }

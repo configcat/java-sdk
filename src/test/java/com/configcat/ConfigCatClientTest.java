@@ -664,7 +664,6 @@ public class ConfigCatClientTest {
 
         AtomicBoolean changed = new AtomicBoolean(false);
         AtomicBoolean ready = new AtomicBoolean(false);
-        AtomicBoolean closed = new AtomicBoolean(false);
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
@@ -673,7 +672,6 @@ public class ConfigCatClientTest {
             options.hooks().addOnConfigChanged(map -> changed.set(true));
             options.hooks().addOnClientReady(() -> ready.set(true));
             options.hooks().addOnError(error::set);
-            options.hooks().addOnClientClosed(() -> closed.set(true));
         });
 
         cl.forceRefresh();
@@ -685,7 +683,6 @@ public class ConfigCatClientTest {
 
         server.shutdown();
         cl.close();
-        assertTrue(closed.get());
     }
 
     @Test
