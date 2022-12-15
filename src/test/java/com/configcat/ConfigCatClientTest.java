@@ -281,7 +281,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getAllValuesDetails() throws IOException {
+    public void getAllValueDetails() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -294,7 +294,7 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_MULTIPLE));
         cl.forceRefresh();
 
-        List<EvaluationDetails<?>> allValuesDetails = cl.getAllValuesDetails(null);
+        List<EvaluationDetails<?>> allValuesDetails = cl.getAllValueDetails(null);
 
         //assert result list
         assertEquals(2, allValuesDetails.size());

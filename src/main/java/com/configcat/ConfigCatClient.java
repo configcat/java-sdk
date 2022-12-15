@@ -303,9 +303,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public List<EvaluationDetails<?>> getAllValuesDetails(User user) {
+    public List<EvaluationDetails<?>> getAllValueDetails(User user) {
         try {
-            return this.getAllValuesDetailsAsync(user).get();
+            return this.getAllValueDetailsAsync(user).get();
         } catch (InterruptedException e) {
             this.logger.error("Thread interrupted.", e);
             Thread.currentThread().interrupt();
@@ -317,7 +317,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public CompletableFuture<List<EvaluationDetails<?>>> getAllValuesDetailsAsync(User user) {
+    public CompletableFuture<List<EvaluationDetails<?>>> getAllValueDetailsAsync(User user) {
         return this.getSettingsAsync()
                 .thenApply(settingResult -> {
                     try {
