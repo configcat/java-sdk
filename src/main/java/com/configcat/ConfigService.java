@@ -221,12 +221,13 @@ public class ConfigService implements Closeable {
             } else if (response.isNotModified()) {
                 if (response.isFetchTimeUpdatable()) {
                     cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
+                    writeCache(cachedEntry);
                 }
-                writeCache(cachedEntry);
                 completeRunningTask(Result.success(cachedEntry));
             } else {
                 if (response.isFetchTimeUpdatable()) {
                     cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
+                    writeCache(cachedEntry);
                 }
                 //if actual fetch failed always use cache
                 completeRunningTask(Result.error(response.error(), cachedEntry));

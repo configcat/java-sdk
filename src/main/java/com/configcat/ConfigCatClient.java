@@ -322,6 +322,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return configService.refresh();
     }
 
+    @Override
     public void setDefaultUser(User defaultUser) {
         if (isClosed()) {
             logger.warn("Client has already been closed, this 'setDefaultUser' has no effect.");
