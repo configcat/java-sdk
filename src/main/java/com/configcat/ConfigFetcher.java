@@ -133,7 +133,7 @@ class ConfigFetcher implements Closeable {
                         logger.error(message);
                         future.complete(FetchResponse.failed(message, true));
                     } else {
-                        String message = "Unexpected HTTP response was received: " + response.code() + " " + response.message();
+                        String message = "Unexpected HTTP response received: " + response.code() + " " + response.message();
                         logger.error(message);
                         future.complete(FetchResponse.failed(message));
                     }

@@ -7,7 +7,7 @@ class AutoPollingMode extends PollingMode {
 
     AutoPollingMode(int autoPollRateInSeconds, int maxInitWaitTimeSeconds, ConfigurationChangeListener listener) {
         if (autoPollRateInSeconds < 1)
-            throw new IllegalArgumentException("autoPollRateInSeconds cannot be less than 1 seconds");
+            throw new IllegalArgumentException("autoPollRateInSeconds cannot be less than 1 second");
 
         this.autoPollRateInSeconds = autoPollRateInSeconds;
         this.maxInitWaitTimeSeconds = maxInitWaitTimeSeconds;
