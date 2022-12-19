@@ -691,7 +691,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             ConfigCatClient client = INSTANCES.get(sdkKey);
             if (client != null) {
                 if (optionsCallback != null) {
-                    client.logger.warn("Client for '" + sdkKey + "' is already created and will be reused; options passed are being ignored.");
+                    client.logger.warn("The passed options are ignored because the client for '" + sdkKey + "' is already created and will be reused.");
                 }
                 return client;
             }
