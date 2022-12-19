@@ -25,11 +25,6 @@ public class ConfigCatClientTest {
 
     @Test
     public void ensuresApiKeyIsNotNull() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class, () -> new ConfigCatClient(null));
-
-        assertEquals("'sdkKey' cannot be null or empty.", exception.getMessage());
-
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.get(null));
 
@@ -38,11 +33,6 @@ public class ConfigCatClientTest {
 
     @Test
     public void ensuresApiKeyIsNotEmpty() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class, () -> new ConfigCatClient(""));
-
-        assertEquals("'sdkKey' cannot be null or empty.", exception.getMessage());
-
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.get(""));
 
@@ -420,19 +410,6 @@ public class ConfigCatClientTest {
 
         client2.close();
         assertTrue(client3.isClosed());
-
-    }
-
-    @Test
-    void testDeprecatedClientCloseAffects() throws IOException {
-        ConfigCatClient client1 = new ConfigCatClient("test");
-        ConfigCatClient client2 = ConfigCatClient.get("test");
-
-        assertNotSame(client1, client2);
-
-        client1.close();
-        assertTrue(client1.isClosed());
-        assertFalse(client2.isClosed());
 
     }
 

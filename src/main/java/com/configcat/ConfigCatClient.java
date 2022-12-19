@@ -61,21 +61,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.defaultUser = options.defaultUser;
     }
 
-    /**
-     * Constructs a new client instance with the default configuration.
-     *
-     * @param sdkKey the token which identifies your project configuration.
-     * @deprecated Use the singleton client creation {@link ConfigCatClient#get(String)}
-     */
-    @Deprecated
-    public ConfigCatClient(String sdkKey) {
-        this(sdkKey, new Options());
-        if (INSTANCES.containsKey(sdkKey)) {
-            this.logger.warn("A singleton ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'.");
-        }
-        this.logger.warn("We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
-    }
-
     @Override
     public <T> T getValue(Class<T> classOfT, String key, T defaultValue) {
         return this.getValue(classOfT, key, null, defaultValue);
@@ -182,85 +167,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.getSettingsAsync()
                 .thenApply(settingsResult -> this.evaluate(classOfT, settingsResult.settings().get(key),
                         key, user != null ? user : this.defaultUser, settingsResult.fetchTime()));
-    }
-
-    @Override
-    public String getVariationId(String key, String defaultVariationId) {
-        return this.getVariationId(key, null, defaultVariationId);
-    }
-
-    @Override
-    public String getVariationId(String key, User user, String defaultVariationId) {
-        if (key == null || key.isEmpty())
-            throw new IllegalArgumentException("'key' cannot be null or empty.");
-
-        try {
-            return this.getVariationIdAsync(key, user, defaultVariationId).get();
-        } catch (InterruptedException e) {
-            this.logger.error("Thread interrupted.", e);
-            Thread.currentThread().interrupt();
-            return defaultVariationId;
-        } catch (Exception e) {
-            return defaultVariationId;
-        }
-    }
-
-    @Override
-    public CompletableFuture<String> getVariationIdAsync(String key, String defaultVariationId) {
-        return this.getVariationIdAsync(key, null, defaultVariationId);
-    }
-
-    @Override
-    public CompletableFuture<String> getVariationIdAsync(String key, User user, String defaultVariationId) {
-        if (key == null || key.isEmpty())
-            throw new IllegalArgumentException("'key' cannot be null or empty.");
-
-        return this.getSettingsAsync()
-                .thenApply(settingResult -> this.getVariationIdFromSettingsMap(settingResult, key, user, defaultVariationId));
-    }
-
-    @Override
-    public Collection<String> getAllVariationIds() {
-        return this.getAllVariationIds(null);
-    }
-
-    @Override
-    public CompletableFuture<Collection<String>> getAllVariationIdsAsync() {
-        return this.getAllVariationIdsAsync(null);
-    }
-
-    @Override
-    public Collection<String> getAllVariationIds(User user) {
-        try {
-            return this.getAllVariationIdsAsync(user).get();
-        } catch (InterruptedException e) {
-            this.logger.error("Thread interrupted.", e);
-            Thread.currentThread().interrupt();
-            return new ArrayList<>();
-        } catch (Exception e) {
-            this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
-            return new ArrayList<>();
-        }
-    }
-
-    @Override
-    public CompletableFuture<Collection<String>> getAllVariationIdsAsync(User user) {
-        return this.getSettingsAsync()
-                .thenApply(settingResult -> {
-                    try {
-                        Collection<String> keys = settingResult.settings().keySet();
-                        ArrayList<String> result = new ArrayList<>();
-
-                        for (String key : keys) {
-                            result.add(this.getVariationIdFromSettingsMap(settingResult, key, user, null));
-                        }
-
-                        return result;
-                    } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
-                        return new ArrayList<>();
-                    }
-                });
     }
 
     @Override
@@ -546,27 +452,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error("Evaluating getValue('" + key + "') failed. Returning defaultValue: [" + defaultValue + "]. "
                     + e.getMessage(), e);
             return defaultValue;
-        }
-    }
-
-    private String getVariationIdFromSettingsMap(SettingResult settingResult, String key, User user, String defaultVariationId) {
-        try {
-            Map<String, Setting> settings = settingResult.settings();
-            if (settings.isEmpty()) {
-                this.logger.error("Config JSON is not present. Returning defaultVariationId: [" + defaultVariationId + "].");
-                return defaultVariationId;
-            }
-
-            Setting setting = settings.get(key);
-            if (setting == null) {
-                this.logger.error("Variation ID not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet()));
-                return defaultVariationId;
-            }
-            return this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user)).variationId;
-        } catch (Exception e) {
-            this.logger.error("Evaluating getVariationId('" + key + "') failed. Returning defaultVariationId: [" + defaultVariationId + "]. "
-                    + e.getMessage(), e);
-            return defaultVariationId;
         }
     }
 
