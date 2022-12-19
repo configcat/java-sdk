@@ -60,9 +60,9 @@ public class ConfigService implements Closeable {
                 try {
                     if (!initialized) {
                         initialized = true;
-                        configCatHooks.invokeOnClientReady();
+                        this.configCatHooks.invokeOnClientReady();
                         String message = "Max init wait time for the very first fetch reached (" + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
-                        logger.warn(message);
+                        this.logger.warn(message);
                         completeRunningTask(Result.error(message, cachedEntry));
                     }
                 } finally {
