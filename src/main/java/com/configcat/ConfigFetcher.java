@@ -108,7 +108,7 @@ class ConfigFetcher implements Closeable {
                     }
                     logger.error(message, e);
                 }
-                future.complete(FetchResponse.failed(message));
+                future.complete(FetchResponse.failed(message, false));
             }
 
             @Override
@@ -120,14 +120,14 @@ class ConfigFetcher implements Closeable {
                         String eTag = response.header("ETag");
                         Result<Config> result = deserializeConfig(content);
                         if (result.error() != null) {
-                            future.complete(FetchResponse.failed(result.error()));
+                            future.complete(FetchResponse.failed(result.error(), false));
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
                         future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, System.currentTimeMillis())));
                     } else if (response.code() == 304) {
                         logger.debug("Fetch was successful: config not modified.");
-                        future.complete(FetchResponse.notModified(true));
+                        future.complete(FetchResponse.notModified());
                     } else if (response.code() == 403 || response.code() == 404) {
                         String message = "Double-check your API KEY at https://app.configcat.com/apikey.";
                         logger.error(message);
@@ -135,16 +135,16 @@ class ConfigFetcher implements Closeable {
                     } else {
                         String message = "Unexpected HTTP response received: " + response.code() + " " + response.message();
                         logger.error(message);
-                        future.complete(FetchResponse.failed(message));
+                        future.complete(FetchResponse.failed(message, false));
                     }
                 } catch (SocketTimeoutException e) {
                     String message = "Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
                     logger.error(message, e);
-                    future.complete(FetchResponse.failed(message));
+                    future.complete(FetchResponse.failed(message, false));
                 } catch (Exception e) {
                     String message = "Exception in ConfigFetcher.getResponseAsync";
                     logger.error(message, e);
-                    future.complete(FetchResponse.failed(message));
+                    future.complete(FetchResponse.failed(message, false));
                 }
             }
         });

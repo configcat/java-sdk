@@ -218,19 +218,14 @@ public class ConfigService implements Closeable {
                 writeCache(entry);
                 this.broadcastConfigurationChanged();
                 completeRunningTask(Result.success(entry));
-            } else if (response.isNotModified()) {
-                if (response.isFetchTimeUpdatable()) {
-                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
-                    writeCache(cachedEntry);
-                }
-                completeRunningTask(Result.success(cachedEntry));
             } else {
                 if (response.isFetchTimeUpdatable()) {
                     cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
                     writeCache(cachedEntry);
                 }
-                //if actual fetch failed always use cache
-                completeRunningTask(Result.error(response.error(), cachedEntry));
+                completeRunningTask(response.isFailed()
+                        ? Result.error(response.error(), cachedEntry)
+                        : Result.success(cachedEntry));
             }
         } finally {
             lock.unlock();

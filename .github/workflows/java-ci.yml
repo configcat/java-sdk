@@ -36,7 +36,7 @@ jobs:
       run: chmod +x gradlew
       
     - name: Test with Gradle
-      run: ./gradlew test
+      run: ./gradlew test --stacktrace
       
   coverage-scan:
     needs: test
