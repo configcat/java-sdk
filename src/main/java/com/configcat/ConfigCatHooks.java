@@ -15,7 +15,7 @@ public class ConfigCatHooks {
     /**
      * Subscribes to the onReady event. This event is sent when the SDK reaches the ready state.
      * If the SDK is configured with lazy load or manual polling it's considered ready right after instantiation.
-     * If it's using auto polling, the ready state is reached when the SDK has a valid config.json loaded
+     * In case of auto polling, the ready state is reached when the SDK has a valid config.json loaded
      * into memory either from cache or from HTTP. If the config couldn't be loaded neither from cache nor from HTTP the
      * onReady event fires when the auto polling's maxInitWaitTimeInSeconds is reached.
      *
