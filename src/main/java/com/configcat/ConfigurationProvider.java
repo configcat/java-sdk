@@ -63,7 +63,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param key          the identifier of the configuration value.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
-     * @return the evaluation details.
+     * @return the result of the evaluation.
      */
     <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue);
 
@@ -72,10 +72,10 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the configuration value.
-     * @param user         the user object to identify the caller.
+     * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
-     * @return the evaluation details.
+     * @return the result of the evaluation.
      */
     <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue);
 
@@ -86,7 +86,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param key          the identifier of the configuration value.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
-     * @return a future which computes the the evaluation details.
+     * @return a future which computes the evaluation details.
      */
     <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, T defaultValue);
 
@@ -95,10 +95,10 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the configuration value.
-     * @param user         the user object to identify the caller.
+     * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
-     * @return a future which computes the the evaluation details.
+     * @return a future which computes the evaluation details.
      */
     <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, User user, T defaultValue);
 
@@ -206,7 +206,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the detailed values of all feature flags or settings synchronously.
      *
      * @param user the user object to identify the caller.
-     * @return a collection of all detailed values.
+     * @return a collection of all the evaluation results with details
      */
     List<EvaluationDetails<?>> getAllValueDetails(User user);
 
