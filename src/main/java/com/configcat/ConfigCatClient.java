@@ -61,21 +61,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.defaultUser = options.defaultUser;
     }
 
-    /**
-     * Constructs a new client instance with the default configuration.
-     *
-     * @param sdkKey the token which identifies your project configuration.
-     * @deprecated Use the singleton client creation {@link ConfigCatClient#get(String)}
-     */
-    @Deprecated
-    public ConfigCatClient(String sdkKey) {
-        this(sdkKey, new Options());
-        if (INSTANCES.containsKey(sdkKey)) {
-            this.logger.warn("A singleton ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'.");
-        }
-        this.logger.warn("We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
-    }
-
     @Override
     public <T> T getValue(Class<T> classOfT, String key, T defaultValue) {
         return this.getValue(classOfT, key, null, defaultValue);
