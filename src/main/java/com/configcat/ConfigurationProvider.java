@@ -16,7 +16,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of a feature flag or setting value.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting value.
      * @return the configuration value identified by the given key.
      */
     <T> T getValue(Class<T> classOfT, String key, T defaultValue);
@@ -28,7 +28,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param key          the identifier of a feature flag or setting value.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting value.
      * @return the configuration value identified by the given key.
      */
     <T> T getValue(Class<T> classOfT, String key, User user, T defaultValue);
@@ -39,7 +39,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of a feature flag or setting value.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting value.
      * @return a future which computes the configuration value identified by the given key.
      */
     <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, T defaultValue);
@@ -51,7 +51,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param key          the identifier of a feature flag or setting value.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting value.
      * @return a future which computes the configuration value identified by the given key.
      */
     <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, User user, T defaultValue);
@@ -62,7 +62,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of a feature flag or setting value.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting value.
      * @return the result of the evaluation.
      */
     <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue);
@@ -74,7 +74,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param key          the identifier of a feature flag or setting value.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting value.
      * @return the result of the evaluation.
      */
     <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue);
@@ -85,7 +85,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of a feature flag or setting value.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting value.
      * @return a future which computes the evaluation details.
      */
     <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, T defaultValue);
