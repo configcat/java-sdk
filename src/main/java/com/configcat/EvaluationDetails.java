@@ -85,7 +85,7 @@ public class EvaluationDetails<T> {
     }
 
     /**
-     * The last download time of the current config in unix milliseconds format.
+     * The last fetch time of the config.json in unix milliseconds format.
      */
     public Long getFetchTimeUnixMilliseconds() {
         return fetchTimeUnixMilliseconds;

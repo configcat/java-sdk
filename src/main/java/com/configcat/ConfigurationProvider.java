@@ -14,7 +14,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
+     * @param key          the identifier of a feature flag or setting value.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
      * @return the configuration value identified by the given key.
@@ -25,8 +25,8 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
-     * @param user         the user object to identify the caller.
+     * @param key          the identifier of a feature flag or setting value.
+     * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
      * @return the configuration value identified by the given key.
@@ -37,7 +37,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
+     * @param key          the identifier of a feature flag or setting value.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
      * @return a future which computes the configuration value identified by the given key.
@@ -48,8 +48,8 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
-     * @param user         the user object to identify the caller.
+     * @param key          the identifier of a feature flag or setting value.
+     * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
      * @return a future which computes the configuration value identified by the given key.
@@ -60,7 +60,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
+     * @param key          the identifier of a feature flag or setting value.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
      * @return the result of the evaluation.
@@ -71,7 +71,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
+     * @param key          the identifier of a feature flag or setting value.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
@@ -83,7 +83,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
+     * @param key          the identifier of a feature flag or setting value.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired config value.
      * @return a future which computes the evaluation details.
@@ -94,10 +94,10 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
+     * @param key          the identifier of a feature flag or setting value.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting value.
      * @return a future which computes the evaluation details.
      */
     <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, User user, T defaultValue);
@@ -105,7 +105,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the values of all feature flags or settings synchronously.
      *
-     * @param user the user object to identify the caller.
+     * @param user the user object.
      * @return a collection of all values.
      */
     Map<String, Object> getAllValues(User user);
@@ -113,7 +113,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the values of all feature flags or settings asynchronously.
      *
-     * @param user the user object to identify the caller.
+     * @param user the user object.
      * @return a future which computes the collection of all values.
      */
     CompletableFuture<Map<String, Object>> getAllValuesAsync(User user);
@@ -121,7 +121,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the detailed values of all feature flags or settings synchronously.
      *
-     * @param user the user object to identify the caller.
+     * @param user the user object.
      * @return a collection of all the evaluation results with details
      */
     List<EvaluationDetails<?>> getAllValueDetails(User user);
@@ -129,7 +129,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the detailed values of all feature flags or settings asynchronously.
      *
-     * @param user the user object to identify the caller.
+     * @param user the user object.
      * @return a future which computes the collection of all detailed values.
      */
     CompletableFuture<List<EvaluationDetails<?>>> getAllValueDetailsAsync(User user);
@@ -139,7 +139,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param variationId the Variation ID.
-     * @param <T>         the type of the desired config value.
+     * @param <T>         the type of the desired feature flag or setting value.
      * @return the key of a setting and its value.
      */
     <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId);
@@ -149,7 +149,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param variationId the Variation ID.
-     * @param <T>         the type of the desired config value.
+     * @param <T>         the type of the desired feature flag or setting value.
      * @return a future which computes the key of a setting and its value.
      */
     <T> CompletableFuture<Map.Entry<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId);
@@ -184,8 +184,7 @@ public interface ConfigurationProvider extends Closeable {
 
     /**
      * Sets defaultUser value.
-     * If no user specified in the following calls {getValue}, {getAllValues}, {getVariationId},
-     * {getAllVariationIds}, {getValueAsync},  {getAllValuesAsync}, {getVariationIdAsync}, {getAllVariationIdsAsync}
+     * If no user specified in the following calls {getValue}, {getAllValues}, {getValueDetails}, {getAllValueDetails}
      * the default user value will be used.
      *
      * @param defaultUser The new default user.
