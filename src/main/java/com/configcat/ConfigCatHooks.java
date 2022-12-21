@@ -13,7 +13,7 @@ public class ConfigCatHooks {
     private final List<Consumer<String>> onError = new ArrayList<>();
 
     /**
-     * Subscribes to the onReady event. This event is sent when the SDK reaches the ready state.
+     * Subscribes to the onReady event. This event is fired when the SDK reaches the ready state.
      * If the SDK is configured with lazy load or manual polling it's considered ready right after instantiation.
      * In case of auto polling, the ready state is reached when the SDK has a valid config.json loaded
      * into memory either from cache or from HTTP. If the config couldn't be loaded neither from cache nor from HTTP the
@@ -28,7 +28,7 @@ public class ConfigCatHooks {
     }
 
     /**
-     * Subscribes to the onConfigChanged event. This event is sent when the SDK loads a valid config.json
+     * Subscribes to the onConfigChanged event. This event is fired when the SDK loads a valid config.json
      * into memory from cache, and each subsequent time when the loaded config.json changes via HTTP.
      *
      * @param callback the method to call when the event fires.
@@ -40,7 +40,7 @@ public class ConfigCatHooks {
     }
 
     /**
-     * Subscribes to the onError event. This event is sent when an error occurs within the ConfigCat SDK.
+     * Subscribes to the onError event. This event is fired when an error occurs within the ConfigCat SDK.
      *
      * @param callback the method to call when the event fires.
      */
@@ -51,7 +51,7 @@ public class ConfigCatHooks {
     }
 
     /**
-     * Subscribes to the onFlagEvaluated event. This event is sent each time when the SDK evaluates a feature flag or setting.
+     * Subscribes to the onFlagEvaluated event. This event is fired each time when the SDK evaluates a feature flag or setting.
      * The event sends the same evaluation details that you would get from getValueDetails().
      *
      * @param callback the method to call when the event fires.

@@ -242,7 +242,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
+            this.logger.error("An error occurred while getting all the variation ids. Returning empty array.", e);
             return new ArrayList<>();
         }
     }
@@ -261,7 +261,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
+                        this.logger.error("An error occurred while getting all the variation ids. Returning empty array.", e);
                         return new ArrayList<>();
                     }
                 });
@@ -276,7 +276,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return new HashMap<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all values. Returning empty map.", e);
+            this.logger.error("An error occurred while getting all values. Returning empty map.", e);
             return new HashMap<>();
         }
     }
@@ -300,7 +300,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all values. Returning empty map.", e);
+                        this.logger.error("An error occurred while getting all values. Returning empty map.", e);
                         return new HashMap<>();
                     }
                 });
@@ -315,7 +315,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all detailed values. Returning empty map.", e);
+            this.logger.error("An error occurred while getting the detailed values. Returning empty map.", e);
             return new ArrayList<>();
         }
     }
@@ -338,7 +338,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all detailed values. Returning empty map.", e);
+                        this.logger.error("An error occurred while getting the detailed values. Returning empty map.", e);
                         return new ArrayList<>();
                     }
                 });
@@ -378,7 +378,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error("Thread interrupted.", e);
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
+            this.logger.error("An error occurred while getting all the setting keys. Returning empty array.", e);
             return new ArrayList<>();
         }
     }
@@ -390,7 +390,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     try {
                         return settingResult.settings().keySet();
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
+                        this.logger.error("An error occurred while getting all the setting keys. Returning empty array.", e);
                         return new ArrayList<>();
                     }
                 });
