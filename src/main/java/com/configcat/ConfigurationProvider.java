@@ -14,9 +14,9 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting value.
+     * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired feature flag or setting value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return the configuration value identified by the given key.
      */
     <T> T getValue(Class<T> classOfT, String key, T defaultValue);
@@ -25,10 +25,10 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting value.
+     * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired feature flag or setting value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return the configuration value identified by the given key.
      */
     <T> T getValue(Class<T> classOfT, String key, User user, T defaultValue);
@@ -37,9 +37,9 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting value.
+     * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired feature flag or setting value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return a future which computes the configuration value identified by the given key.
      */
     <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, T defaultValue);
@@ -48,10 +48,10 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting value.
+     * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired feature flag or setting value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return a future which computes the configuration value identified by the given key.
      */
     <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, User user, T defaultValue);
@@ -60,9 +60,9 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting value.
+     * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired feature flag or setting value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return the result of the evaluation.
      */
     <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue);
@@ -71,10 +71,10 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting value.
+     * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired feature flag or setting value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return the result of the evaluation.
      */
     <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue);
@@ -83,9 +83,9 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting value.
+     * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired feature flag or setting value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return a future which computes the evaluation details.
      */
     <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, T defaultValue);
@@ -94,10 +94,10 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting value.
+     * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired feature flag or setting value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return a future which computes the evaluation details.
      */
     <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, User user, T defaultValue);
@@ -139,7 +139,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param variationId the Variation ID.
-     * @param <T>         the type of the desired feature flag or setting value.
+     * @param <T>         the type of the desired feature flag or setting.
      * @return the key of a setting and its value.
      */
     <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId);
@@ -149,7 +149,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param variationId the Variation ID.
-     * @param <T>         the type of the desired feature flag or setting value.
+     * @param <T>         the type of the desired feature flag or setting.
      * @return a future which computes the key of a setting and its value.
      */
     <T> CompletableFuture<Map.Entry<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId);
