@@ -57,7 +57,7 @@ public class EvaluationDetails<T> {
     }
 
     /**
-     * The evaluated variation ID (analytics).
+     * The ID of the evaluated value. Useful for analytics.
      */
     public String getVariationId() {
         return variationId;
