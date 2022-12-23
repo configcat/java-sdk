@@ -23,7 +23,7 @@ public final class PollingModes {
      * Set up the auto polling mode with custom parameters.
      *
      * @param autoPollIntervalInSeconds Sets how often the config.json should be fetched and cached.
-     * @return the auto polling configuration.
+     * @return the auto polling mode.
      */
     public static PollingMode autoPoll(int autoPollIntervalInSeconds) {
         return new AutoPollingMode(autoPollIntervalInSeconds, DEFAULT_MAX_INIT_WAIT_TIME_IN_SECONDS);
