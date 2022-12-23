@@ -93,7 +93,7 @@ class Setting {
     @SerializedName(value = "t")
     private int type;
     @SerializedName(value = "p")
-    public PercentageRule[] percentageItems;
+    private PercentageRule[] percentageItems;
     @SerializedName(value = "r")
     private RolloutRule[] rolloutRules;
     @SerializedName(value = "i")

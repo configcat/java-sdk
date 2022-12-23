@@ -71,7 +71,7 @@ public class EvaluationDetails<T> {
     }
 
     /**
-     * True when the default value passed to getValueDetails() is returned due to an error.
+     * True when the default value was returned, possibly due to an error.
      */
     public boolean isDefaultValue() {
         return isDefaultValue;
@@ -85,7 +85,7 @@ public class EvaluationDetails<T> {
     }
 
     /**
-     * The last download time of the current config in unix milliseconds format.
+     * The last fetch time of the config.json in unix milliseconds format.
      */
     public Long getFetchTimeUnixMilliseconds() {
         return fetchTimeUnixMilliseconds;
