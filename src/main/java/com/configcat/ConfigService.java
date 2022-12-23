@@ -175,7 +175,7 @@ public class ConfigService implements Closeable {
 
     public void setOnline() {
         if (closed.get()) {
-            logger.warn("Client has already been closed, this 'setOnline' has no effect.");
+            logger.warn("The 'setOnline' method has no effect because the client has already been closed.");
         }
         lock.lock();
         try {
@@ -191,7 +191,7 @@ public class ConfigService implements Closeable {
 
     public void setOffline() {
         if (closed.get()) {
-            logger.warn("Client has already been closed, this 'setOffline' has no effect.");
+            logger.warn("The 'setOffline' method has no effect because the client has already been closed");
         }
         lock.lock();
         try {
