@@ -556,7 +556,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * Creates a new or gets an already existing ConfigCatClient for the given sdkKey.
      *
      * @param sdkKey          the SDK Key for to communicate with the ConfigCat services.
-     * @param optionsCallback the options callback to configure the created ConfigCatClient instance.
+     * @param optionsCallback the options callback to set up the created ConfigCatClient instance.
      * @return the ConfigCatClient instance.
      */
     public static ConfigCatClient get(String sdkKey, Consumer<Options> optionsCallback) {

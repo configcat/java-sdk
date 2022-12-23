@@ -11,18 +11,18 @@ public final class PollingModes {
 
 
     /**
-     * Creates a configured auto polling configuration with default parameters.
+     * Set up the auto polling mode with default parameters.
      *
-     * @return the auto polling configuration.
+     * @return the auto polling mode.
      */
     public static PollingMode autoPoll() {
         return new AutoPollingMode(DEFAULT_AUTO_POLL_INTERVAL_IN_SECONDS, DEFAULT_MAX_INIT_WAIT_TIME_IN_SECONDS);
     }
 
     /**
-     * Creates a configured auto polling configuration.
+     * Set up the auto polling mode with custom parameters.
      *
-     * @param autoPollIntervalInSeconds Sets at least how often this policy should fetch the latest configuration and refresh the cache.
+     * @param autoPollIntervalInSeconds Sets how often the config.json should be fetched and cached.
      * @return the auto polling configuration.
      */
     public static PollingMode autoPoll(int autoPollIntervalInSeconds) {
@@ -30,39 +30,39 @@ public final class PollingModes {
     }
 
     /**
-     * Creates a configured auto polling configuration.
+     * Set up the auto polling mode with custom parameters.
      *
-     * @param autoPollIntervalInSeconds Sets at least how often this policy should fetch the latest configuration and refresh the cache.
-     * @param maxInitWaitTimeSeconds    Sets the maximum waiting time between initialization and the first config acquisition in seconds.
-     * @return the auto polling configuration.
+     * @param autoPollIntervalInSeconds Sets how often the config.json should be fetched and cached.
+     * @param maxInitWaitTimeSeconds    Sets the time limit between the initialization of the client and the first config.json acquisition.
+     * @return the auto polling mode.
      */
     public static PollingMode autoPoll(int autoPollIntervalInSeconds, int maxInitWaitTimeSeconds) {
         return new AutoPollingMode(autoPollIntervalInSeconds, maxInitWaitTimeSeconds);
     }
 
     /**
-     * Creates a configured lazy loading polling configuration with default parameters.
+     * Set up a lazy polling mode with default parameters.
      *
-     * @return the lazy loading polling configuration.
+     * @return the lazy polling mode.
      */
     public static PollingMode lazyLoad() {
         return new LazyLoadingMode(DEFAULT_CACHE_REFRESH_INTERVAL_IN_SECONDS);
     }
 
     /**
-     * Creates a configured lazy loading polling configuration.
+     * Set up a lazy polling mode with custom parameters.
      *
      * @param cacheRefreshIntervalInSeconds Sets how long the cache will store its value before fetching the latest from the network again.
-     * @return the lazy loading polling configuration.
+     * @return the lazy polling mode.
      */
     public static PollingMode lazyLoad(int cacheRefreshIntervalInSeconds) {
         return new LazyLoadingMode(cacheRefreshIntervalInSeconds);
     }
 
     /**
-     * Creates a configured manual polling configuration.
+     * Set up the manual polling mode.
      *
-     * @return the manual polling configuration.
+     * @return the manual polling mode.
      */
     public static PollingMode manualPoll() {
         return new ManualPollingMode();
