@@ -2,6 +2,7 @@ package com.configcat;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -13,9 +14,9 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
+     * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return the configuration value identified by the given key.
      */
     <T> T getValue(Class<T> classOfT, String key, T defaultValue);
@@ -24,10 +25,10 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
-     * @param user         the user object to identify the caller.
+     * @param key          the identifier of the feature flag or setting.
+     * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return the configuration value identified by the given key.
      */
     <T> T getValue(Class<T> classOfT, String key, User user, T defaultValue);
@@ -36,9 +37,9 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
+     * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return a future which computes the configuration value identified by the given key.
      */
     <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, T defaultValue);
@@ -47,86 +48,64 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of the configuration value.
-     * @param user         the user object to identify the caller.
+     * @param key          the identifier of the feature flag or setting.
+     * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
-     * @param <T>          the type of the desired config value.
+     * @param <T>          the type of the desired feature flag or setting.
      * @return a future which computes the configuration value identified by the given key.
      */
     <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, User user, T defaultValue);
 
     /**
-     * Gets the Variation ID (analytics) of a feature flag or setting synchronously based on its key.
+     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
-     * @param key                the identifier of the configuration value.
-     * @param defaultVariationId in case of any failure, this value will be returned.
-     * @return the Variation ID.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the feature flag or setting.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired feature flag or setting.
+     * @return the result of the evaluation.
      */
-    String getVariationId(String key, String defaultVariationId);
+    <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue);
 
     /**
-     * Gets the Variation ID (analytics) of a feature flag or setting synchronously based on its key.
+     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
-     * @param key                the identifier of the configuration value.
-     * @param user               the user object to identify the caller.
-     * @param defaultVariationId in case of any failure, this value will be returned.
-     * @return the Variation ID.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the feature flag or setting.
+     * @param user         the user object.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired feature flag or setting.
+     * @return the result of the evaluation.
      */
-    String getVariationId(String key, User user, String defaultVariationId);
+    <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue);
 
     /**
-     * Gets the Variation ID (analytics) of a feature flag or setting asynchronously based on its key.
+     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
-     * @param key                the identifier of the configuration value.
-     * @param defaultVariationId in case of any failure, this value will be returned.
-     * @return a future which computes the Variation ID.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the feature flag or setting.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired feature flag or setting.
+     * @return a future which computes the evaluation details.
      */
-    CompletableFuture<String> getVariationIdAsync(String key, String defaultVariationId);
+    <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, T defaultValue);
 
     /**
-     * Gets the Variation ID (analytics) of a feature flag or setting asynchronously based on its key.
+     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
-     * @param key                the identifier of the configuration value.
-     * @param user               the user object to identify the caller.
-     * @param defaultVariationId in case of any failure, this value will be returned.
-     * @return a future which computes the Variation ID.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the feature flag or setting.
+     * @param user         the user object.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired feature flag or setting.
+     * @return a future which computes the evaluation details.
      */
-    CompletableFuture<String> getVariationIdAsync(String key, User user, String defaultVariationId);
-
-    /**
-     * Gets the Variation IDs (analytics) of all feature flags or settings synchronously.
-     *
-     * @return a collection of all Variation IDs.
-     */
-    Collection<String> getAllVariationIds();
-
-    /**
-     * Gets the Variation IDs (analytics) of all feature flags or settings asynchronously.
-     *
-     * @return a future which computes the collection of all Variation IDs.
-     */
-    CompletableFuture<Collection<String>> getAllVariationIdsAsync();
-
-    /**
-     * Gets the Variation IDs (analytics) of all feature flags or settings synchronously.
-     *
-     * @param user the user object to identify the caller.
-     * @return a collection of all Variation IDs.
-     */
-    Collection<String> getAllVariationIds(User user);
-
-    /**
-     * Gets the Variation IDs (analytics) of all feature flags or settings asynchronously.
-     *
-     * @param user the user object to identify the caller.
-     * @return a future which computes the collection of all Variation IDs.
-     */
-    CompletableFuture<Collection<String>> getAllVariationIdsAsync(User user);
+    <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, User user, T defaultValue);
 
     /**
      * Gets the values of all feature flags or settings synchronously.
      *
-     * @param user the user object to identify the caller.
+     * @param user the user object.
      * @return a collection of all values.
      */
     Map<String, Object> getAllValues(User user);
@@ -134,17 +113,33 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the values of all feature flags or settings asynchronously.
      *
-     * @param user the user object to identify the caller.
+     * @param user the user object.
      * @return a future which computes the collection of all values.
      */
     CompletableFuture<Map<String, Object>> getAllValuesAsync(User user);
+
+    /**
+     * Gets the detailed values of all feature flags or settings synchronously.
+     *
+     * @param user the user object.
+     * @return a collection of all the evaluation results with details
+     */
+    List<EvaluationDetails<?>> getAllValueDetails(User user);
+
+    /**
+     * Gets the detailed values of all feature flags or settings asynchronously.
+     *
+     * @param user the user object.
+     * @return a future which computes the collection of all detailed values.
+     */
+    CompletableFuture<List<EvaluationDetails<?>>> getAllValueDetailsAsync(User user);
 
     /**
      * Gets the key of a setting and its value identified by the given Variation ID (analytics).
      *
      * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param variationId the Variation ID.
-     * @param <T>         the type of the desired config value.
+     * @param <T>         the type of the desired feature flag or setting.
      * @return the key of a setting and its value.
      */
     <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId);
@@ -154,7 +149,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param variationId the Variation ID.
-     * @param <T>         the type of the desired config value.
+     * @param <T>         the type of the desired feature flag or setting.
      * @return a future which computes the key of a setting and its value.
      */
     <T> CompletableFuture<Map.Entry<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId);
@@ -189,8 +184,7 @@ public interface ConfigurationProvider extends Closeable {
 
     /**
      * Sets defaultUser value.
-     * If no user specified in the following calls {getValue}, {getAllValues}, {getVariationId},
-     * {getAllVariationIds}, {getValueAsync},  {getAllValuesAsync}, {getVariationIdAsync}, {getAllVariationIdsAsync}
+     * If no user specified in the following calls {getValue}, {getAllValues}, {getValueDetails}, {getAllValueDetails}
      * the default user value will be used.
      *
      * @param defaultUser The new default user.
@@ -225,4 +219,11 @@ public interface ConfigurationProvider extends Closeable {
      * @return True if the client is in offline mode, otherwise false.
      */
     boolean isOffline();
+
+    /**
+     * Access to hooks for event subscription.
+     *
+     * @return the hooks object used for event subscription.
+     */
+    ConfigCatHooks getHooks();
 }

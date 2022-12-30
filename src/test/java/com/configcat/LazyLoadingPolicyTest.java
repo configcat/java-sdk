@@ -34,7 +34,7 @@ public class LazyLoadingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 mode.getPollingIdentifier());
-        this.configService = new ConfigService("", fetcher, mode, new NullConfigCache(), logger, false);
+        this.configService = new ConfigService("", fetcher, mode, new NullConfigCache(), logger, false, new ConfigCatHooks());
     }
 
     @AfterEach
@@ -68,7 +68,7 @@ public class LazyLoadingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 mode.getPollingIdentifier());
-        ConfigService configService1 = new ConfigService("", fetcher, mode, new FailingCache(), logger, false);
+        ConfigService configService1 = new ConfigService("", fetcher, mode, new FailingCache(), logger, false, new ConfigCatHooks());
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
@@ -107,7 +107,7 @@ public class LazyLoadingPolicyTest {
         PollingMode mode = PollingModes
                 .lazyLoad(1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false);
+        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false, new ConfigCatHooks());
 
         assertFalse(service.getSettings().get().settings().isEmpty());
         assertFalse(service.getSettings().get().settings().isEmpty());
@@ -131,7 +131,7 @@ public class LazyLoadingPolicyTest {
         PollingMode mode = PollingModes
                 .lazyLoad(1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false);
+        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false, new ConfigCatHooks());
 
         assertFalse(service.getSettings().get().settings().isEmpty());
         assertFalse(service.getSettings().get().settings().isEmpty());
@@ -158,7 +158,7 @@ public class LazyLoadingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false);
+        ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false, new ConfigCatHooks());
 
         assertFalse(service.getSettings().get().settings().isEmpty());
         assertEquals(1, this.server.getRequestCount());
@@ -192,7 +192,7 @@ public class LazyLoadingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, true);
+        ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, true, new ConfigCatHooks());
 
         assertTrue(service.getSettings().get().settings().isEmpty());
         assertEquals(0, this.server.getRequestCount());

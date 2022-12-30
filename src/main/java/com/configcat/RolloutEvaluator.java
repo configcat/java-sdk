@@ -5,7 +5,9 @@ import de.skuzzle.semantic.Version;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 class RolloutEvaluator {
     private static final String[] COMPARATOR_TEXTS = new String[]{
@@ -35,7 +37,7 @@ class RolloutEvaluator {
         this.logger = logger;
     }
 
-    public Map.Entry<JsonElement, String> evaluate(Setting setting, String key, User user) {
+    public EvaluationResult evaluate(Setting setting, String key, User user) {
         LogEntries logEntries = new LogEntries();
         logEntries.add("Evaluating getValue(" + key + ").");
 
@@ -48,7 +50,7 @@ class RolloutEvaluator {
                 }
 
                 logEntries.add("Returning " + setting.getValue() + ".");
-                return new AbstractMap.SimpleEntry<>(setting.getValue(), setting.getVariationId());
+                return new EvaluationResult(setting.getValue(), setting.getVariationId(), null, null);
             }
 
             logEntries.add("User object: " + user + "");
@@ -76,7 +78,7 @@ class RolloutEvaluator {
                             inValues.removeAll(Arrays.asList(null, ""));
                             if (inValues.contains(userValue)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //IS NOT ONE OF
@@ -86,21 +88,21 @@ class RolloutEvaluator {
                             notInValues.removeAll(Arrays.asList(null, ""));
                             if (!notInValues.contains(userValue)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //CONTAINS
                         case 2:
                             if (userValue.contains(comparisonValue)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //DOES NOT CONTAIN
                         case 3:
                             if (!userValue.contains(comparisonValue)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //IS ONE OF, IS NOT ONE OF (SemVer)
@@ -118,7 +120,7 @@ class RolloutEvaluator {
 
                                 if ((matched && comparator == 4) || (!matched && comparator == 5)) {
                                     logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                    return new AbstractMap.SimpleEntry<>(value, variationId);
+                                    return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (Exception e) {
                                 logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
@@ -138,7 +140,7 @@ class RolloutEvaluator {
                                         (comparator == 8 && cmpUserVersion.isGreaterThan(matchValue)) ||
                                         (comparator == 9 && cmpUserVersion.compareTo(matchValue) >= 0)) {
                                     logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                    return new AbstractMap.SimpleEntry<>(value, variationId);
+                                    return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (Exception e) {
                                 logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
@@ -163,7 +165,7 @@ class RolloutEvaluator {
                                         (comparator == 14 && userDoubleValue > comparisonDoubleValue) ||
                                         (comparator == 15 && userDoubleValue >= comparisonDoubleValue)) {
                                     logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                    return new AbstractMap.SimpleEntry<>(value, variationId);
+                                    return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (NumberFormatException e) {
                                 logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
@@ -178,7 +180,7 @@ class RolloutEvaluator {
                             String hashValueOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                             if (inValuesSensitive.contains(hashValueOne)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //IS NOT ONE OF (Sensitive)
@@ -189,7 +191,7 @@ class RolloutEvaluator {
                             String hashValueNotOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                             if (!notInValuesSensitive.contains(hashValueNotOne)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                     }
@@ -205,18 +207,19 @@ class RolloutEvaluator {
                 int scaled = longHash % scale;
 
                 int bucket = 0;
-                for (RolloutPercentageItem rule : setting.getPercentageItems()) {
+                for (PercentageRule rule : setting.getPercentageItems()) {
 
                     bucket += rule.getPercentage();
                     if (scaled < bucket) {
                         logEntries.add("Evaluating % options. Returning " + rule.getValue() + ".");
-                        return new AbstractMap.SimpleEntry<>(rule.getValue(), rule.getVariationId());
+
+                        return new EvaluationResult(rule.getValue(), rule.getVariationId(), null, rule);
                     }
                 }
             }
 
             logEntries.add("Returning " + setting.getValue() + ".");
-            return new AbstractMap.SimpleEntry<>(setting.getValue(), setting.getVariationId());
+            return new EvaluationResult(setting.getValue(), setting.getVariationId(), null, null);
         } finally {
             this.logger.info(logEntries.toPrint());
         }

@@ -93,7 +93,7 @@ class Setting {
     @SerializedName(value = "t")
     private int type;
     @SerializedName(value = "p")
-    private RolloutPercentageItem[] percentageItems;
+    private PercentageRule[] percentageItems;
     @SerializedName(value = "r")
     private RolloutRule[] rolloutRules;
     @SerializedName(value = "i")
@@ -111,7 +111,7 @@ class Setting {
         return type;
     }
 
-    public RolloutPercentageItem[] getPercentageItems() {
+    public PercentageRule[] getPercentageItems() {
         return percentageItems;
     }
 
@@ -157,7 +157,7 @@ class RolloutRule {
     }
 }
 
-class RolloutPercentageItem {
+class PercentageRule {
     @SerializedName(value = "v")
     private JsonElement value;
     @SerializedName(value = "p")

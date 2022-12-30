@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -24,11 +25,11 @@ public class VariationIdTests {
         this.server = new MockWebServer();
         this.server.start();
 
-        ConfigCatClient.Options options = new ConfigCatClient.Options()
-                .httpClient(new OkHttpClient.Builder().build())
-                .mode(PollingModes.lazyLoad(2))
-                .baseUrl(this.server.url("/").toString());
-        this.client = ConfigCatClient.get("TEST_KEY", options);
+        this.client = ConfigCatClient.get("TEST_KEY", options -> {
+            options.httpClient(new OkHttpClient.Builder().build());
+            options.pollingMode(PollingModes.lazyLoad(2));
+            options.baseUrl(this.server.url("/").toString());
+        });
     }
 
     @AfterEach
@@ -38,57 +39,27 @@ public class VariationIdTests {
     }
 
     @Test
-    public void nullKeyThrows() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class, () -> client.getVariationId(null, null));
-
-        assertEquals("'key' cannot be null or empty.", exception.getMessage());
-    }
-
-    @Test
     public void getVariationIdWorks() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        String result = client.getVariationId("key1", null);
-        assertEquals("fakeId1", result);
-    }
-
-    @Test
-    public void getVariationIdAsyncWorks() throws ExecutionException, InterruptedException {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        String result = client.getVariationIdAsync("key2", null).get();
-        assertEquals("fakeId2", result);
+        EvaluationDetails<String> valueDetails = client.getValueDetails(String.class, "key1", null);
+        assertEquals("fakeId1", valueDetails.getVariationId());
     }
 
     @Test
     public void getVariationIdNotFound() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        String result = client.getVariationId("nonexisting", "defaultId");
-        assertEquals("defaultId", result);
+        EvaluationDetails<String> valueDetails = client.getValueDetails(String.class, "nonexisting", "defaultId");
+        assertEquals("", valueDetails.getVariationId());
     }
 
     @Test
     public void getAllVariationIdsWorks() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        String[] result = client.getAllVariationIds().toArray(new String[0]);
-        assertEquals(2, result.length);
-        assertEquals("fakeId1", result[0]);
-        assertEquals("fakeId2", result[1]);
-    }
 
-    @Test
-    public void getAllVariationIdsEmpty() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("{}"));
-        String[] result = client.getAllVariationIds().toArray(new String[0]);
-        assertEquals(0, result.length);
-    }
-
-    @Test
-    public void getAllVariationIdsAsyncWorks() throws ExecutionException, InterruptedException {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        String[] result = client.getAllVariationIdsAsync().get().toArray(new String[0]);
-        assertEquals(2, result.length);
-        assertEquals("fakeId1", result[0]);
-        assertEquals("fakeId2", result[1]);
+        List<EvaluationDetails<?>> allValueDetails = client.getAllValueDetails(null);
+        assertEquals(2, allValueDetails.size());
+        assertEquals("fakeId1", allValueDetails.get(0).getVariationId());
+        assertEquals("fakeId2", allValueDetails.get(1).getVariationId());
     }
 
     @Test
