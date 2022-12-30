@@ -14,11 +14,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
-public class ManualPollingPolicyTest {
+public class LazyLoadingPolicyTest {
     private ConfigService configService;
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingPolicyTest.class));
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicyTest.class));
     private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
     @BeforeEach
@@ -26,7 +25,9 @@ public class ManualPollingPolicyTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        PollingMode mode = PollingModes.manualPoll();
+        LazyLoadingMode mode = (LazyLoadingMode) PollingModes
+                .lazyLoad(5);
+
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
                 logger,
                 "",
@@ -45,38 +46,41 @@ public class ManualPollingPolicyTest {
     @Test
     public void get() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        this.configService.refresh().get();
         assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
-        //next call will get the new value
-        this.configService.refresh().get();
+        //wait for cache invalidation
+        Thread.sleep(6000);
+
+        //next call will block until the new value is fetched
         assertEquals("test2", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
     }
 
     @Test
     public void getCacheFails() throws InterruptedException, ExecutionException {
-        PollingMode mode = PollingModes.manualPoll();
+        PollingMode mode = PollingModes
+                .lazyLoad(5);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
-                logger,
-                "",
+                logger
+                , "",
                 this.server.url("/").toString(),
                 false,
                 mode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, mode, new FailingCache(), logger, false, new ConfigCatHooks());
+        ConfigService configService1 = new ConfigService("", fetcher, mode, new FailingCache(), logger, false, new ConfigCatHooks());
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        configService.refresh().get();
-        assertEquals("test", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", configService1.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
-        //next call will get the new value
-        configService.refresh().get();
-        assertEquals("test2", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        //wait for cache invalidation
+        Thread.sleep(6000);
+
+        //next call will block until the new value is fetched
+        assertEquals("test2", configService1.getSettings().get().settings().get("fakeKey").getValue().getAsString());
     }
 
     @Test
@@ -85,41 +89,61 @@ public class ManualPollingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
-        this.configService.refresh().get();
         assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
+        //wait for cache invalidation
+        Thread.sleep(6000);
+
         //previous value returned because of the refresh failure
-        this.configService.refresh().get();
         assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
     }
 
     @Test
-    void testCache() throws InterruptedException, ExecutionException, IOException {
+    void testCacheExpirationRespectedInTTLCalc() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")));
 
-        InMemoryCache cache = new InMemoryCache();
-        PollingMode mode = PollingModes.manualPoll();
+        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+
+        PollingMode mode = PollingModes
+                .lazyLoad(1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false, new ConfigCatHooks());
 
-        service.refresh().get();
-        assertEquals("test", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertFalse(service.getSettings().get().settings().isEmpty());
 
-        service.refresh().get();
-        assertEquals("test2", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals(0, this.server.getRequestCount());
 
-        assertEquals(1, cache.getMap().size());
+        Thread.sleep(1000);
 
-        service.close();
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertFalse(service.getSettings().get().settings().isEmpty());
+
+        assertEquals(1, this.server.getRequestCount());
     }
 
     @Test
-    void testEmptyCacheDoesNotInitiateHTTP() throws InterruptedException, ExecutionException {
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+    void testCacheExpirationRespectedInTTLCalc304() throws InterruptedException, ExecutionException {
+        this.server.enqueue(new MockResponse().setResponseCode(304).setBody(""));
 
-        assertTrue(this.configService.getSettings().get().settings().isEmpty());
+        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+
+        PollingMode mode = PollingModes
+                .lazyLoad(1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false, new ConfigCatHooks());
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertFalse(service.getSettings().get().settings().isEmpty());
+
         assertEquals(0, this.server.getRequestCount());
+
+        Thread.sleep(1000);
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
+        assertFalse(service.getSettings().get().settings().isEmpty());
+
+        assertEquals(1, this.server.getRequestCount());
     }
 
     @Test
@@ -127,7 +151,7 @@ public class ManualPollingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
-        PollingMode pollingMode = PollingModes.manualPoll();
+        PollingMode pollingMode = PollingModes.lazyLoad(1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
                 logger,
                 "",
@@ -136,20 +160,21 @@ public class ManualPollingPolicyTest {
                 pollingMode.getPollingIdentifier());
         ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false, new ConfigCatHooks());
 
-        assertFalse(service.isOffline());
-        assertTrue(service.refresh().get().isSuccess());
+        assertFalse(service.getSettings().get().settings().isEmpty());
         assertEquals(1, this.server.getRequestCount());
 
         service.setOffline();
-
         assertTrue(service.isOffline());
-        assertFalse(service.refresh().get().isSuccess());
+
+        Thread.sleep(1500);
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
         assertEquals(1, this.server.getRequestCount());
 
         service.setOnline();
-
         assertFalse(service.isOffline());
-        assertTrue(service.refresh().get().isSuccess());
+
+        assertFalse(service.getSettings().get().settings().isEmpty());
         assertEquals(2, this.server.getRequestCount());
 
         service.close();
@@ -160,7 +185,7 @@ public class ManualPollingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
-        PollingMode pollingMode = PollingModes.manualPoll();
+        PollingMode pollingMode = PollingModes.lazyLoad(1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
                 logger,
                 "",
@@ -169,14 +194,18 @@ public class ManualPollingPolicyTest {
                 pollingMode.getPollingIdentifier());
         ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, true, new ConfigCatHooks());
 
-        assertTrue(service.isOffline());
-        assertFalse(service.refresh().get().isSuccess());
+        assertTrue(service.getSettings().get().settings().isEmpty());
+        assertEquals(0, this.server.getRequestCount());
+
+        Thread.sleep(1500);
+
+        assertTrue(service.getSettings().get().settings().isEmpty());
         assertEquals(0, this.server.getRequestCount());
 
         service.setOnline();
         assertFalse(service.isOffline());
 
-        assertTrue(service.refresh().get().isSuccess());
+        assertFalse(service.getSettings().get().settings().isEmpty());
         assertEquals(1, this.server.getRequestCount());
 
         service.close();

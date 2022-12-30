@@ -6,13 +6,13 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,12 +29,11 @@ public class ConfigCatClientIntegrationTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        ConfigCatClient.Options options = new ConfigCatClient.Options()
-                .httpClient(new OkHttpClient.Builder().build())
-                .mode(PollingModes.lazyLoad(2, true))
-                .baseUrl(this.server.url("/").toString());
-
-        this.client = ConfigCatClient.get(APIKEY, options);
+        this.client = ConfigCatClient.get(APIKEY, options -> {
+            options.httpClient(new OkHttpClient.Builder().build());
+            options.pollingMode(PollingModes.lazyLoad(2));
+            options.baseUrl(this.server.url("/").toString());
+        });
 
     }
 
@@ -193,10 +192,9 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getConfigurationJsonStringWithDefaultConfigTimeout() {
-        ConfigCatClient.Options options = new ConfigCatClient.Options()
-                .httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build());
 
-        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> options.httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build()));
 
         // makes a call to a real url which would fail, null expected
         String config = cl.getValue(String.class, "test", null);
@@ -211,7 +209,11 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getAllKeys() throws IOException {
-        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
+
+        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
+            options.logLevel(LogLevel.INFO);
+            options.dataGovernance(DataGovernance.EU_ONLY);
+        });
 
         Collection<String> keys = cl.getAllKeys();
 
@@ -222,25 +224,53 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void ensureFailingCacheWriteDoesNotPreventFurtherWrites() {
-        FailingWriteCache cache = new FailingWriteCache();
-        ConfigJsonCache memoryCache = new ConfigJsonCache(
-                new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClientIntegrationTest.class)), cache, "");
+    void testEvalDetails() {
+        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
 
-        Config initialConfig = memoryCache.readFromJson(String.format(TEST_JSON, "initial"), "etag1");
-        memoryCache.writeToCache(initialConfig);
+        User user = new User.Builder()
+                .email("test@configcat.com")
+                .build("test@configcat.com");
 
-        Config updated = memoryCache.readFromJson(String.format(TEST_JSON, "updated"), "etag2");
-        memoryCache.writeToCache(updated); // this will fail
+        EvaluationDetails<String> details = cl.getValueDetails(String.class, "stringContainsDogDefaultCat", user, "");
+        assertEquals("stringContainsDogDefaultCat", details.getKey());
+        assertEquals("Dog", details.getValue());
+        assertFalse(details.isDefaultValue());
+        assertNull(details.getError());
+        assertEquals("d0cd8f06", details.getVariationId());
+        assertEquals("Email", details.getMatchedEvaluationRule().getComparisonAttribute());
+        assertEquals("@configcat.com", details.getMatchedEvaluationRule().getComparisonValue());
+        assertNull(details.getMatchedEvaluationPercentageRule());
+        assertEquals(2, details.getMatchedEvaluationRule().getComparator());
+        assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
+    }
 
-        Config fromCache1 = memoryCache.readFromCache();
-        assertEquals(initialConfig.eTag, fromCache1.eTag);
+    @Test
+    void testEvalDetailsHook() {
+        User user = new User.Builder()
+                .email("test@configcat.com")
+                .build("test@configcat.com");
 
-        memoryCache.writeToCache(updated);
+        AtomicBoolean called = new AtomicBoolean(false);
 
-        Config fromCache2 = memoryCache.readFromCache();
-        assertEquals(updated.eTag, fromCache2.eTag);
 
-        assertEquals(2, cache.successCounter.get());
+        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
+            options.hooks().addOnFlagEvaluated(details -> {
+                assertEquals("stringContainsDogDefaultCat", details.getKey());
+                assertEquals("Dog", details.getValue());
+                assertFalse(details.isDefaultValue());
+                assertNull(details.getError());
+                assertEquals("d0cd8f06", details.getVariationId());
+                assertEquals("Email", details.getMatchedEvaluationRule().getComparisonAttribute());
+                assertEquals("@configcat.com", details.getMatchedEvaluationRule().getComparisonValue());
+                assertNull(details.getMatchedEvaluationPercentageRule());
+                assertEquals(2, details.getMatchedEvaluationRule().getComparator());
+                assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
+                called.set(true);
+            });
+        });
+
+        cl.getValueDetails(String.class, "stringContainsDogDefaultCat", user, "");
+
+        assertTrue(called.get());
     }
 }

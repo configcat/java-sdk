@@ -5,15 +5,20 @@ import org.slf4j.Logger;
 class ConfigCatLogger {
     private final Logger logger;
     private final LogLevel logLevel;
+    private final ConfigCatHooks configCatHooks;
 
-    public ConfigCatLogger(Logger logger, LogLevel logLevel) {
+    public ConfigCatLogger(Logger logger, LogLevel logLevel, ConfigCatHooks configCatHooks) {
         this.logger = logger;
         this.logLevel = logLevel;
+        this.configCatHooks = configCatHooks;
+    }
+
+    public ConfigCatLogger(Logger logger, LogLevel logLevel) {
+        this(logger, logLevel, null);
     }
 
     public ConfigCatLogger(Logger logger) {
-        this.logger = logger;
-        this.logLevel = LogLevel.WARNING;
+        this(logger, LogLevel.WARNING);
     }
 
     public void warn(String message) {
@@ -23,12 +28,14 @@ class ConfigCatLogger {
     }
 
     public void error(String message, Exception exception) {
+        if (this.configCatHooks != null) this.configCatHooks.invokeOnError(message);
         if (this.logLevel.ordinal() <= LogLevel.ERROR.ordinal()) {
             this.logger.error(message, exception);
         }
     }
 
     public void error(String message) {
+        if (this.configCatHooks != null) this.configCatHooks.invokeOnError(message);
         if (this.logLevel.ordinal() <= LogLevel.ERROR.ordinal()) {
             this.logger.error(message);
         }

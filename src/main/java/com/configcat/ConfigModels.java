@@ -13,55 +13,167 @@ enum SettingType {
     DOUBLE,
 }
 
+class Entry {
+    @SerializedName(value = "c")
+    private Config config;
+    @SerializedName(value = "e")
+    private String eTag;
+    @SerializedName(value = "f")
+    private long fetchTime;
+
+    public Config getConfig() {
+        return config;
+    }
+
+    public String getETag() {
+        return eTag;
+    }
+
+    public long getFetchTime() {
+        return fetchTime;
+    }
+
+    public Entry withFetchTime(long fetchTime) {
+        return new Entry(getConfig(), getETag(), fetchTime);
+    }
+
+    public Entry(Config config, String eTag, long fetchTime) {
+        this.config = config;
+        this.eTag = eTag;
+        this.fetchTime = fetchTime;
+    }
+
+    boolean isEmpty() {
+        return EMPTY.equals(this);
+    }
+
+    public static final Entry EMPTY = new Entry(Config.EMPTY, "", 0);
+
+}
+
 class Config {
     @SerializedName(value = "p")
-    public Preferences preferences;
+    private Preferences preferences;
     @SerializedName(value = "f")
-    public Map<String, Setting> entries = new HashMap<>();
-    @SerializedName(value = "e")
-    public String eTag = "";
+    private Map<String, Setting> entries = new HashMap<>();
 
-    public static Config empty = new Config();
+    public Preferences getPreferences() {
+        return preferences;
+    }
+
+    public Map<String, Setting> getEntries() {
+        return entries;
+    }
+
+    boolean isEmpty() {
+        return EMPTY.equals(this);
+    }
+
+    public static final Config EMPTY = new Config();
 }
 
 class Preferences {
     @SerializedName(value = "u")
-    public String baseUrl;
+    private String baseUrl;
     @SerializedName(value = "r")
-    public int redirect;
+    private int redirect;
+
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
+    public int getRedirect() {
+        return redirect;
+    }
 }
 
 class Setting {
     @SerializedName(value = "v")
-    public JsonElement value;
+    private JsonElement value;
     @SerializedName(value = "t")
-    public int type;
+    private int type;
     @SerializedName(value = "p")
-    public RolloutPercentageItem[] percentageItems;
+    private PercentageRule[] percentageItems;
     @SerializedName(value = "r")
-    public RolloutRule[] rolloutRules;
+    private RolloutRule[] rolloutRules;
     @SerializedName(value = "i")
-    public String variationId = "";
+    private String variationId = "";
+
+    public void setValue(JsonElement value) {
+        this.value = value;
+    }
+
+    public JsonElement getValue() {
+        return value;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public PercentageRule[] getPercentageItems() {
+        return percentageItems;
+    }
+
+    public RolloutRule[] getRolloutRules() {
+        return rolloutRules;
+    }
+
+    public String getVariationId() {
+        return variationId;
+    }
 }
 
 class RolloutRule {
     @SerializedName(value = "v")
-    public JsonElement value;
+    private JsonElement value;
     @SerializedName(value = "a")
-    public String comparisonAttribute;
+    private String comparisonAttribute;
     @SerializedName(value = "t")
-    public int comparator;
+    private int comparator;
     @SerializedName(value = "c")
-    public String comparisonValue;
+    private String comparisonValue;
     @SerializedName(value = "i")
-    public String variationId;
+    private String variationId;
+
+    public JsonElement getValue() {
+        return value;
+    }
+
+    public String getComparisonAttribute() {
+        return comparisonAttribute;
+    }
+
+    public int getComparator() {
+        return comparator;
+    }
+
+    public String getComparisonValue() {
+        return comparisonValue;
+    }
+
+    public String getVariationId() {
+        return variationId;
+    }
 }
 
-class RolloutPercentageItem {
+class PercentageRule {
     @SerializedName(value = "v")
-    public JsonElement value;
+    private JsonElement value;
     @SerializedName(value = "p")
-    public double percentage;
+    private double percentage;
     @SerializedName(value = "i")
-    public String variationId;
+    private String variationId;
+
+    public JsonElement getValue() {
+        return value;
+    }
+
+    public double getPercentage() {
+        return percentage;
+    }
+
+    public String getVariationId() {
+        return variationId;
+    }
 }

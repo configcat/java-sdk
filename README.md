@@ -21,7 +21,7 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 <dependency>
   <groupId>com.configcat</groupId>
   <artifactId>configcat-java-client</artifactId>
-  <version>[7.0.0,)</version>
+  <version>[8.0.0,)</version>
 </dependency>
 ```
 *Gradle:*
@@ -39,7 +39,7 @@ import com.configcat.*;
 
 ### 4. Create a *ConfigCat* client instance
 ```java
-ConfigCatClient client = new ConfigCatClient("#YOUR-SDK-KEY#");
+ConfigCatClient client = ConfigCatClient.get("#YOUR-SDK-KEY#");
 ```
 
 ### 5. Get your setting value

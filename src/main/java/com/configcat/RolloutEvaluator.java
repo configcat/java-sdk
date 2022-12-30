@@ -2,10 +2,12 @@ package com.configcat;
 
 import com.google.gson.JsonElement;
 import de.skuzzle.semantic.Version;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 class RolloutEvaluator {
     private static final String[] COMPARATOR_TEXTS = new String[]{
@@ -35,31 +37,31 @@ class RolloutEvaluator {
         this.logger = logger;
     }
 
-    public Map.Entry<JsonElement, String> evaluate(Setting setting, String key, User user) {
+    public EvaluationResult evaluate(Setting setting, String key, User user) {
         LogEntries logEntries = new LogEntries();
         logEntries.add("Evaluating getValue(" + key + ").");
 
         try {
 
             if (user == null) {
-                if ((setting.rolloutRules != null && setting.rolloutRules.length > 0) ||
-                        (setting.percentageItems != null && setting.percentageItems.length > 0)) {
+                if ((setting.getRolloutRules() != null && setting.getRolloutRules().length > 0) ||
+                        (setting.getPercentageItems() != null && setting.getPercentageItems().length > 0)) {
                     this.logger.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
                 }
 
-                logEntries.add("Returning " + setting.value + ".");
-                return new AbstractMap.SimpleEntry<>(setting.value, setting.variationId);
+                logEntries.add("Returning " + setting.getValue() + ".");
+                return new EvaluationResult(setting.getValue(), setting.getVariationId(), null, null);
             }
 
             logEntries.add("User object: " + user + "");
-            if (setting.rolloutRules != null) {
-                for (RolloutRule rule : setting.rolloutRules) {
+            if (setting.getRolloutRules() != null) {
+                for (RolloutRule rule : setting.getRolloutRules()) {
 
-                    String comparisonAttribute = rule.comparisonAttribute;
-                    String comparisonValue = rule.comparisonValue;
-                    int comparator = rule.comparator;
-                    JsonElement value = rule.value;
-                    String variationId = rule.variationId;
+                    String comparisonAttribute = rule.getComparisonAttribute();
+                    String comparisonValue = rule.getComparisonValue();
+                    int comparator = rule.getComparator();
+                    JsonElement value = rule.getValue();
+                    String variationId = rule.getVariationId();
                     String userValue = user.getAttribute(comparisonAttribute);
 
                     if (comparisonValue == null || comparisonValue.isEmpty() ||
@@ -76,7 +78,7 @@ class RolloutEvaluator {
                             inValues.removeAll(Arrays.asList(null, ""));
                             if (inValues.contains(userValue)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //IS NOT ONE OF
@@ -86,21 +88,21 @@ class RolloutEvaluator {
                             notInValues.removeAll(Arrays.asList(null, ""));
                             if (!notInValues.contains(userValue)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //CONTAINS
                         case 2:
                             if (userValue.contains(comparisonValue)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //DOES NOT CONTAIN
                         case 3:
                             if (!userValue.contains(comparisonValue)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //IS ONE OF, IS NOT ONE OF (SemVer)
@@ -118,7 +120,7 @@ class RolloutEvaluator {
 
                                 if ((matched && comparator == 4) || (!matched && comparator == 5)) {
                                     logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                    return new AbstractMap.SimpleEntry<>(value, variationId);
+                                    return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (Exception e) {
                                 logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
@@ -138,7 +140,7 @@ class RolloutEvaluator {
                                         (comparator == 8 && cmpUserVersion.isGreaterThan(matchValue)) ||
                                         (comparator == 9 && cmpUserVersion.compareTo(matchValue) >= 0)) {
                                     logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                    return new AbstractMap.SimpleEntry<>(value, variationId);
+                                    return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (Exception e) {
                                 logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
@@ -163,7 +165,7 @@ class RolloutEvaluator {
                                         (comparator == 14 && userDoubleValue > comparisonDoubleValue) ||
                                         (comparator == 15 && userDoubleValue >= comparisonDoubleValue)) {
                                     logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                    return new AbstractMap.SimpleEntry<>(value, variationId);
+                                    return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (NumberFormatException e) {
                                 logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
@@ -178,7 +180,7 @@ class RolloutEvaluator {
                             String hashValueOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                             if (inValuesSensitive.contains(hashValueOne)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //IS NOT ONE OF (Sensitive)
@@ -189,7 +191,7 @@ class RolloutEvaluator {
                             String hashValueNotOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                             if (!notInValuesSensitive.contains(hashValueNotOne)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
-                                return new AbstractMap.SimpleEntry<>(value, variationId);
+                                return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                     }
@@ -197,7 +199,7 @@ class RolloutEvaluator {
                 }
             }
 
-            if (setting.percentageItems != null && setting.percentageItems.length > 0) {
+            if (setting.getPercentageItems() != null && setting.getPercentageItems().length > 0) {
                 String hashCandidate = key + user.getIdentifier();
                 int scale = 100;
                 String hexHash = new String(Hex.encodeHex(DigestUtils.sha1(hashCandidate))).substring(0, 7);
@@ -205,18 +207,19 @@ class RolloutEvaluator {
                 int scaled = longHash % scale;
 
                 int bucket = 0;
-                for (RolloutPercentageItem rule : setting.percentageItems) {
+                for (PercentageRule rule : setting.getPercentageItems()) {
 
-                    bucket += rule.percentage;
+                    bucket += rule.getPercentage();
                     if (scaled < bucket) {
-                        logEntries.add("Evaluating % options. Returning " + rule.value + ".");
-                        return new AbstractMap.SimpleEntry<>(rule.value, rule.variationId);
+                        logEntries.add("Evaluating % options. Returning " + rule.getValue() + ".");
+
+                        return new EvaluationResult(rule.getValue(), rule.getVariationId(), null, rule);
                     }
                 }
             }
 
-            logEntries.add("Returning " + setting.value + ".");
-            return new AbstractMap.SimpleEntry<>(setting.value, setting.variationId);
+            logEntries.add("Returning " + setting.getValue() + ".");
+            return new EvaluationResult(setting.getValue(), setting.getVariationId(), null, null);
         } finally {
             this.logger.info(logEntries.toPrint());
         }
