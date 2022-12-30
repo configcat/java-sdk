@@ -285,7 +285,7 @@ public class ConfigCatClientTest {
         assertEquals(2, allValuesDetails.size());
 
         //assert result 1
-        EvaluationDetails<?> element = allValuesDetails.get(0);
+        EvaluationDetails<Object> element = allValuesDetails.get(0);
         assertEquals("key1", element.getKey());
         assertTrue((boolean) element.getValue());
         assertFalse(element.isDefaultValue());
