@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -52,7 +51,7 @@ public class AutoPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false, new ConfigCatHooks());
 
 
         //first call
@@ -79,7 +78,7 @@ public class AutoPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false, new ConfigCatHooks());
 
         //first call
         assertTrue(configService.getSettings().get().settings().isEmpty());
@@ -102,7 +101,7 @@ public class AutoPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false, new ConfigCatHooks());
 
         //first calls
         assertEquals("test", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
@@ -143,7 +142,7 @@ public class AutoPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false, new ConfigCatHooks());
 
         //first call
         assertEquals("test", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
@@ -153,29 +152,6 @@ public class AutoPollingPolicyTest {
 
         //previous value returned because of the refresh failure
         assertEquals("test", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
-
-        configService.close();
-    }
-
-    @Test
-    public void configChanged() throws IOException, InterruptedException {
-        AtomicBoolean isCalled = new AtomicBoolean();
-        ConfigCache cache = new NullConfigCache();
-        PollingMode pollingMode = PollingModes
-                .autoPoll(2, () -> isCalled.set(true));
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
-                logger,
-                "",
-                server.url("/").toString(),
-                false,
-                pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
-
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
-
-        Thread.sleep(1000);
-
-        assertTrue(isCalled.get());
 
         configService.close();
     }
@@ -196,7 +172,7 @@ public class AutoPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false, new ConfigCatHooks());
 
         assertEquals("test", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
@@ -214,7 +190,7 @@ public class AutoPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false, new ConfigCatHooks());
 
         long start = System.currentTimeMillis();
         assertTrue(configService.getSettings().get().settings().isEmpty());
@@ -237,7 +213,7 @@ public class AutoPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false, new ConfigCatHooks());
 
         configService.getSettings().get();
 
@@ -260,7 +236,7 @@ public class AutoPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false, new ConfigCatHooks());
 
         Thread.sleep(2500);
 
@@ -291,7 +267,7 @@ public class AutoPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, true);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, true, new ConfigCatHooks());
 
         assertTrue(configService.isOffline());
         assertEquals(0, this.server.getRequestCount());
@@ -320,7 +296,7 @@ public class AutoPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false);
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false, new ConfigCatHooks());
 
         long start = System.currentTimeMillis();
         assertFalse(configService.getSettings().get().settings().isEmpty());

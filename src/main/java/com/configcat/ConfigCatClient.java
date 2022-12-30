@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * A client for handling configurations provided by ConfigCat.
@@ -24,12 +25,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private final String sdkKey;
     private User defaultUser;
     private ConfigService configService;
+    private final ConfigCatHooks configCatHooks;
+
 
     private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException {
         if (sdkKey == null || sdkKey.isEmpty())
             throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
 
-        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel);
+        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.configCatHooks);
 
         this.sdkKey = sdkKey;
         this.overrideDataSource = options.localDataSourceBuilder != null
@@ -37,6 +40,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 : new OverrideDataSource();
         this.overrideBehaviour = options.overrideBehaviour;
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
+        this.configCatHooks = options.configCatHooks;
 
         if (this.overrideBehaviour != OverrideBehaviour.LOCAL_ONLY) {
             boolean hasCustomBaseUrl = options.baseUrl != null && !options.baseUrl.isEmpty();
@@ -55,7 +59,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     hasCustomBaseUrl,
                     options.pollingMode.getPollingIdentifier());
 
-            this.configService = new ConfigService(sdkKey, fetcher, options.pollingMode, options.cache, logger, options.offline);
+            this.configService = new ConfigService(sdkKey, fetcher, options.pollingMode, options.cache, logger, options.offline, options.configCatHooks);
         }
 
         this.defaultUser = options.defaultUser;
@@ -280,7 +284,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error("Thread interrupted.", e);
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
+            this.logger.error("An error occurred while getting all the setting keys. Returning empty array.", e);
             return new ArrayList<>();
         }
     }
@@ -292,7 +296,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     try {
                         return settingResult.settings().keySet();
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
+                        this.logger.error("An error occurred while getting all the setting keys. Returning empty array.", e);
                         return new ArrayList<>();
                     }
                 });
@@ -361,6 +365,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
+    public ConfigCatHooks getHooks() {
+        return this.configCatHooks;
+    }
+
+    @Override
     public void close() throws IOException {
         if (!this.isClosed.compareAndSet(false, true)) {
             return;
@@ -385,6 +394,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.configService.close();
         }
         this.overrideDataSource.close();
+        this.configCatHooks.clear();
     }
 
     /**
@@ -437,20 +447,26 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
-                this.logger.error("Config JSON is not present. Returning defaultValue: [" + defaultValue + "].");
+                String errorMessage = "Config JSON is not present. Returning defaultValue: [" + defaultValue + "].";
+                this.logger.error(errorMessage);
+                this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
                 return defaultValue;
             }
 
             Setting setting = settings.get(key);
             if (setting == null) {
-                this.logger.error("Value not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet()));
+                String errorMessage = "Value not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet());
+                this.logger.error(errorMessage);
+                this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
                 return defaultValue;
             }
 
             return this.evaluate(classOfT, setting, key, getEvaluateUser(user), settingResult.fetchTime()).getValue();
         } catch (Exception e) {
-            this.logger.error("Evaluating getValue('" + key + "') failed. Returning defaultValue: [" + defaultValue + "]. "
-                    + e.getMessage(), e);
+            String errorMessage = "Evaluating getValue('" + key + "') failed. Returning defaultValue: [" + defaultValue + "]. "
+                    + e.getMessage();
+            this.logger.error(errorMessage, e);
+            this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
             return defaultValue;
         }
     }
@@ -537,31 +553,32 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     /**
-     * Get a singleton ConfigCat Client for the sdk key with the options, create a new client if not existed yet.
-     * If the client already exist the options are ignored.
+     * Creates a new or gets an already existing ConfigCatClient for the given sdkKey.
      *
-     * @param sdkKey  the client sdk key.
-     * @param options the client initializer options.
-     * @return a singleton client.
+     * @param sdkKey          the SDK Key for to communicate with the ConfigCat services.
+     * @param optionsCallback the options callback to set up the created ConfigCatClient instance.
+     * @return the ConfigCatClient instance.
      */
-    public static ConfigCatClient get(final String sdkKey, final Options options) {
+    public static ConfigCatClient get(String sdkKey, Consumer<Options> optionsCallback) {
         if (sdkKey == null || sdkKey.isEmpty()) {
             throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
         }
 
         synchronized (INSTANCES) {
-            Options clientOptions = options;
+            Options clientOptions = new Options();
 
             ConfigCatClient client = INSTANCES.get(sdkKey);
             if (client != null) {
-                if (clientOptions != null) {
-                    client.logger.warn("Client for '" + sdkKey + "' is already created and will be reused; options passed are being ignored.");
+                if (optionsCallback != null) {
+                    client.logger.warn("The passed options are ignored because the client for '" + sdkKey + "' is already created and will be reused.");
                 }
                 return client;
             }
 
-            if (clientOptions == null) {
-                clientOptions = new Options();
+            if (optionsCallback != null) {
+                Options options = new Options();
+                optionsCallback.accept(options);
+                clientOptions = options;
             }
             client = new ConfigCatClient(sdkKey, clientOptions);
             INSTANCES.put(sdkKey, client);
@@ -569,6 +586,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return client;
         }
     }
+
 
     private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
         EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user);
@@ -582,6 +600,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 fetchTime,
                 evaluationResult.targetingRule,
                 evaluationResult.percentageRule);
+        this.configCatHooks.invokeOnFlagEvaluated(details);
         return details.asTypeSpecific();
     }
 
@@ -592,56 +611,50 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private OkHttpClient httpClient;
         private ConfigCache cache = new NullConfigCache();
         private String baseUrl;
-        private PollingMode pollingMode = PollingModes.autoPoll(60);
+        private PollingMode pollingMode = PollingModes.autoPoll();
         private LogLevel logLevel = LogLevel.WARNING;
         private DataGovernance dataGovernance = DataGovernance.GLOBAL;
         private OverrideDataSourceBuilder localDataSourceBuilder;
         private OverrideBehaviour overrideBehaviour;
         private User defaultUser;
         private boolean offline = false;
+        private final ConfigCatHooks configCatHooks = new ConfigCatHooks();
+
 
         /**
          * Sets the underlying http client which will be used to fetch the latest configuration.
          *
          * @param httpClient the http client.
-         * @return the options.
          */
-        public Options httpClient(OkHttpClient httpClient) {
+        public void httpClient(OkHttpClient httpClient) {
             this.httpClient = httpClient;
-            return this;
         }
 
         /**
          * Sets the internal cache implementation.
          *
          * @param cache a {@link ConfigCache} implementation used to cache the configuration.
-         * @return the options.
          */
-        public Options cache(ConfigCache cache) {
+        public void cache(ConfigCache cache) {
             this.cache = cache;
-            return this;
         }
 
         /**
          * Sets the base ConfigCat CDN url.
          *
          * @param baseUrl the base ConfigCat CDN url.
-         * @return the options.
          */
-        public Options baseUrl(String baseUrl) {
+        public void baseUrl(String baseUrl) {
             this.baseUrl = baseUrl;
-            return this;
         }
 
         /**
          * Sets the internal refresh policy implementation.
          *
          * @param pollingMode the polling mode.
-         * @return the options.
          */
-        public Options mode(PollingMode pollingMode) {
+        public void pollingMode(PollingMode pollingMode) {
             this.pollingMode = pollingMode;
-            return this;
         }
 
         /**
@@ -649,22 +662,18 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * https://app.configcat.com/organization/data-governance (Only Organization Admins have access)
          *
          * @param dataGovernance the {@link DataGovernance} parameter.
-         * @return the options.
          */
-        public Options dataGovernance(DataGovernance dataGovernance) {
+        public void dataGovernance(DataGovernance dataGovernance) {
             this.dataGovernance = dataGovernance;
-            return this;
         }
 
         /**
          * Default: Warning. Sets the internal log level.
          *
          * @param logLevel the {@link LogLevel} parameter.
-         * @return the options.
          */
-        public Options logLevel(LogLevel logLevel) {
+        public void logLevel(LogLevel logLevel) {
             this.logLevel = logLevel;
-            return this;
         }
 
         /**
@@ -674,10 +683,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * @param behaviour         the override behaviour. It can be used to set preference on whether the local
          *                          values should override the remote values, or use local values only when a remote
          *                          value doesn't exist, or use it for local only mode.
-         * @return the options.
          * @throws IllegalArgumentException when the <tt>dataSourceBuilder</tt> or <tt>behaviour</tt> parameter is null.
          */
-        public Options flagOverrides(OverrideDataSourceBuilder dataSourceBuilder, OverrideBehaviour behaviour) {
+        public void flagOverrides(OverrideDataSourceBuilder dataSourceBuilder, OverrideBehaviour behaviour) {
             if (dataSourceBuilder == null) {
                 throw new IllegalArgumentException("'dataSourceBuilder' cannot be null or empty.");
             }
@@ -688,29 +696,33 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             this.localDataSourceBuilder = dataSourceBuilder;
             this.overrideBehaviour = behaviour;
-            return this;
         }
 
         /**
          * Sets the default user.
          *
          * @param defaultUser the default user.
-         * @return the options.
          */
-        public Options defaultUser(User defaultUser) {
+        public void defaultUser(User defaultUser) {
             this.defaultUser = defaultUser;
-            return this;
         }
 
         /**
          * Set client offline mode.
          *
          * @param offline the client offline mode value.
-         * @return the options.
          */
-        public Options offline(boolean offline) {
+        public void offline(boolean offline) {
             this.offline = offline;
-            return this;
+        }
+
+        /**
+         * Set the client hooks.
+         *
+         * @return the hooks.
+         */
+        public ConfigCatHooks hooks() {
+            return configCatHooks;
         }
     }
 }

@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,12 +29,11 @@ public class ConfigCatClientIntegrationTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        ConfigCatClient.Options options = new ConfigCatClient.Options()
-                .httpClient(new OkHttpClient.Builder().build())
-                .mode(PollingModes.lazyLoad(2))
-                .baseUrl(this.server.url("/").toString());
-
-        this.client = ConfigCatClient.get(APIKEY, options);
+        this.client = ConfigCatClient.get(APIKEY, options -> {
+            options.httpClient(new OkHttpClient.Builder().build());
+            options.pollingMode(PollingModes.lazyLoad(2));
+            options.baseUrl(this.server.url("/").toString());
+        });
 
     }
 
@@ -192,10 +192,9 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getConfigurationJsonStringWithDefaultConfigTimeout() {
-        ConfigCatClient.Options options = new ConfigCatClient.Options()
-                .httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build());
 
-        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options);
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> options.httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build()));
 
         // makes a call to a real url which would fail, null expected
         String config = cl.getValue(String.class, "test", null);
@@ -210,11 +209,11 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getAllKeys() throws IOException {
-        ConfigCatClient.Options options = new ConfigCatClient.Options()
-                .logLevel(LogLevel.INFO)
-                .dataGovernance(DataGovernance.EU_ONLY);
 
-        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options);
+        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
+            options.logLevel(LogLevel.INFO);
+            options.dataGovernance(DataGovernance.EU_ONLY);
+        });
 
         Collection<String> keys = cl.getAllKeys();
 
@@ -243,5 +242,35 @@ public class ConfigCatClientIntegrationTest {
         assertNull(details.getMatchedEvaluationPercentageRule());
         assertEquals(2, details.getMatchedEvaluationRule().getComparator());
         assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
+    }
+
+    @Test
+    void testEvalDetailsHook() {
+        User user = new User.Builder()
+                .email("test@configcat.com")
+                .build("test@configcat.com");
+
+        AtomicBoolean called = new AtomicBoolean(false);
+
+
+        ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
+            options.hooks().addOnFlagEvaluated(details -> {
+                assertEquals("stringContainsDogDefaultCat", details.getKey());
+                assertEquals("Dog", details.getValue());
+                assertFalse(details.isDefaultValue());
+                assertNull(details.getError());
+                assertEquals("d0cd8f06", details.getVariationId());
+                assertEquals("Email", details.getMatchedEvaluationRule().getComparisonAttribute());
+                assertEquals("@configcat.com", details.getMatchedEvaluationRule().getComparisonValue());
+                assertNull(details.getMatchedEvaluationPercentageRule());
+                assertEquals(2, details.getMatchedEvaluationRule().getComparator());
+                assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
+                called.set(true);
+            });
+        });
+
+        cl.getValueDetails(String.class, "stringContainsDogDefaultCat", user, "");
+
+        assertTrue(called.get());
     }
 }

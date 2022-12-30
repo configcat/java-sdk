@@ -33,7 +33,7 @@ public class ManualPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 mode.getPollingIdentifier());
-        this.configService = new ConfigService("", fetcher, mode, new NullConfigCache(), logger, false);
+        this.configService = new ConfigService("", fetcher, mode, new NullConfigCache(), logger, false, new ConfigCatHooks());
     }
 
     @AfterEach
@@ -65,7 +65,7 @@ public class ManualPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 mode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", fetcher, mode, new FailingCache(), logger, false);
+        ConfigService configService = new ConfigService("", fetcher, mode, new FailingCache(), logger, false, new ConfigCatHooks());
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
@@ -101,7 +101,7 @@ public class ManualPollingPolicyTest {
         InMemoryCache cache = new InMemoryCache();
         PollingMode mode = PollingModes.manualPoll();
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false);
+        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false, new ConfigCatHooks());
 
         service.refresh().get();
         assertEquals("test", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
@@ -134,7 +134,7 @@ public class ManualPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false);
+        ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, false, new ConfigCatHooks());
 
         assertFalse(service.isOffline());
         assertTrue(service.refresh().get().isSuccess());
@@ -167,7 +167,7 @@ public class ManualPollingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, true);
+        ConfigService service = new ConfigService("", fetcher, pollingMode, new NullConfigCache(), logger, true, new ConfigCatHooks());
 
         assertTrue(service.isOffline());
         assertFalse(service.refresh().get().isSuccess());
