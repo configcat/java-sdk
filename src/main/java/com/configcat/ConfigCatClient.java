@@ -213,7 +213,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public List<EvaluationDetails<?>> getAllValueDetails(User user) {
+    public List<EvaluationDetails<Object>> getAllValueDetails(User user) {
         try {
             return this.getAllValueDetailsAsync(user).get();
         } catch (InterruptedException e) {
@@ -227,17 +227,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public CompletableFuture<List<EvaluationDetails<?>>> getAllValueDetailsAsync(User user) {
+    public CompletableFuture<List<EvaluationDetails<Object>>> getAllValueDetailsAsync(User user) {
         return this.getSettingsAsync()
                 .thenApply(settingResult -> {
                     try {
                         Map<String, Setting> settings = settingResult.settings();
-                        List<EvaluationDetails<?>> result = new ArrayList<>();
+                        List<EvaluationDetails<Object>> result = new ArrayList<>();
 
                         for (String key : settings.keySet()) {
                             Setting setting = settings.get(key);
 
-                            EvaluationDetails<?> evaluationDetails = this.evaluate(this.classBySettingType(setting.getType()), setting,
+                            EvaluationDetails<Object> evaluationDetails = this.evaluateObject(this.classBySettingType(setting.getType()), setting,
                                     key, user != null ? user : this.defaultUser, settingResult.fetchTime());
                             result.add(evaluationDetails);
                         }
@@ -593,7 +593,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
 
-    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
+    private EvaluationDetails<Object> evaluateObject(Class classOfT, Setting setting, String key, User user, Long fetchTime) {
         EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user);
         EvaluationDetails<Object> details = new EvaluationDetails<>(
                 this.parseObject(classOfT, evaluationResult.value),
@@ -606,7 +606,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 evaluationResult.targetingRule,
                 evaluationResult.percentageRule);
         this.configCatHooks.invokeOnFlagEvaluated(details);
-        return details.asTypeSpecific();
+        return details;
+    }
+
+    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
+        return evaluateObject(classOfT, setting, key, user, fetchTime).asTypeSpecific();
     }
 
     /**

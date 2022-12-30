@@ -279,7 +279,7 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_MULTIPLE));
         cl.forceRefresh();
 
-        List<EvaluationDetails<?>> allValuesDetails = cl.getAllValueDetails(null);
+        List<EvaluationDetails<Object>> allValuesDetails = cl.getAllValueDetails(null);
 
         //assert result list
         assertEquals(2, allValuesDetails.size());

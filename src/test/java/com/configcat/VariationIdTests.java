@@ -56,7 +56,7 @@ public class VariationIdTests {
     public void getAllVariationIdsWorks() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
-        List<EvaluationDetails<?>> allValueDetails = client.getAllValueDetails(null);
+        List<EvaluationDetails<Object>> allValueDetails = client.getAllValueDetails(null);
         assertEquals(2, allValueDetails.size());
         assertEquals("fakeId1", allValueDetails.get(0).getVariationId());
         assertEquals("fakeId2", allValueDetails.get(1).getVariationId());

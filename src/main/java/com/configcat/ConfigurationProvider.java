@@ -124,7 +124,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param user the user object.
      * @return a collection of all the evaluation results with details
      */
-    List<EvaluationDetails<?>> getAllValueDetails(User user);
+    List<EvaluationDetails<Object>> getAllValueDetails(User user);
 
     /**
      * Gets the detailed values of all feature flags or settings asynchronously.
@@ -132,7 +132,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param user the user object.
      * @return a future which computes the collection of all detailed values.
      */
-    CompletableFuture<List<EvaluationDetails<?>>> getAllValueDetailsAsync(User user);
+    CompletableFuture<List<EvaluationDetails<Object>>> getAllValueDetailsAsync(User user);
 
     /**
      * Gets the key of a setting and its value identified by the given Variation ID (analytics).
