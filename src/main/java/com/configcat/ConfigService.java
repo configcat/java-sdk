@@ -61,7 +61,7 @@ public class ConfigService implements Closeable {
                     if (!initialized) {
                         initialized = true;
                         this.configCatHooks.invokeOnClientReady();
-                        String message = "maxInitWaitTimeSeconds for the very first fetch reached (maxInitWaitTimeSeconds: " + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
+                        String message = "maxInitWaitTimeSeconds for the very first fetch reached (" + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
                         this.logger.warn(message);
                         completeRunningTask(Result.error(message, cachedEntry));
                     }
@@ -92,7 +92,7 @@ public class ConfigService implements Closeable {
 
     public CompletableFuture<RefreshResult> refresh() {
         if (offline.get()) {
-            String offlineWarning = "Client is in offline mode, it can't initiate HTTP calls.";
+            String offlineWarning = "Can't initiate HTTP calls because the client is in offline mode.";
             logger.warn(offlineWarning);
             return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning));
         }
@@ -166,9 +166,6 @@ public class ConfigService implements Closeable {
     }
 
     public void setOnline() {
-        if (closed.get()) {
-            logger.warn("Client has already been closed, this 'setOnline' has no effect.");
-        }
         lock.lock();
         try {
             if (!offline.compareAndSet(true, false)) return;
@@ -182,9 +179,6 @@ public class ConfigService implements Closeable {
     }
 
     public void setOffline() {
-        if (closed.get()) {
-            logger.warn("Client has already been closed, this 'setOffline' has no effect.");
-        }
         lock.lock();
         try {
             if (!offline.compareAndSet(false, true)) return;
@@ -209,19 +203,14 @@ public class ConfigService implements Closeable {
                 cachedEntry = entry;
                 writeCache(entry);
                 completeRunningTask(Result.success(entry));
-                configCatHooks.invokeOnConfigChanged(entry.getConfig().getEntries());
-            } else if (response.isNotModified()) {
-                if (response.isFetchTimeUpdatable()) {
-                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
-                }
-                writeCache(cachedEntry);
-                completeRunningTask(Result.success(cachedEntry));
             } else {
                 if (response.isFetchTimeUpdatable()) {
                     cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
+                    writeCache(cachedEntry);
                 }
-                //if actual fetch failed always use cache
-                completeRunningTask(Result.error(response.error(), cachedEntry));
+                completeRunningTask(response.isFailed()
+                        ? Result.error(response.error(), cachedEntry)
+                        : Result.success(cachedEntry));
             }
         } finally {
             lock.unlock();
@@ -243,7 +232,7 @@ public class ConfigService implements Closeable {
             Entry deserialized = Utils.gson.fromJson(json, Entry.class);
             return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
-            this.logger.error("An error occurred during the cache read.", e);
+            this.logger.error("An error occurred while reading the cache.", e);
             return Entry.EMPTY;
         }
     }
@@ -254,7 +243,7 @@ public class ConfigService implements Closeable {
             cachedEntryString = configToCache;
             cache.write(cacheKey, configToCache);
         } catch (Exception e) {
-            logger.error("An error occurred during the cache write.", e);
+            logger.error("An error occurred while writing the cache.", e);
         }
     }
 }

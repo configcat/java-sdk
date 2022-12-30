@@ -22,7 +22,7 @@ final class Helpers {
         while (!predicate.get()) {
             Thread.sleep(200);
             if (System.currentTimeMillis() > end) {
-                throw new RuntimeException("Test wait timed out.");
+                throw new RuntimeException("Test timed out.");
             }
         }
     }

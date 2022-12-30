@@ -49,15 +49,7 @@ class FetchResponse {
     }
 
     public static FetchResponse notModified() {
-        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, false);
-    }
-
-    public static FetchResponse notModified(boolean fetchTimeUpdatable) {
-        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, fetchTimeUpdatable);
-    }
-
-    public static FetchResponse failed(String error) {
-        return new FetchResponse(Status.FAILED, Entry.EMPTY, error, false);
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, true);
     }
 
     public static FetchResponse failed(String error, boolean fetchTimeUpdatable) {

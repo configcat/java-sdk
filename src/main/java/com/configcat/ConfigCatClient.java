@@ -320,9 +320,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.configService.refresh();
     }
 
+    @Override
     public void setDefaultUser(User defaultUser) {
         if (isClosed()) {
-            logger.warn("Client has already been closed, this 'setDefaultUser' has no effect.");
+            logger.warn("The 'setDefaultUser' method has no effect because the client has already been closed.");
             return;
         }
         this.defaultUser = defaultUser;
@@ -330,6 +331,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public void clearDefaultUser() {
+        if (isClosed()) {
+            logger.warn("The 'clearDefaultUser' method has no effect because the client has already been closed.");
+            return;
+        }
         this.defaultUser = null;
     }
 
@@ -343,7 +348,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (this.configService != null && !isClosed()) {
             this.configService.setOnline();
         } else {
-            logger.warn("Client has already been closed, this 'setOnline' has no effect.");
+            logger.warn("The 'setOnline' method has no effect because the client has already been closed.");
         }
     }
 
@@ -352,7 +357,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (this.configService != null && !isClosed()) {
             this.configService.setOffline();
         } else {
-            logger.warn("Client has already been closed, this 'setOffline' has no effect.");
+            logger.warn("The 'setOffline' method has no effect because the client has already been closed.");
         }
     }
 
