@@ -370,13 +370,12 @@ public class ConfigCatClientTest {
         User user2 = new User.Builder().build("test@test2.com");
 
         cl.setDefaultUser(user1);
-
-        assertEquals("id1", cl.getVariationId("key", ""));
-        assertEquals("id2", cl.getVariationId("key", user2, ""));
+        assertEquals("id1", cl.getValueDetails(String.class, "key", "").getVariationId());
+        assertEquals("id2", cl.getValueDetails(String.class, "key", user2, "").getVariationId());
 
         cl.clearDefaultUser();
 
-        assertEquals("defVar", cl.getVariationId("key", ""));
+        assertEquals("defVar", cl.getValueDetails(String.class, "key", "").getVariationId());
 
         server.shutdown();
         cl.close();
@@ -656,7 +655,7 @@ public class ConfigCatClientTest {
 
         assertTrue(changed.get());
         assertTrue(ready.get());
-        assertEquals("Unexpected HTTP response was received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -685,7 +684,7 @@ public class ConfigCatClientTest {
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertEquals("Unexpected HTTP response was received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -717,7 +716,7 @@ public class ConfigCatClientTest {
 
         assertTrue(changed.get());
         assertTrue(ready.get());
-        assertEquals("Unexpected HTTP response was received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();

@@ -202,6 +202,7 @@ public class ConfigService implements Closeable {
                 Entry entry = response.entry();
                 cachedEntry = entry;
                 writeCache(entry);
+                configCatHooks.invokeOnConfigChanged(entry.getConfig().getEntries());
                 completeRunningTask(Result.success(entry));
             } else {
                 if (response.isFetchTimeUpdatable()) {
