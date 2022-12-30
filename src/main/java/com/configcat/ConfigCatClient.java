@@ -692,7 +692,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * @param behaviour         the override behaviour. It can be used to set preference on whether the local
          *                          values should override the remote values, or use local values only when a remote
          *                          value doesn't exist, or use it for local only mode.
-         * @throws IllegalArgumentException when the <tt>dataSourceBuilder</tt> or <tt>behaviour</tt> parameter is null.
+         * @throws IllegalArgumentException when the dataSourceBuilder or behaviour parameter is null.
          */
         public void flagOverrides(OverrideDataSourceBuilder dataSourceBuilder, OverrideBehaviour behaviour) {
             if (dataSourceBuilder == null) {

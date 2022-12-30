@@ -8,11 +8,11 @@ public class Main {
     public static void main(String[] args) throws IOException {
         System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO");
 
-        ConfigCatClient client = ConfigCatClient.newBuilder()
-                // Info level logging helps to inspect the feature flag evaluation process.
-                // Use the default Warning level to avoid too detailed logging in your application.
-                .logLevel(LogLevel.INFO)
-                .build("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ");
+        ConfigCatClient client = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ", options -> {
+            // Info level logging helps to inspect the feature flag evaluation process.
+            // Use the default Warning level to avoid too detailed logging in your application.
+            options.logLevel(LogLevel.INFO);
+        });
 
         // Get individual config values identified by a key for a user.
         System.out.println("isAwesomeFeatureEnabled: " + client.getValue(String.class, "isAwesomeFeatureEnabled", ""));
