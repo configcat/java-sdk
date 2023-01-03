@@ -9,8 +9,9 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 
 [![Java CI](https://github.com/configcat/java-sdk/actions/workflows/java-ci.yml/badge.svg?branch=master)](https://github.com/configcat/java-sdk/actions/workflows/java-ci.yml)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-java-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-java-client)
-[![Coverage Status](https://img.shields.io/codecov/c/github/ConfigCat/java-sdk.svg)](https://codecov.io/gh/ConfigCat/java-sdk)
 [![Javadocs](http://javadoc.io/badge/com.configcat/configcat-java-client.svg)](http://javadoc.io/doc/com.configcat/configcat-java-client)
+[![Coverage Status](https://img.shields.io/sonar/coverage/configcat_java-sdk?logo=SonarCloud&server=https%3A%2F%2Fsonarcloud.io)](https://sonarcloud.io/project/overview?id=configcat_java-sdk)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=configcat_java-sdk&metric=alert_status)](https://sonarcloud.io/dashboard?id=configcat_java-sdk)
 ![License](https://img.shields.io/github/license/configcat/java-sdk.svg)
 
 ## Getting started
