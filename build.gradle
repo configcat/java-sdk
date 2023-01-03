@@ -13,8 +13,8 @@ plugins {
     id "jacoco"
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 ext {
     buildNumber = System.getProperty("build.number")
@@ -49,16 +49,6 @@ jar {
     }
 }
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    archiveClassifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    archiveClassifier = "javadoc"
-    from javadoc.destinationDir
-}
-
 sonarqube {
     properties {
         property "sonar.projectKey", "configcat_java-sdk"
@@ -75,79 +65,74 @@ jacoco {
     toolVersion = "0.8.6"
 }
 
-test {
+tasks.withType(Test).configureEach {
     useJUnitPlatform()
 }
 
-task junit5CodeCoverageReport(type: JacocoReport) {
+tasks.named("jacocoTestReport", JacocoReport) {
     dependsOn test
     executionData test
     sourceSets sourceSets.main
     reports {
-        xml.enabled = true
+        xml.required.set(true)
         xml.destination file("${buildDir}/reports/jacoco/report.xml")
-        html.enabled = false
-        csv.enabled = false
+        html.required.set(false)
+        csv.required.set(false)
     }
 }
 
-check.dependsOn junit5CodeCoverageReport
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
+tasks.named("check") {
+    it.dependsOn(tasks.named("jacocoTestReport"))
 }
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact sourcesJar
-            artifact javadocJar
+extensions.getByType(JavaPluginExtension).with {
+    withJavadocJar()
+    withSourcesJar()
+}
 
-            pom {
-                name = 'ConfigCat Java SDK'
-                url = 'https://github.com/configcat/java-sdk'
-                description = 'Java SDK for ConfigCat, a feature flag, feature toggle, and configuration management service. That lets you launch new features and change your software configuration remotely without actually (re)deploying code. ConfigCat even helps you do controlled roll-outs like canary releases and blue-green deployments.'
+def publishing = extensions.getByType(PublishingExtension)
+publishing.repositories {
+    maven {
+        credentials {
+            username findProperty('OSSRH_USERNAME') as String
+            password findProperty('OSSRH_PASSWORD') as String
+        }
 
-                scm {
-                    url = 'https://github.com/configcat/java-sdk'
-                    developerConnection = 'scm:git:ssh:git@github.com:configcat/java-sdk.git'
-                    connection = 'scm:git:git://github.com/configcat/java-sdk.git'
-                }
+        def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+        def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
+        url = isSnapshot ? snapshotsRepoUrl : releasesRepoUrl
+    }
+}
 
-                licenses {
-                    license {
-                        name = 'MIT License'
-                        url = 'https://raw.githubusercontent.com/configcat/java-sdk/master/LICENSE'
-                    }
-                }
+def publication = publishing.publications.create("main", MavenPublication) {
+    from(components.getByName("java"))
 
-                organization {
-                    url = 'https://configcat.com'
-                    name = 'ConfigCat'
-                }
-
-                developers {
-                    developer {
-                        id = 'configcat'
-                        email = 'developer@configcat.com'
-                        name = 'ConfigCat'
-                    }
-                }
+    pom {
+        name.set("ConfigCat Java SDK")
+        description.set("Java SDK for ConfigCat, a feature flag, feature toggle, and configuration management service. That lets you launch new features and change your software configuration remotely without actually (re)deploying code. ConfigCat even helps you do controlled roll-outs like canary releases and blue-green deployments.")
+        url.set("https://github.com/configcat/java-sdk")
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://raw.githubusercontent.com/configcat/java-sdk/master/LICENSE")
+                distribution.set("repo")
             }
         }
-    }
-    repositories {
-        maven {
-            credentials {
-                username findProperty('OSSRH_USERNAME')
-                password findProperty('OSSRH_PASSWORD')
+        scm {
+            connection.set("scm:git:git://github.com/configcat/java-sdk.git")
+            developerConnection.set("scm:git:ssh:git@github.com:configcat/java-sdk.git")
+            url.set("https://github.com/configcat/java-sdk")
+        }
+        developers {
+            developer {
+                id.set("configcat")
+                name.set("ConfigCat")
+                email.set("developer@configcat.com")
             }
-
-            def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
-            def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
-            url = isSnapshot ? snapshotsRepoUrl : releasesRepoUrl
+        }
+        organization {
+            url.set("https://configcat.com")
+            name.set("ConfigCat")
         }
     }
 }
@@ -157,6 +142,6 @@ signing {
     def signingPassphrase = findProperty("SIGNING_PASSPHRASE")
     if (signingKey && signingPassphrase) {
         useInMemoryPgpKeys(signingKey as String, signingPassphrase as String)
-        sign publishing.publications.mavenJava
+        sign publication
     }
 }
