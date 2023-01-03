@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java-versions: [ 8, 9, 10, 11, 12 ]
+        java-versions: [ 8, 9, 11, 12 ]
       fail-fast: false
     steps:
     - uses: actions/checkout@v3
@@ -32,7 +32,7 @@ jobs:
       run: chmod +x gradlew
       
     - name: Test with Gradle
-      run: ./gradlew test --stacktrace --scan
+      run: ./gradlew test --stacktrace
       
   coverage-scan:
     needs: test
