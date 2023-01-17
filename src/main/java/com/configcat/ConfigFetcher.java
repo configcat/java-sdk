@@ -114,7 +114,6 @@ class ConfigFetcher implements Closeable {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
-                    logger.error("onReposnse");
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
