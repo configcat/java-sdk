@@ -35,7 +35,6 @@ jobs:
       run: ./gradlew test --stacktrace
       
   coverage-scan:
-    needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -67,7 +66,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
   deploy-snapshot:
-    needs: coverage-scan
+    needs: [ coverage-scan, test ]
     if: ${{ github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
     steps:
@@ -92,7 +91,7 @@ jobs:
         ORG_GRADLE_PROJECT_SIGNING_PASSPHRASE: ${{ secrets.PASSPHRASE }}
       
   deploy-release:
-    needs: coverage-scan
+    needs: [ coverage-scan, test ]
     if: startsWith(github.ref, 'refs/tags')
     runs-on: ubuntu-latest
     steps:
