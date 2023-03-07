@@ -6,14 +6,14 @@ import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
 import java.util.Map;
 
-enum SettingType {
+public enum SettingType {
     BOOLEAN,
     STRING,
     INT,
     DOUBLE,
 }
 
-class Entry {
+public class Entry {
     @SerializedName(value = "c")
     private Config config;
     @SerializedName(value = "e")
@@ -87,7 +87,7 @@ class Preferences {
     }
 }
 
-class Setting {
+public class Setting {
     @SerializedName(value = "v")
     private JsonElement value;
     @SerializedName(value = "t")
@@ -124,7 +124,7 @@ class Setting {
     }
 }
 
-class RolloutRule {
+public class RolloutRule {
     @SerializedName(value = "v")
     private JsonElement value;
     @SerializedName(value = "a")
@@ -157,7 +157,7 @@ class RolloutRule {
     }
 }
 
-class PercentageRule {
+public class PercentageRule {
     @SerializedName(value = "v")
     private JsonElement value;
     @SerializedName(value = "p")
