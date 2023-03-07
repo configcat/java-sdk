@@ -524,14 +524,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
     }
 
-    private Class<?> classBySettingType(int settingType) {
-        if (settingType == SettingType.BOOLEAN.ordinal())
+    private Class<?> classBySettingType(SettingType settingType) {
+        if (settingType == SettingType.BOOLEAN)
             return boolean.class;
-        else if (settingType == SettingType.STRING.ordinal())
+        else if (settingType == SettingType.STRING)
             return String.class;
-        else if (settingType == SettingType.INT.ordinal())
+        else if (settingType == SettingType.INT)
             return int.class;
-        else if (settingType == SettingType.DOUBLE.ordinal())
+        else if (settingType == SettingType.DOUBLE)
             return double.class;
         else
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
