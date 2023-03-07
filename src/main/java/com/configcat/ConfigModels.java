@@ -1,6 +1,5 @@
 package com.configcat;
 
-import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.HashMap;
