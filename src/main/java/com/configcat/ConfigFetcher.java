@@ -74,10 +74,7 @@ class ConfigFetcher implements Closeable {
                     return CompletableFuture.completedFuture(fetchResponse);
                 } else { // redirect
                     if (redirect == RedirectMode.ShouldRedirect.ordinal()) {
-                        this.logger.warn("Your builder.dataGovernance() parameter at ConfigCatClient " +
-                                "initialization is not in sync with your preferences on the ConfigCat " +
-                                "Dashboard: https://app.configcat.com/organization/data-governance. " +
-                                "Only Organization Admins can access this preference.");
+                        this.logger.warn(3002, "The `builder.dataGovernance()` parameter specified at the client initialization is not in sync with the preferences on the ConfigCat Dashboard. Read more: https://configcat.com/docs/advanced/data-governance/");
                     }
 
                     if (executionCount > 0) {
@@ -86,11 +83,11 @@ class ConfigFetcher implements Closeable {
                 }
 
             } catch (Exception exception) {
-                this.logger.error("Exception while trying to fetch the config.json.", exception);
+                this.logger.error(1103, "Unexpected error occurred while trying to fetch config JSON.", exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
 
-            this.logger.error("Redirect loop during config.json fetch. Please contact support@configcat.com.");
+            this.logger.error(1104, "Redirection loop encountered while trying to fetch config JSON. Please contact us at https://configcat.com/support/");
             return CompletableFuture.completedFuture(fetchResponse);
         });
     }
@@ -101,12 +98,14 @@ class ConfigFetcher implements Closeable {
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                String message = "Exception while trying to fetch the config.json.";
+                int logEventId = 1103;
+                String message = "Unexpected error occurred while trying to fetch config JSON.";
                 if (!isClosed.get()) {
                     if (e instanceof SocketTimeoutException) {
-                        message = "Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
+                        logEventId = 1102;
+                        message = "Request timed out while trying to fetch config JSON. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
                     }
-                    logger.error(message, e);
+                    logger.error(logEventId, message, e);
                 }
                 future.complete(FetchResponse.failed(message, false));
             }
@@ -128,21 +127,21 @@ class ConfigFetcher implements Closeable {
                         logger.debug("Fetch was successful: config not modified.");
                         future.complete(FetchResponse.notModified());
                     } else if (response.code() == 403 || response.code() == 404) {
-                        String message = "Double-check your API KEY at https://app.configcat.com/apikey.";
-                        logger.error(message);
+                        String message = "Your SDK Key seems to be wrong. You can find the valid SDK Key at https://app.configcat.com/sdkkey";
+                        logger.error(1100, message);
                         future.complete(FetchResponse.failed(message, true));
                     } else {
-                        String message = "Unexpected HTTP response received: " + response.code() + " " + response.message();
-                        logger.error(message);
+                        String message = "Unexpected HTTP response was received while trying to fetch config JSON: "  + response.code() + " " + response.message();
+                        logger.error(1101, message);
                         future.complete(FetchResponse.failed(message, false));
                     }
                 } catch (SocketTimeoutException e) {
-                    String message = "Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
-                    logger.error(message, e);
+                    String message = "Request timed out while trying to fetch config JSON. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
+                    logger.error(1102, message, e);
                     future.complete(FetchResponse.failed(message, false));
                 } catch (Exception e) {
-                    String message = "Exception while trying to fetch the config.json.";
-                    logger.error(message, e);
+                    String message = "Unexpected error occurred while trying to fetch config JSON.";
+                    logger.error(1103, message, e);
                     future.complete(FetchResponse.failed(message, false));
                 }
             }
@@ -181,8 +180,8 @@ class ConfigFetcher implements Closeable {
         try {
             return Result.success(Utils.gson.fromJson(json, Config.class));
         } catch (Exception e) {
-            String message = "JSON parsing failed. " + e.getMessage();
-            this.logger.error(message);
+            String message = "Fetching config JSON was successful but the HTTP response content was invalid. JSON parsing failed. " + e.getMessage();
+            this.logger.error(1105, message);
             return Result.error(message, null);
         }
     }

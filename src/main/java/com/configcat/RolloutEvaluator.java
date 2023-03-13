@@ -46,7 +46,7 @@ class RolloutEvaluator {
             if (user == null) {
                 if ((setting.getRolloutRules() != null && setting.getRolloutRules().length > 0) ||
                         (setting.getPercentageItems() != null && setting.getPercentageItems().length > 0)) {
-                    this.logger.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
+                    this.logger.warn(3001, "Cannot evaluate targeting rules and % options for setting '" + key + "' (User Object is missing). You should pass a User Object to the evaluation methods like `getValue()`/`getValueAsync()` in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/");
                 }
 
                 logEntries.add("Returning " + setting.getValue() + ".");
@@ -221,7 +221,7 @@ class RolloutEvaluator {
             logEntries.add("Returning " + setting.getValue() + ".");
             return new EvaluationResult(setting.getValue(), setting.getVariationId(), null, null);
         } finally {
-            this.logger.info(logEntries.toPrint());
+            this.logger.info(5000, logEntries.toPrint());
         }
     }
 
@@ -235,7 +235,7 @@ class RolloutEvaluator {
 
     private String logFormatError(String comparisonAttribute, String userValue, int comparator, String comparisonValue, Exception exception) {
         String message = "Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + COMPARATOR_TEXTS[comparator] + "] [" + comparisonValue + "] => SKIP rule. Validation error: " + exception + "";
-        this.logger.warn(message);
+        this.logger.warn(0, message);
         return message;
     }
 
