@@ -12,14 +12,14 @@ public class LoggerTests {
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG);
 
         logger.debug("debug");
-        logger.info("info");
-        logger.warn("warn");
-        logger.error("error");
+        logger.info(5000, "info");
+        logger.warn(3000, "warn");
+        logger.error(1000, "error");
 
-        verify(mockLogger, times(1)).debug("debug");
-        verify(mockLogger, times(1)).error("error");
-        verify(mockLogger, times(1)).warn("warn");
-        verify(mockLogger, times(1)).info("info");
+        verify(mockLogger, times(1)).debug("[0] debug");
+        verify(mockLogger, times(1)).error("[1000] error");
+        verify(mockLogger, times(1)).warn("[3000] warn");
+        verify(mockLogger, times(1)).info("[5000] info");
     }
 
     @Test
@@ -28,14 +28,14 @@ public class LoggerTests {
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.INFO);
 
         logger.debug("debug");
-        logger.info("info");
-        logger.warn("warn");
-        logger.error("error");
+        logger.info(5000, "info");
+        logger.warn(3000, "warn");
+        logger.error(1000, "error");
 
-        verify(mockLogger, never()).debug("debug");
-        verify(mockLogger, times(1)).error("error");
-        verify(mockLogger, times(1)).warn("warn");
-        verify(mockLogger, times(1)).info("info");
+        verify(mockLogger, never()).debug("[0] debug");
+        verify(mockLogger, times(1)).error("[1000] error");
+        verify(mockLogger, times(1)).warn("[3000] warn");
+        verify(mockLogger, times(1)).info("[5000] info");
     }
 
     @Test
@@ -44,14 +44,14 @@ public class LoggerTests {
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.WARNING);
 
         logger.debug("debug");
-        logger.info("info");
-        logger.warn("warn");
-        logger.error("error");
+        logger.info(5000, "info");
+        logger.warn(3000, "warn");
+        logger.error(1000, "error");
 
-        verify(mockLogger, never()).debug("debug");
-        verify(mockLogger, never()).info("info");
-        verify(mockLogger, times(1)).warn("warn");
-        verify(mockLogger, times(1)).error("error");
+        verify(mockLogger, never()).debug("[0] debug");
+        verify(mockLogger, never()).info("[5000] info");
+        verify(mockLogger, times(1)).warn("[3000] warn");
+        verify(mockLogger, times(1)).error("[1000] error");
     }
 
     @Test
@@ -60,14 +60,14 @@ public class LoggerTests {
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.ERROR);
 
         logger.debug("debug");
-        logger.info("info");
-        logger.warn("warn");
-        logger.error("error");
+        logger.info(5000, "info");
+        logger.warn(3000, "warn");
+        logger.error(1000, "error");
 
-        verify(mockLogger, never()).debug("debug");
-        verify(mockLogger, never()).info("info");
-        verify(mockLogger, never()).warn("warn");
-        verify(mockLogger, times(1)).error("error");
+        verify(mockLogger, never()).debug("[0] debug");
+        verify(mockLogger, never()).info("[5000] info");
+        verify(mockLogger, never()).warn("[3000] warn");
+        verify(mockLogger, times(1)).error("[1000] error");
     }
 
     @Test
@@ -76,13 +76,13 @@ public class LoggerTests {
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.NO_LOG);
 
         logger.debug("debug");
-        logger.info("info");
-        logger.warn("warn");
-        logger.error("error");
+        logger.info(5000, "info");
+        logger.warn(3000, "warn");
+        logger.error(1000, "error");
 
-        verify(mockLogger, never()).debug("debug");
-        verify(mockLogger, never()).info("info");
-        verify(mockLogger, never()).warn("warn");
-        verify(mockLogger, never()).error("error");
+        verify(mockLogger, never()).debug("[0] debug");
+        verify(mockLogger, never()).info("[5000] info");
+        verify(mockLogger, never()).warn("[3000] warn");
+        verify(mockLogger, never()).error("[1000] error");
     }
 }
