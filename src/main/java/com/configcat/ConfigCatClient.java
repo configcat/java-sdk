@@ -460,7 +460,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             Setting setting = settings.get(key);
             if (setting == null) {
-                String errorMessage = "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `defaultValue` parameter that you specified in your application: '" + defaultValue + "'. Available keys: " + String.join(", ", settings.keySet()) + ".";
+                String errorMessage = "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `defaultValue` parameter that you specified in your application: '" + defaultValue + "'. Available keys: [" + String.join(", ", settings.keySet()) + "].";
                 this.logger.error(1001, errorMessage);
                 this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
                 return defaultValue;
