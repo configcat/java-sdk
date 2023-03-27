@@ -92,6 +92,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return defaultValue;
         } catch (Exception e) {
+            this.logger.error(1002, "Error occurred in the `getValue` method while evaluating setting '" + key + "'. Returning the `defaultValue` parameter that you specified in your application: '" + defaultValue + "'.", e);
             return defaultValue;
         }
     }
@@ -146,6 +147,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return EvaluationDetails.fromError(key, defaultValue, error + ": " + e.getMessage(), user);
         } catch (Exception e) {
+            this.logger.error(2001, "Failed to evaluate setting '" + key + "'. Returning the `defaultValue` parameter that you specified in your application: '" + defaultValue + "'. ", e);
             return EvaluationDetails.fromError(key, defaultValue, e.getMessage(), user);
         }
     }
@@ -263,6 +265,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return null;
         } catch (Exception e) {
+            this.logger.error(1002, "Error occurred in the `getKeyAndValue` method. Returning null.", e);
             return null;
         }
     }
@@ -469,10 +472,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             return this.evaluate(classOfT, setting, key, getEvaluateUser(user), settingResult.fetchTime()).getValue();
         } catch (Exception e) {
-            String errorMessage = "Failed to evaluate setting '" + key + "'. Returning the `defaultValue` parameter that you specified in your application: '" + defaultValue + "'. "
-                    + e.getMessage();
+            String errorMessage = "Failed to evaluate setting '" + key + "'. Returning the `defaultValue` parameter that you specified in your application: '" + defaultValue + "'.";
             this.logger.error(2001, errorMessage, e);
-            this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
+            this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage + e.getMessage(), user));
             return defaultValue;
         }
     }
