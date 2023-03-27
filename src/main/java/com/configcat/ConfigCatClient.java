@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * A client for handling configurations provided by ConfigCat.
@@ -460,7 +461,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             Setting setting = settings.get(key);
             if (setting == null) {
-                String errorMessage = "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `defaultValue` parameter that you specified in your application: '" + defaultValue + "'. Available keys: [" + String.join(", ", settings.keySet()) + "].";
+                String errorMessage = "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `defaultValue` parameter that you specified in your application: '" + defaultValue + "'. Available keys: [" + settings.keySet().stream().map(keyTo -> "'" + keyTo + "'").collect(Collectors.joining(",")) + "].";
                 this.logger.error(1001, errorMessage);
                 this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
                 return defaultValue;
