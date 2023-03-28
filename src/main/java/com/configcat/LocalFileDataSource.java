@@ -37,10 +37,10 @@ class LocalFileDataSource extends OverrideDataSource {
         if (autoReload && !isResource) {
             Path path = Paths.get(filePath);
             try {
-                fileWatcher = FileWatcher.create(Paths.get(filePath));
+                fileWatcher = FileWatcher.create(path);
                 fileWatcher.start(this::reloadFileContent);
             } catch (IOException e) {
-                this.logger.error(1300, "Cannot find the local config file '" + path + "'. This is a path that your application provided to the ConfigCat SDK by passing it to the `OverrideDataSourceBuilder.localFile()` method. Read more: https://configcat.com/docs/sdk-reference/java/#json-file", e);
+                this.logger.error(1300, ConfigCatLogMessages.getLocalFileDataSourceDoesNotExist(path.toString()), e);
             }
         }
         this.watcher = fileWatcher;
@@ -63,7 +63,7 @@ class LocalFileDataSource extends OverrideDataSource {
         try {
             content = this.readFile();
         } catch (IOException e) {
-            this.logger.error(1302, "Failed to read the local config file '" + this.filePath + "'.", e);
+            this.logger.error(1302, ConfigCatLogMessages.getLocalFileDataSourceFailedToReadFile(this.filePath), e);
         }
 
         if (content != null && !content.isEmpty()) {

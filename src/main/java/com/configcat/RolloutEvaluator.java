@@ -46,7 +46,7 @@ class RolloutEvaluator {
             if (user == null) {
                 if ((setting.getRolloutRules() != null && setting.getRolloutRules().length > 0) ||
                         (setting.getPercentageItems() != null && setting.getPercentageItems().length > 0)) {
-                    this.logger.warn(3001, "Cannot evaluate targeting rules and % options for setting '" + key + "' (User Object is missing). You should pass a User Object to the evaluation methods like `getValue()`/`getValueAsync()` in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/");
+                    this.logger.warn(3001, ConfigCatLogMessages.getTargetingIsNotPossible(key));
                 }
 
                 logEntries.add("Returning " + setting.getValue() + ".");
