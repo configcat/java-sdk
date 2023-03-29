@@ -92,7 +92,7 @@ public class ConfigService implements Closeable {
 
     public CompletableFuture<RefreshResult> refresh() {
         if (offline.get()) {
-            String offlineWarning = ConfigCatLogMessages.getConfigServiceCannotInitiateHttpCalls();
+            String offlineWarning = ConfigCatLogMessages.CONFIG_SERVICE_CANNOT_INITIATE_HTTP_CALLS_WARN;
             logger.warn(3200, offlineWarning);
             return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning));
         }
@@ -233,7 +233,7 @@ public class ConfigService implements Closeable {
             Entry deserialized = Utils.gson.fromJson(json, Entry.class);
             return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
-            this.logger.error(2200, ConfigCatLogMessages.getConfigServiceCacheReadError(), e);
+            this.logger.error(2200, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_READ_ERROR, e);
             return Entry.EMPTY;
         }
     }
@@ -244,7 +244,7 @@ public class ConfigService implements Closeable {
             cachedEntryString = configToCache;
             cache.write(cacheKey, configToCache);
         } catch (Exception e) {
-            logger.error(2201, ConfigCatLogMessages.getConfigServiceCacheWriteError(), e);
+            logger.error(2201, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_WRITE_ERROR, e);
         }
     }
 }

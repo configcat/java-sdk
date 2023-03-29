@@ -508,7 +508,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             return null;
         } catch (Exception e) {
-            this.logger.error(2011, "Could not find the setting for the specified variation ID: '" + variationId + "'.");
+            this.logger.error(2011, ConfigCatLogMessages.getSettingForVariationIdIsNotPresent(variationId));
             return null;
         }
     }

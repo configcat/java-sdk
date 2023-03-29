@@ -74,7 +74,7 @@ class ConfigFetcher implements Closeable {
                     return CompletableFuture.completedFuture(fetchResponse);
                 } else { // redirect
                     if (redirect == RedirectMode.ShouldRedirect.ordinal()) {
-                        this.logger.warn(3002, ConfigCatLogMessages.getDataGovernanceIsOutOfSync());
+                        this.logger.warn(3002, ConfigCatLogMessages.DATA_GOVERNANCE_IS_OUT_OF_SYNC_WARN);
                     }
 
                     if (executionCount > 0) {
@@ -83,11 +83,11 @@ class ConfigFetcher implements Closeable {
                 }
 
             } catch (Exception exception) {
-                this.logger.error(1103, ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(), exception);
+                this.logger.error(1103, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR, exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
 
-            this.logger.error(1104, ConfigCatLogMessages.getFetchFailedDueToRedirectLoop());
+            this.logger.error(1104, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_REDIRECT_LOOP_ERROR);
             return CompletableFuture.completedFuture(fetchResponse);
         });
     }
@@ -99,7 +99,7 @@ class ConfigFetcher implements Closeable {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 int logEventId = 1103;
-                String message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError();
+                String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                 if (!isClosed.get()) {
                     if (e instanceof SocketTimeoutException) {
                         logEventId = 1102;
@@ -127,7 +127,7 @@ class ConfigFetcher implements Closeable {
                         logger.debug("Fetch was successful: config not modified.");
                         future.complete(FetchResponse.notModified());
                     } else if (response.code() == 403 || response.code() == 404) {
-                        String message = ConfigCatLogMessages.getFetchFailedDueToInvalidSdkKey();
+                        String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_INVALID_SDK_KEY_ERROR;
                         logger.error(1100, message);
                         future.complete(FetchResponse.failed(message, true));
                     } else {
@@ -140,7 +140,7 @@ class ConfigFetcher implements Closeable {
                     logger.error(1102, message, e);
                     future.complete(FetchResponse.failed(message, false));
                 } catch (Exception e) {
-                    String message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError();
+                    String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                     logger.error(1103, message, e);
                     future.complete(FetchResponse.failed(message, false));
                 }
@@ -180,7 +180,7 @@ class ConfigFetcher implements Closeable {
         try {
             return Result.success(Utils.gson.fromJson(json, Config.class));
         } catch (Exception e) {
-            String message = ConfigCatLogMessages.getFetchReceived200WithInvalidBody();
+            String message = ConfigCatLogMessages.FETCH_RECEIVED_200_WITH_INVALID_BODY_ERROR;
             this.logger.error(1105, message, e);
             return Result.error(message, null);
         }

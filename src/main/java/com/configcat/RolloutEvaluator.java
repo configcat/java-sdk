@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 class RolloutEvaluator {
-    public static final String[] COMPARATOR_TEXTS = new String[]{
+    protected static final String[] COMPARATOR_TEXTS = new String[]{
             "IS ONE OF",
             "IS NOT ONE OF",
             "CONTAINS",

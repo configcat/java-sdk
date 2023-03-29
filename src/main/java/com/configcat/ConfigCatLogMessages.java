@@ -5,6 +5,42 @@ import java.util.stream.Collectors;
 
 final class ConfigCatLogMessages {
 
+    /**
+     * Log message for Config Service Cannot Initiate Http Calls warning. The log eventId 3200.
+     */
+    public static final String CONFIG_SERVICE_CANNOT_INITIATE_HTTP_CALLS_WARN = "Client is in offline mode, it cannot initiate HTTP calls.";
+
+    /**
+     * Log message for Data Governance Is Out Of Sync warning. The log eventId 3002.
+     */
+    public static final String DATA_GOVERNANCE_IS_OUT_OF_SYNC_WARN = "The `builder.dataGovernance()` parameter specified at the client initialization is not in sync with the preferences on the ConfigCat Dashboard. Read more: https://configcat.com/docs/advanced/data-governance/";
+    /**
+     * Log message for Config Service Cache Write error. The log eventId is 2201.
+     */
+    public static final String CONFIG_SERVICE_CACHE_WRITE_ERROR = "Error occurred while writing the cache";
+    /**
+     * Log message for Config Service Cache Read error. The log eventId is 2200.
+     */
+    public static final String CONFIG_SERVICE_CACHE_READ_ERROR = "Error occurred while reading the cache.";
+    /**
+     * Log message for Fetch Received 200 With Invalid Body error. The log eventId is 1105.
+     */
+    public static final String FETCH_RECEIVED_200_WITH_INVALID_BODY_ERROR = "Fetching config JSON was successful but the HTTP response content was invalid.";
+    /**
+     * Log message for Fetch Failed Due To Redirect Loop error. The log eventId is 1104.
+     */
+    public static final String FETCH_FAILED_DUE_TO_REDIRECT_LOOP_ERROR = "Redirection loop encountered while trying to fetch config JSON. Please contact us at https://configcat.com/support/";
+
+    /**
+     * Log message for Fetch Failed Due To Unexpected error. The log eventId is 1103.
+     */
+    public static final String FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR = "Unexpected error occurred while trying to fetch config JSON.";
+
+    /**
+     * Log message for Fetch Failed Due To Invalid Sdk Key error. The log eventId is 1100.
+     */
+     public static final String FETCH_FAILED_DUE_TO_INVALID_SDK_KEY_ERROR = "Your SDK Key seems to be wrong. You can find the valid SDK Key at https://app.configcat.com/sdkkey";
+
     private ConfigCatLogMessages() { /* prevent from instantiation*/ }
 
     /**
@@ -37,7 +73,7 @@ final class ConfigCatLogMessages {
      * @param availableKeysSet  The set of available keys in the settings.
      * @return The formatted error message.
      */
-    public static String getSettingEvaluationFailedDueToMissingKey(final String key, final String defaultParamName, final Object defaultParamValue, final Set availableKeysSet) {
+    public static String getSettingEvaluationFailedDueToMissingKey(final String key, final String defaultParamName, final Object defaultParamValue, final Set<String> availableKeysSet) {
         return "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'. Available keys: [" + availableKeysSet.stream().map(keyTo -> "'" + keyTo + "'").collect(Collectors.joining(",")) + "].";
     }
 
@@ -88,12 +124,13 @@ final class ConfigCatLogMessages {
     }
 
     /**
-     * Log message for Fetch Failed Due To Invalid Sdk Key error. The log eventId is 1100.
+     * Log message for Setting For Variation Id Is Not Present error. The log eventId is 2011.
      *
+     * @param variationId The variation id.
      * @return The formatted error message.
      */
-    public static String getFetchFailedDueToInvalidSdkKey() {
-        return "Your SDK Key seems to be wrong. You can find the valid SDK Key at https://app.configcat.com/sdkkey";
+    public static String getSettingForVariationIdIsNotPresent(final String variationId){
+    return  "Could not find the setting for the specified variation ID: '" + variationId + "'.";
     }
 
     /**
@@ -117,51 +154,6 @@ final class ConfigCatLogMessages {
      */
     public static String getFetchFailedDueToRequestTimeout(final Integer connectTimeoutMillis, final Integer readTimeoutMillis, final Integer writeTimeoutMillis) {
         return "Request timed out while trying to fetch config JSON. Timeout values: [connect: " + connectTimeoutMillis + "ms, read: " + readTimeoutMillis + "ms, write: " + writeTimeoutMillis + "ms]";
-    }
-
-    /**
-     * Log message for Fetch Failed Due To Unexpected error. The log eventId is 1103.
-     *
-     * @return The formatted error message.
-     */
-    public static String getFetchFailedDueToUnexpectedError() {
-        return "Unexpected error occurred while trying to fetch config JSON.";
-    }
-
-    /**
-     * Log message for Fetch Failed Due To Redirect Loop error. The log eventId is 1104.
-     *
-     * @return The formatted error message.
-     */
-    public static String getFetchFailedDueToRedirectLoop() {
-        return "Redirection loop encountered while trying to fetch config JSON. Please contact us at https://configcat.com/support/";
-    }
-
-    /**
-     * Log message for Fetch Received 200 With Invalid Body error. The log eventId is 1105.
-     *
-     * @return The formatted error message.
-     */
-    public static String getFetchReceived200WithInvalidBody() {
-        return "Fetching config JSON was successful but the HTTP response content was invalid.";
-    }
-
-    /**
-     * Log message for Config Service Cache Read error. The log eventId is 2200.
-     *
-     * @return The formatted error message.
-     */
-    public static String getConfigServiceCacheReadError() {
-        return "Error occurred while reading the cache.";
-    }
-
-    /**
-     * Log message for Config Service Cache Write error. The log eventId is 2201.
-     *
-     * @return The formatted error message.
-     */
-    public static String getConfigServiceCacheWriteError() {
-        return "Error occurred while writing the cache";
     }
 
     /**
@@ -202,24 +194,6 @@ final class ConfigCatLogMessages {
      */
     public static String getTargetingIsNotPossible(final String key) {
         return "Cannot evaluate targeting rules and % options for setting '" + key + "' (User Object is missing). You should pass a User Object to the evaluation methods like `getValue()`/`getValueAsync()` in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/";
-    }
-
-    /**
-     * Log message for Data Governance Is Out Of Sync warning. The log eventId 3002.
-     *
-     * @return The formatted warn message.
-     */
-    public static String getDataGovernanceIsOutOfSync() {
-        return "The `builder.dataGovernance()` parameter specified at the client initialization is not in sync with the preferences on the ConfigCat Dashboard. Read more: https://configcat.com/docs/advanced/data-governance/";
-    }
-
-    /**
-     * Log message for Config Service Cannot Initiate Http Calls warning. The log eventId 3200.
-     *
-     * @return The formatted warn message.
-     */
-    public static String getConfigServiceCannotInitiateHttpCalls() {
-        return "Client is in offline mode, it cannot initiate HTTP calls.";
     }
 
     /**

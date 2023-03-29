@@ -30,20 +30,20 @@ class ConfigCatLogger {
     public void error(int eventId, String message, Exception exception) {
         if (this.configCatHooks != null) this.configCatHooks.invokeOnError(message);
         if (this.logLevel.ordinal() <= LogLevel.ERROR.ordinal()) {
-            this.logger.error("[" + eventId + "] " + message, exception);
+            this.logger.error(String.format("[%s] {%s}",eventId, message), exception);
         }
     }
 
     public void error(int eventId, String message) {
         if (this.configCatHooks != null) this.configCatHooks.invokeOnError(message);
         if (this.logLevel.ordinal() <= LogLevel.ERROR.ordinal()) {
-            this.logger.error("[" + eventId + "] " + message);
+            this.logger.error(String.format("[%s] {%s}",eventId, message));
         }
     }
 
     public void info(int eventId, String message) {
         if (this.logLevel.ordinal() <= LogLevel.INFO.ordinal()) {
-            this.logger.info("[" + eventId + "] " + message);
+            this.logger.info(String.format("[%s] {%s}",eventId, message));
         }
     }
 
