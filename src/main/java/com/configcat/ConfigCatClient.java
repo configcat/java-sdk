@@ -473,7 +473,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         } catch (Exception e) {
             String errorMessage = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.logger.error(2001, errorMessage, e);
-            this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage + e.getMessage(), user));
+            this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage + " " + e.getMessage(), user));
             return defaultValue;
         }
     }
