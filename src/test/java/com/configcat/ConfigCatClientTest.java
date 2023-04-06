@@ -736,7 +736,7 @@ public class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnFlagEvaluated(details -> {
                 assertEquals("", details.getValue());
-                assertEquals("Config JSON is not present. Returning the `defaultValue` parameter that you specified in your application: ''.", details.getError());
+                assertEquals("Config JSON is not present when evaluating setting 'key'. Returning the `defaultValue` parameter that you specified in your application: ''.", details.getError());
                 assertTrue(details.isDefaultValue());
                 called.set(true);
             });
