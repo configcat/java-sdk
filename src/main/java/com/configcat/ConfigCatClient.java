@@ -455,7 +455,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
-                String errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWitDefaultValue("defaultValue", defaultValue);
+                String errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWitDefaultValue(key,"defaultValue", defaultValue);
                 this.logger.error(1000, errorMessage);
                 this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
                 return defaultValue;

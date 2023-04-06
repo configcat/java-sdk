@@ -39,7 +39,7 @@ final class ConfigCatLogMessages {
     /**
      * Log message for Fetch Failed Due To Invalid Sdk Key error. The log eventId is 1100.
      */
-     public static final String FETCH_FAILED_DUE_TO_INVALID_SDK_KEY_ERROR = "Your SDK Key seems to be wrong. You can find the valid SDK Key at https://app.configcat.com/sdkkey";
+    public static final String FETCH_FAILED_DUE_TO_INVALID_SDK_KEY_ERROR = "Your SDK Key seems to be wrong. You can find the valid SDK Key at https://app.configcat.com/sdkkey";
 
     private ConfigCatLogMessages() { /* prevent from instantiation*/ }
 
@@ -50,8 +50,8 @@ final class ConfigCatLogMessages {
      * @param defaultParamValue The default parameter value.
      * @return The formatted error message.
      */
-    public static String getConfigJsonIsNotPresentedWitDefaultValue(final String defaultParamName, final Object defaultParamValue) {
-        return "Config JSON is not present. Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'.";
+    public static String getConfigJsonIsNotPresentedWitDefaultValue(final String key, final String defaultParamName, final Object defaultParamValue) {
+        return "Config JSON is not present when evaluating setting '" + key + "'. Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'.";
     }
 
     /**
@@ -129,8 +129,8 @@ final class ConfigCatLogMessages {
      * @param variationId The variation id.
      * @return The formatted error message.
      */
-    public static String getSettingForVariationIdIsNotPresent(final String variationId){
-    return  "Could not find the setting for the specified variation ID: '" + variationId + "'.";
+    public static String getSettingForVariationIdIsNotPresent(final String variationId) {
+        return "Could not find the setting for the specified variation ID: '" + variationId + "'.";
     }
 
     /**
@@ -218,11 +218,12 @@ final class ConfigCatLogMessages {
 
     /**
      * Log message for Config Service Status Changed info. The log eventId 5200.
+     *
      * @param mode The change mode.
      * @return The formatted info message.
      */
-    public static  String getConfigServiceStatusChanged(final String mode){
-        return "Switched to " +mode + " mode.";
+    public static String getConfigServiceStatusChanged(final String mode) {
+        return "Switched to " + mode + " mode.";
     }
 
 }
