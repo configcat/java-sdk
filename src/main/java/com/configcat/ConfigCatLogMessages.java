@@ -46,6 +46,7 @@ final class ConfigCatLogMessages {
     /**
      * Log message for Config Json Is Not Presented errors when the method returns with default value. The log eventId is 1000.
      *
+     * @param key The feature flag key.
      * @param defaultParamName  The default parameter name.
      * @param defaultParamValue The default parameter value.
      * @return The formatted error message.
