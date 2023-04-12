@@ -51,7 +51,7 @@ final class ConfigCatLogMessages {
      * @param defaultParamValue The default parameter value.
      * @return The formatted error message.
      */
-    public static String getConfigJsonIsNotPresentedWitDefaultValue(final String key, final String defaultParamName, final Object defaultParamValue) {
+    public static String getConfigJsonIsNotPresentedWithDefaultValue(final String key, final String defaultParamName, final Object defaultParamValue) {
         return "Config JSON is not present when evaluating setting '" + key + "'. Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'.";
     }
 
@@ -61,7 +61,7 @@ final class ConfigCatLogMessages {
      * @param emptyResult The empty result.
      * @return The formatted error message.
      */
-    public static String getConfigJsonIsNotPresentedWitEmptyResult(final String emptyResult) {
+    public static String getConfigJsonIsNotPresentedWithEmptyResult(final String emptyResult) {
         return "Config JSON is not present. Returning " + emptyResult + ".";
     }
 

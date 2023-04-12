@@ -49,7 +49,7 @@ class ConfigCatLogger {
 
     public void debug(String message) {
         if (this.logLevel.ordinal() <= LogLevel.DEBUG.ordinal()) {
-            this.logger.debug("[0] " + message);
+            this.logger.debug("[{}] {}",0, message);
         }
     }
 }

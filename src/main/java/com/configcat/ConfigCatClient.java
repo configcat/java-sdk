@@ -146,7 +146,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return EvaluationDetails.fromError(key, defaultValue, error + ": " + e.getMessage(), user);
         } catch (Exception e) {
-            this.logger.error(2001, ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key,"defaultValue", defaultValue), e);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails",key,"defaultValue", defaultValue), e);
             return EvaluationDetails.fromError(key, defaultValue, e.getMessage(), user);
         }
     }
@@ -455,7 +455,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
-                String errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWitDefaultValue(key,"defaultValue", defaultValue);
+                String errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key,"defaultValue", defaultValue);
                 this.logger.error(1000, errorMessage);
                 this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
                 return defaultValue;
@@ -482,7 +482,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
-                this.logger.error(1000, ConfigCatLogMessages.getConfigJsonIsNotPresentedWitEmptyResult("null"));
+                this.logger.error(1000, ConfigCatLogMessages.getConfigJsonIsNotPresentedWithEmptyResult("null"));
                 return null;
             }
 
