@@ -18,7 +18,7 @@ public class LoggerTests {
         logger.warn(3000, "warn");
         logger.error(1000, "error", new Exception());
 
-        verify(mockLogger, times(1)).debug("[0] debug");
+        verify(mockLogger, times(1)).debug(anyString(), eq(0),eq("debug"));
         verify(mockLogger, times(1)).error(anyString(), eq(1000),eq("error"), any(Exception.class));
         verify(mockLogger, times(1)).warn(anyString(), eq(3000),eq("warn"));
         verify(mockLogger, times(1)).info(anyString(), eq(5000), eq("info"));
@@ -34,7 +34,7 @@ public class LoggerTests {
         logger.warn(3000, "warn");
         logger.error(1000, "error", new Exception());
 
-        verify(mockLogger, never()).debug("[0] debug");
+        verify(mockLogger, never()).debug(anyString(), eq(0),eq("debug"));
         verify(mockLogger, times(1)).error(anyString(), eq(1000),eq("error"), any(Exception.class));
         verify(mockLogger, times(1)).warn(anyString(), eq(3000),eq("warn"));
         verify(mockLogger, times(1)).info(anyString(), eq(5000), eq("info"));
@@ -50,7 +50,7 @@ public class LoggerTests {
         logger.warn(3000, "warn");
         logger.error(1000, "error", new Exception());
 
-        verify(mockLogger, never()).debug("[0] debug");
+        verify(mockLogger, never()).debug(anyString(), eq(0),eq("debug"));
         verify(mockLogger, never()).info(anyString(), eq(5000), eq("info"));
         verify(mockLogger, times(1)).warn(anyString(), eq(3000),eq("warn"));
         verify(mockLogger, times(1)).error(anyString(), eq(1000),eq("error"), any(Exception.class));
@@ -66,7 +66,7 @@ public class LoggerTests {
         logger.warn(3000, "warn");
         logger.error(1000, "error", new Exception());
 
-        verify(mockLogger, never()).debug("[0] debug");
+        verify(mockLogger, never()).debug(anyString(), eq(0),eq("debug"));
         verify(mockLogger, never()).info(anyString(), eq(5000), eq("info"));
         verify(mockLogger, never()).warn(anyString(), eq(3000),eq("warn"));
         verify(mockLogger, times(1)).error(anyString(), eq(1000),eq("error"), any(Exception.class));
@@ -84,7 +84,7 @@ public class LoggerTests {
         logger.warn(3000, "warn");
         logger.error(1000, "error", new Exception());
 
-        verify(mockLogger, never()).debug("[0] debug");
+        verify(mockLogger, never()).debug(anyString(), eq(0),eq("debug"));
         verify(mockLogger, never()).info(anyString(), eq(5000), eq("info"));
         verify(mockLogger, never()).warn(anyString(), eq(3000),eq("warn"));
         verify(mockLogger, never()).error(anyString(), eq(1000),eq("error"), any(Exception.class));
