@@ -1,5 +1,6 @@
 package com.configcat;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -21,4 +22,10 @@ class SettingResult {
     public long fetchTime() {
         return fetchTime;
     }
+   
+    boolean isEmpty() {
+        return EMPTY.equals(this);
+    }
+
+    public static final SettingResult EMPTY = new SettingResult(new HashMap<>(), Constants.DISTANT_PAST);
 }

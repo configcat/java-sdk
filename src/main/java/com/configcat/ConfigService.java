@@ -104,10 +104,14 @@ public class ConfigService implements Closeable {
         if (pollingMode instanceof LazyLoadingMode) {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode) pollingMode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
-                    .thenApply(entryResult -> new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime()));
+                    .thenApply(entryResult -> !entryResult.value().isEmpty()
+                        ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
+                        : SettingResult.EMPTY);
         } else {
             return fetchIfOlder(Constants.DISTANT_PAST, true)
-                    .thenApply(entryResult -> new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime()));
+                    .thenApply(entryResult -> !entryResult.value().isEmpty()
+                        ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
+                        : SettingResult.EMPTY);
         }
 
     }
