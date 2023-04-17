@@ -519,7 +519,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private <T> Map.Entry<String, T> getKeyAndValueFromSettingsMap(Class<T> classOfT, SettingResult settingResult, String variationId) {
         try {
             if (!checkSettingsAvailable(settingResult, "null")) {
-                this.logger.error(1000, ConfigCatLogMessages.getConfigJsonIsNotPresentedWithEmptyResult("null"));
                 return null;
             }
 
