@@ -75,7 +75,7 @@ final class ConfigCatLogMessages {
      * @return The formatted error message.
      */
     public static String getSettingEvaluationFailedDueToMissingKey(final String key, final String defaultParamName, final Object defaultParamValue, final Set<String> availableKeysSet) {
-        return "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'. Available keys: [" + availableKeysSet.stream().map(keyTo -> "'" + keyTo + "'").collect(Collectors.joining(",")) + "].";
+        return "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'. Available keys: [" + availableKeysSet.stream().map(keyTo -> "'" + keyTo + "'").collect(Collectors.joining(", ")) + "].";
     }
 
     /**
