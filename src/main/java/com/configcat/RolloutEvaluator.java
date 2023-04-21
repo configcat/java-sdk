@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 class RolloutEvaluator {
-    private static final String[] COMPARATOR_TEXTS = new String[]{
+    protected static final String[] COMPARATOR_TEXTS = new String[]{
             "IS ONE OF",
             "IS NOT ONE OF",
             "CONTAINS",
@@ -38,22 +38,21 @@ class RolloutEvaluator {
     }
 
     public EvaluationResult evaluate(Setting setting, String key, User user) {
-        LogEntries logEntries = new LogEntries();
-        logEntries.add("Evaluating getValue(" + key + ").");
+        EvaluateLogger evaluateLogger = new EvaluateLogger(key);
 
         try {
 
             if (user == null) {
                 if ((setting.getRolloutRules() != null && setting.getRolloutRules().length > 0) ||
                         (setting.getPercentageItems() != null && setting.getPercentageItems().length > 0)) {
-                    this.logger.warn("UserObject missing! You should pass a UserObject to getValue() in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object.");
+                    this.logger.warn(3001, ConfigCatLogMessages.getTargetingIsNotPossible(key));
                 }
 
-                logEntries.add("Returning " + setting.getValue() + ".");
+                evaluateLogger.logReturnValue(setting.getValue().toString());
                 return new EvaluationResult(setting.getValue(), setting.getVariationId(), null, null);
             }
 
-            logEntries.add("User object: " + user + "");
+            evaluateLogger.logUserObject(user);
             if (setting.getRolloutRules() != null) {
                 for (RolloutRule rule : setting.getRolloutRules()) {
 
@@ -66,7 +65,7 @@ class RolloutEvaluator {
 
                     if (comparisonValue == null || comparisonValue.isEmpty() ||
                             userValue == null || userValue.isEmpty()) {
-                        logEntries.add(this.logNoMatch(comparisonAttribute, userValue, comparator, comparisonValue));
+                        evaluateLogger.logNoMatch(comparisonAttribute, userValue, comparator, comparisonValue);
                         continue;
                     }
 
@@ -77,7 +76,7 @@ class RolloutEvaluator {
                             inValues.replaceAll(String::trim);
                             inValues.removeAll(Arrays.asList(null, ""));
                             if (inValues.contains(userValue)) {
-                                logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
+                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
@@ -87,21 +86,21 @@ class RolloutEvaluator {
                             notInValues.replaceAll(String::trim);
                             notInValues.removeAll(Arrays.asList(null, ""));
                             if (!notInValues.contains(userValue)) {
-                                logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
+                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //CONTAINS
                         case 2:
                             if (userValue.contains(comparisonValue)) {
-                                logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
+                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                         //DOES NOT CONTAIN
                         case 3:
                             if (!userValue.contains(comparisonValue)) {
-                                logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
+                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
@@ -119,11 +118,12 @@ class RolloutEvaluator {
                                 }
 
                                 if ((matched && comparator == 4) || (!matched && comparator == 5)) {
-                                    logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
+                                    evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                     return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (Exception e) {
-                                logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
+                                String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
+                                this.logger.warn(0, message);
                                 continue;
                             }
                             break;
@@ -139,11 +139,12 @@ class RolloutEvaluator {
                                         (comparator == 7 && cmpUserVersion.compareTo(matchValue) <= 0) ||
                                         (comparator == 8 && cmpUserVersion.isGreaterThan(matchValue)) ||
                                         (comparator == 9 && cmpUserVersion.compareTo(matchValue) >= 0)) {
-                                    logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
+                                    evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                     return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (Exception e) {
-                                logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
+                                String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
+                                this.logger.warn(0, message);
                                 continue;
                             }
                             break;
@@ -164,11 +165,12 @@ class RolloutEvaluator {
                                         (comparator == 13 && userDoubleValue <= comparisonDoubleValue) ||
                                         (comparator == 14 && userDoubleValue > comparisonDoubleValue) ||
                                         (comparator == 15 && userDoubleValue >= comparisonDoubleValue)) {
-                                    logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
+                                    evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                     return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (NumberFormatException e) {
-                                logEntries.add(this.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e));
+                                String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
+                                this.logger.warn(0, message);
                                 continue;
                             }
                             break;
@@ -179,7 +181,7 @@ class RolloutEvaluator {
                             inValuesSensitive.removeAll(Arrays.asList(null, ""));
                             String hashValueOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                             if (inValuesSensitive.contains(hashValueOne)) {
-                                logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
+                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
@@ -190,12 +192,12 @@ class RolloutEvaluator {
                             notInValuesSensitive.removeAll(Arrays.asList(null, ""));
                             String hashValueNotOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                             if (!notInValuesSensitive.contains(hashValueNotOne)) {
-                                logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
+                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
                     }
-                    logEntries.add(this.logNoMatch(comparisonAttribute, userValue, comparator, comparisonValue));
+                    evaluateLogger.logNoMatch(comparisonAttribute, userValue, comparator, comparisonValue);
                 }
             }
 
@@ -211,43 +213,17 @@ class RolloutEvaluator {
 
                     bucket += rule.getPercentage();
                     if (scaled < bucket) {
-                        logEntries.add("Evaluating % options. Returning " + rule.getValue() + ".");
-
+                        evaluateLogger.logPercentageEvaluationReturnValue(rule.getValue().toString());
                         return new EvaluationResult(rule.getValue(), rule.getVariationId(), null, rule);
                     }
                 }
             }
 
-            logEntries.add("Returning " + setting.getValue() + ".");
+            evaluateLogger.logReturnValue(setting.getValue().toString());
             return new EvaluationResult(setting.getValue(), setting.getVariationId(), null, null);
         } finally {
-            this.logger.info(logEntries.toPrint());
+            this.logger.info(5000, evaluateLogger.toPrint());
         }
     }
 
-    private String logMatch(String comparisonAttribute, String userValue, int comparator, String comparisonValue, Object value) {
-        return "Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + COMPARATOR_TEXTS[comparator] + "] [" + comparisonValue + "] => match, returning: " + value + "";
-    }
-
-    private String logNoMatch(String comparisonAttribute, String userValue, int comparator, String comparisonValue) {
-        return "Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + COMPARATOR_TEXTS[comparator] + "] [" + comparisonValue + "] => no match";
-    }
-
-    private String logFormatError(String comparisonAttribute, String userValue, int comparator, String comparisonValue, Exception exception) {
-        String message = "Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + COMPARATOR_TEXTS[comparator] + "] [" + comparisonValue + "] => SKIP rule. Validation error: " + exception + "";
-        this.logger.warn(message);
-        return message;
-    }
-
-    static class LogEntries {
-        private final List<String> entries = new ArrayList<>();
-
-        public void add(String entry) {
-            this.entries.add(entry);
-        }
-
-        public String toPrint() {
-            return String.join(System.lineSeparator(), this.entries);
-        }
-    }
 }

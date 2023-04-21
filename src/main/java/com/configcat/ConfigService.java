@@ -61,8 +61,8 @@ public class ConfigService implements Closeable {
                     if (!initialized) {
                         initialized = true;
                         this.configCatHooks.invokeOnClientReady();
-                        String message = "maxInitWaitTimeSeconds for the very first fetch reached (" + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
-                        this.logger.warn(message);
+                        String message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
+                        this.logger.warn(4200, message);
                         completeRunningTask(Result.error(message, cachedEntry));
                     }
                 } finally {
@@ -92,8 +92,8 @@ public class ConfigService implements Closeable {
 
     public CompletableFuture<RefreshResult> refresh() {
         if (offline.get()) {
-            String offlineWarning = "Can't initiate HTTP calls because the client is in offline mode.";
-            logger.warn(offlineWarning);
+            String offlineWarning = ConfigCatLogMessages.CONFIG_SERVICE_CANNOT_INITIATE_HTTP_CALLS_WARN;
+            logger.warn(3200, offlineWarning);
             return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning));
         }
         return fetchIfOlder(Constants.DISTANT_FUTURE, false)
@@ -104,10 +104,14 @@ public class ConfigService implements Closeable {
         if (pollingMode instanceof LazyLoadingMode) {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode) pollingMode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
-                    .thenApply(entryResult -> new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime()));
+                    .thenApply(entryResult -> !entryResult.value().isEmpty()
+                        ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
+                        : SettingResult.EMPTY);
         } else {
             return fetchIfOlder(Constants.DISTANT_PAST, true)
-                    .thenApply(entryResult -> new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime()));
+                    .thenApply(entryResult -> !entryResult.value().isEmpty()
+                        ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
+                        : SettingResult.EMPTY);
         }
 
     }
@@ -172,7 +176,7 @@ public class ConfigService implements Closeable {
             if (pollingMode instanceof AutoPollingMode) {
                 startPoll((AutoPollingMode) pollingMode);
             }
-            logger.debug("Switched to ONLINE mode.");
+            logger.info(5200, ConfigCatLogMessages.getConfigServiceStatusChanged("ONLINE"));
         } finally {
             lock.unlock();
         }
@@ -184,7 +188,7 @@ public class ConfigService implements Closeable {
             if (!offline.compareAndSet(false, true)) return;
             if (pollScheduler != null) pollScheduler.shutdown();
             if (initScheduler != null) initScheduler.shutdown();
-            logger.debug("Switched to OFFLINE mode.");
+            logger.info(5200, ConfigCatLogMessages.getConfigServiceStatusChanged("OFFLINE"));
         } finally {
             lock.unlock();
         }
@@ -233,7 +237,7 @@ public class ConfigService implements Closeable {
             Entry deserialized = Utils.gson.fromJson(json, Entry.class);
             return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
-            this.logger.error("An error occurred while reading the cache.", e);
+            this.logger.error(2200, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_READ_ERROR, e);
             return Entry.EMPTY;
         }
     }
@@ -244,7 +248,7 @@ public class ConfigService implements Closeable {
             cachedEntryString = configToCache;
             cache.write(cacheKey, configToCache);
         } catch (Exception e) {
-            logger.error("An error occurred while writing the cache.", e);
+            logger.error(2201, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_WRITE_ERROR, e);
         }
     }
 }

@@ -655,7 +655,7 @@ public class ConfigCatClientTest {
 
         assertTrue(changed.get());
         assertTrue(ready.get());
-        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -684,7 +684,7 @@ public class ConfigCatClientTest {
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -716,7 +716,7 @@ public class ConfigCatClientTest {
 
         assertTrue(changed.get());
         assertTrue(ready.get());
-        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -736,7 +736,7 @@ public class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnFlagEvaluated(details -> {
                 assertEquals("", details.getValue());
-                assertEquals("Config JSON is not present. Returning defaultValue: [].", details.getError());
+                assertEquals("Config JSON is not present when evaluating setting 'key'. Returning the `defaultValue` parameter that you specified in your application: ''.", details.getError());
                 assertTrue(details.isDefaultValue());
                 called.set(true);
             });

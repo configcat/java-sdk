@@ -37,10 +37,10 @@ class LocalFileDataSource extends OverrideDataSource {
         if (autoReload && !isResource) {
             Path path = Paths.get(filePath);
             try {
-                fileWatcher = FileWatcher.create(Paths.get(filePath));
+                fileWatcher = FileWatcher.create(path);
                 fileWatcher.start(this::reloadFileContent);
             } catch (IOException e) {
-                this.logger.error("Error during initializing file watcher on " + path + ".", e);
+                this.logger.error(1300, ConfigCatLogMessages.getLocalFileDataSourceDoesNotExist(path.toString()), e);
             }
         }
         this.watcher = fileWatcher;
@@ -63,7 +63,7 @@ class LocalFileDataSource extends OverrideDataSource {
         try {
             content = this.readFile();
         } catch (IOException e) {
-            this.logger.error("Error during reading " + this.filePath + ".", e);
+            this.logger.error(1302, ConfigCatLogMessages.getLocalFileDataSourceFailedToReadFile(this.filePath), e);
         }
 
         if (content != null && !content.isEmpty()) {

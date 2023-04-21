@@ -21,35 +21,35 @@ class ConfigCatLogger {
         this(logger, LogLevel.WARNING);
     }
 
-    public void warn(String message) {
+    public void warn(int eventId, String message) {
         if (this.logLevel.ordinal() <= LogLevel.WARNING.ordinal()) {
-            this.logger.warn(message);
+            this.logger.warn("[{}] {}", eventId, message);
         }
     }
 
-    public void error(String message, Exception exception) {
+    public void error(int eventId, String message, Exception exception) {
         if (this.configCatHooks != null) this.configCatHooks.invokeOnError(message);
         if (this.logLevel.ordinal() <= LogLevel.ERROR.ordinal()) {
-            this.logger.error(message, exception);
+            this.logger.error("[{}] {}",eventId, message, exception);
         }
     }
 
-    public void error(String message) {
+    public void error(int eventId, String message) {
         if (this.configCatHooks != null) this.configCatHooks.invokeOnError(message);
         if (this.logLevel.ordinal() <= LogLevel.ERROR.ordinal()) {
-            this.logger.error(message);
+            this.logger.error("[{}] {}",eventId, message);
         }
     }
 
-    public void info(String message) {
+    public void info(int eventId, String message) {
         if (this.logLevel.ordinal() <= LogLevel.INFO.ordinal()) {
-            this.logger.info(message);
+            this.logger.info("[{}] {}",eventId, message);
         }
     }
 
     public void debug(String message) {
         if (this.logLevel.ordinal() <= LogLevel.DEBUG.ordinal()) {
-            this.logger.debug(message);
+            this.logger.debug("[{}] {}",0, message);
         }
     }
 }

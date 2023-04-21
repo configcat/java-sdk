@@ -87,10 +87,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return this.getValueAsync(classOfT, key, user, defaultValue).get();
         } catch (InterruptedException e) {
-            this.logger.error("Thread interrupted.", e);
+            this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
             return defaultValue;
         } catch (Exception e) {
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValue", key, "defaultValue", defaultValue.toString()), e);
             return defaultValue;
         }
     }
@@ -141,10 +142,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
         } catch (InterruptedException e) {
             String error = "Thread interrupted.";
-            this.logger.error(error, e);
+            this.logger.error(0, error, e);
             Thread.currentThread().interrupt();
             return EvaluationDetails.fromError(key, defaultValue, error + ": " + e.getMessage(), user);
         } catch (Exception e) {
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails",key,"defaultValue", defaultValue), e);
             return EvaluationDetails.fromError(key, defaultValue, e.getMessage(), user);
         }
     }
@@ -169,8 +171,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         return this.getSettingsAsync()
-                .thenApply(settingsResult -> this.evaluate(classOfT, settingsResult.settings().get(key),
-                        key, user != null ? user : this.defaultUser, settingsResult.fetchTime()));
+                .thenApply(settingsResult -> { 
+                    Result<Setting> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
+                    if (checkSettingResult.error() != null) {
+                        EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.error(), user);
+                        this.configCatHooks.invokeOnFlagEvaluated(evaluationDetails);
+                        return evaluationDetails.asTypeSpecific();
+                    }
+
+                    return this.evaluate(classOfT, checkSettingResult.value(),
+                        key, user != null ? user : this.defaultUser, settingsResult.fetchTime());
+                });
     }
 
     @Override
@@ -178,11 +189,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return this.getAllValuesAsync(user).get();
         } catch (InterruptedException e) {
-            this.logger.error("Thread interrupted.", e);
+            this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
             return new HashMap<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred while getting all values. Returning empty map.", e);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValues", "empty map" ), e);
             return new HashMap<>();
         }
     }
@@ -192,6 +203,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.getSettingsAsync()
                 .thenApply(settingResult -> {
                     try {
+                        if (!checkSettingsAvailable(settingResult, "empty map")) {
+                            return new HashMap<>();
+                        }
+
                         Map<String, Setting> settings = settingResult.settings();
                         Collection<String> keys = settings.keySet();
                         Map<String, Object> result = new HashMap<>();
@@ -206,7 +221,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred while getting all values. Returning empty map.", e);
+                        this.logger.error(1002,ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValuesAsync", "empty map" ), e);
                         return new HashMap<>();
                     }
                 });
@@ -217,11 +232,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return this.getAllValueDetailsAsync(user).get();
         } catch (InterruptedException e) {
-            this.logger.error("Thread interrupted.", e);
+            this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred while getting all detailed values. Returning empty map.", e);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValueDetails", "empty list" ), e);
             return new ArrayList<>();
         }
     }
@@ -231,6 +246,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.getSettingsAsync()
                 .thenApply(settingResult -> {
                     try {
+                        if (!checkSettingsAvailable(settingResult, "empty list")) {
+                            return new ArrayList<>();
+                        }
+
                         Map<String, Setting> settings = settingResult.settings();
                         List<EvaluationDetails<Object>> result = new ArrayList<>();
 
@@ -244,7 +263,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred while getting all detailed values. Returning empty map.", e);
+                        this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValueDetailsAsync", "empty list" ), e);
                         return new ArrayList<>();
                     }
                 });
@@ -258,10 +277,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return this.getKeyAndValueAsync(classOfT, variationId).get();
         } catch (InterruptedException e) {
-            this.logger.error("Thread interrupted.", e);
+            this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
             return null;
         } catch (Exception e) {
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getKeyAndValue", "null" ), e);
             return null;
         }
     }
@@ -281,10 +301,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return this.getAllKeysAsync().get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            this.logger.error("Thread interrupted.", e);
+            this.logger.error(0, "Thread interrupted.", e);
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred while getting all the setting keys. Returning empty array.", e);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllKeys", "empty array" ), e);
             return new ArrayList<>();
         }
     }
@@ -294,9 +314,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.getSettingsAsync()
                 .thenApply(settingResult -> {
                     try {
+                        if (!checkSettingsAvailable(settingResult, "empty array")) {
+                            return new ArrayList<>();
+                        }
+
                         return settingResult.settings().keySet();
                     } catch (Exception e) {
-                        this.logger.error("An error occurred while getting all the setting keys. Returning empty array.", e);
+                        this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllKeysAsync", "empty array" ), e);
                         return new ArrayList<>();
                     }
                 });
@@ -307,10 +331,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return this.forceRefreshAsync().get();
         } catch (InterruptedException e) {
-            this.logger.error("Thread interrupted.", e);
+            this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
         } catch (Exception e) {
-            this.logger.error("An error occurred during the refresh.", e);
+            this.logger.error(1003, ConfigCatLogMessages.getForceRefreshError("forceRefresh"), e);
         }
         return new RefreshResult(false, "An error occurred during the refresh.");
     }
@@ -323,7 +347,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public void setDefaultUser(User defaultUser) {
         if (isClosed()) {
-            logger.warn("The 'setDefaultUser' method has no effect because the client has already been closed.");
+            logger.warn(3201, ConfigCatLogMessages.getConfigServiceMethodHasNoEffectDueToClosedClient("setDefaultUser"));
             return;
         }
         this.defaultUser = defaultUser;
@@ -332,7 +356,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public void clearDefaultUser() {
         if (isClosed()) {
-            logger.warn("The 'clearDefaultUser' method has no effect because the client has already been closed.");
+            logger.warn(3201, ConfigCatLogMessages.getConfigServiceMethodHasNoEffectDueToClosedClient("clearDefaultUser"));
             return;
         }
         this.defaultUser = null;
@@ -348,7 +372,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (this.configService != null && !isClosed()) {
             this.configService.setOnline();
         } else {
-            logger.warn("The 'setOnline' method has no effect because the client has already been closed.");
+            logger.warn(3201, ConfigCatLogMessages.getConfigServiceMethodHasNoEffectDueToClosedClient("setOnline"));
         }
     }
 
@@ -357,7 +381,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (this.configService != null && !isClosed()) {
             this.configService.setOffline();
         } else {
-            logger.warn("The 'setOffline' method has no effect because the client has already been closed.");
+            logger.warn(3201, ConfigCatLogMessages.getConfigServiceMethodHasNoEffectDueToClosedClient("setOffline"));
         }
     }
 
@@ -444,46 +468,61 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         return configService == null
-                ? CompletableFuture.completedFuture(new SettingResult(new HashMap<>(), Constants.DISTANT_PAST))
+                ? CompletableFuture.completedFuture(SettingResult.EMPTY)
                 : configService.getSettings();
+    }
+
+    private boolean checkSettingsAvailable(SettingResult settingResult, String emptyResult) {
+        if (settingResult.isEmpty()) {
+            this.logger.error(1000, ConfigCatLogMessages.getConfigJsonIsNotPresentedWithEmptyResult(emptyResult));
+            return false;
+        }
+
+        return true;
+    }
+
+    private <T> Result<Setting> checkSettingAvailable(SettingResult settingResult, String key, T defaultValue) {
+        if (settingResult.isEmpty()) {
+            String errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultValue", defaultValue);
+            this.logger.error(1000, errorMessage);
+            return Result.error(errorMessage, null);
+        }
+
+        Map<String, Setting> settings = settingResult.settings();
+        Setting setting = settings.get(key);
+        if (setting == null) {
+            String errorMessage = ConfigCatLogMessages.getSettingEvaluationFailedDueToMissingKey(key, "defaultValue", defaultValue, settings.keySet());
+            this.logger.error(1001, errorMessage);
+            return Result.error(errorMessage, null);
+        }
+
+        return Result.success(setting);
     }
 
     private <T> T getValueFromSettingsMap(Class<T> classOfT, SettingResult settingResult, String key, User user, T defaultValue) {
         try {
-            Map<String, Setting> settings = settingResult.settings();
-            if (settings.isEmpty()) {
-                String errorMessage = "Config JSON is not present. Returning defaultValue: [" + defaultValue + "].";
-                this.logger.error(errorMessage);
-                this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
+            Result<Setting> checkSettingResult = checkSettingAvailable(settingResult, key, defaultValue);
+            if (checkSettingResult.error() != null) {
+                this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, checkSettingResult.error(), user));
                 return defaultValue;
             }
 
-            Setting setting = settings.get(key);
-            if (setting == null) {
-                String errorMessage = "Value not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet());
-                this.logger.error(errorMessage);
-                this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
-                return defaultValue;
-            }
-
-            return this.evaluate(classOfT, setting, key, getEvaluateUser(user), settingResult.fetchTime()).getValue();
+            return this.evaluate(classOfT, checkSettingResult.value(), key, getEvaluateUser(user), settingResult.fetchTime()).getValue();
         } catch (Exception e) {
-            String errorMessage = "Evaluating getValue('" + key + "') failed. Returning defaultValue: [" + defaultValue + "]. "
-                    + e.getMessage();
-            this.logger.error(errorMessage, e);
-            this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage, user));
+            String errorMessage = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
+            this.logger.error(2001, errorMessage, e);
+            this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage + " " + e.getMessage(), user));
             return defaultValue;
         }
     }
 
     private <T> Map.Entry<String, T> getKeyAndValueFromSettingsMap(Class<T> classOfT, SettingResult settingResult, String variationId) {
         try {
-            Map<String, Setting> settings = settingResult.settings();
-            if (settings.isEmpty()) {
-                this.logger.error("Config JSON is not present. Returning null.");
+            if (!checkSettingsAvailable(settingResult, "null")) {
                 return null;
             }
 
+            Map<String, Setting> settings = settingResult.settings();
             for (Map.Entry<String, Setting> node : settings.entrySet()) {
                 String settingKey = node.getKey();
                 Setting setting = node.getValue();
@@ -504,9 +543,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 }
             }
 
+            this.logger.error(2011, ConfigCatLogMessages.getSettingForVariationIdIsNotPresent(variationId));
             return null;
         } catch (Exception e) {
-            this.logger.error("Could not find the setting for the given variation ID: " + variationId);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getKeyAndValueFromSettingsMap", "null"), e);
             return null;
         }
     }
@@ -575,7 +615,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             ConfigCatClient client = INSTANCES.get(sdkKey);
             if (client != null) {
                 if (optionsCallback != null) {
-                    client.logger.warn("The passed options are ignored because the client for '" + sdkKey + "' is already created and will be reused.");
+                    client.logger.warn(3000, ConfigCatLogMessages.getClientIsAlreadyCreated(sdkKey));
                 }
                 return client;
             }
