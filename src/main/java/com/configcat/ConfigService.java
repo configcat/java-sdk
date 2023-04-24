@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ConfigService implements Closeable {
 
-    private static final String CACHE_BASE = "java_" + Constants.CONFIG_JSON_NAME + "_%s";
+    private static final String CACHE_BASE = "%s_" + Constants.CONFIG_JSON_NAME + "_" +  Constants.SERIALIZATION_FORMAT_VERSION;
 
     private Entry cachedEntry = Entry.EMPTY;
     private String cachedEntryString = "";
