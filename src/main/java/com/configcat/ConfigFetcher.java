@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -107,42 +108,45 @@ class ConfigFetcher implements Closeable {
                     }
                     logger.error(logEventId, message, e);
                 }
-                future.complete(FetchResponse.failed(message, false));
+                future.complete(FetchResponse.failed(message, false, null));
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
+                    // TODO if header missing the get from system
+                    String fetchTime = response.headers().get("date");
+
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
                         Result<Config> result = deserializeConfig(content);
                         if (result.error() != null) {
-                            future.complete(FetchResponse.failed(result.error(), false));
+                            future.complete(FetchResponse.failed(result.error(), false, null));
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
-                        future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, System.currentTimeMillis())));
+                        future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, content, fetchTime), fetchTime));
                     } else if (response.code() == 304) {
                         logger.debug("Fetch was successful: config not modified.");
-                        future.complete(FetchResponse.notModified());
+                        future.complete(FetchResponse.notModified(fetchTime));
                     } else if (response.code() == 403 || response.code() == 404) {
                         String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_INVALID_SDK_KEY_ERROR;
                         logger.error(1100, message);
-                        future.complete(FetchResponse.failed(message, true));
+                        future.complete(FetchResponse.failed(message, true, fetchTime));
                     } else {
                         String message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(),response.message());
                         logger.error(1101, message);
-                        future.complete(FetchResponse.failed(message, false));
+                        future.complete(FetchResponse.failed(message, false, null));
                     }
                 } catch (SocketTimeoutException e) {
                     String message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis() ,httpClient.readTimeoutMillis() ,httpClient.writeTimeoutMillis());
                     logger.error(1102, message, e);
-                    future.complete(FetchResponse.failed(message, false));
+                    future.complete(FetchResponse.failed(message, false, null));
                 } catch (Exception e) {
                     String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                     logger.error(1103, message, e);
-                    future.complete(FetchResponse.failed(message, false));
+                    future.complete(FetchResponse.failed(message, false, null));
                 }
             }
         });

@@ -6,7 +6,7 @@ final class Helpers {
 
     static String entryStringFromConfigString(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
-        return entryToJson(new Entry(config, "fakeTag", System.currentTimeMillis()));
+        return entryToJson(new Entry(config, "fakeTag", json, Entry.DateTimeUtils.format(System.currentTimeMillis())));
     }
 
     static String entryToJson(Entry entry) {

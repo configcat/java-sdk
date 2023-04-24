@@ -87,7 +87,7 @@ public class ConfigFetcherTest {
 
         Gson gson = new GsonBuilder().create();
         Config config = gson.fromJson(TEST_JSON, Config.class);
-        Entry entry = new Entry(config, "fakeETag", Constants.DISTANT_PAST);
+        Entry entry = new Entry(config, "fakeETag", TEST_JSON, "");
 
         ConfigCache cache = mock(ConfigCache.class);
         when(cache.read(anyString())).thenReturn(gson.toJson(entry));
@@ -113,7 +113,7 @@ public class ConfigFetcherTest {
 
         Gson gson = new GsonBuilder().create();
         Config config = gson.fromJson(TEST_JSON, Config.class);
-        Entry entry = new Entry(config, "fakeETag", Constants.DISTANT_PAST);
+        Entry entry = new Entry(config, "fakeETag", TEST_JSON, "");
 
         ConfigCache cache = mock(ConfigCache.class);
         when(cache.read(anyString())).thenReturn(gson.toJson(entry));

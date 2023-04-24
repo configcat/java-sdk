@@ -210,7 +210,7 @@ public class ConfigService implements Closeable {
                 completeRunningTask(Result.success(entry));
             } else {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
+                    cachedEntry = cachedEntry.withFetchTime(response.getFetchTime());
                     writeCache(cachedEntry);
                 }
                 completeRunningTask(response.isFailed()
@@ -229,12 +229,12 @@ public class ConfigService implements Closeable {
 
     private Entry readCache() {
         try {
-            String json = cache.read(cacheKey);
-            if (json != null && json.equals(cachedEntryString)) {
+            String cachedConfigJson = cache.read(cacheKey);
+            if (cachedConfigJson != null && cachedConfigJson.equals(cachedEntryString)) {
                 return Entry.EMPTY;
             }
-            cachedEntryString = json;
-            Entry deserialized = Utils.gson.fromJson(json, Entry.class);
+            cachedEntryString = cachedConfigJson;
+            Entry deserialized = Entry.deserializeFromCache(cachedConfigJson);
             return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
             this.logger.error(2200, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_READ_ERROR, e);
@@ -244,7 +244,7 @@ public class ConfigService implements Closeable {
 
     private void writeCache(Entry entry) {
         try {
-            String configToCache = Utils.gson.toJson(entry);
+            String configToCache = entry.serializedForCache();
             cachedEntryString = configToCache;
             cache.write(cacheKey, configToCache);
         } catch (Exception e) {
