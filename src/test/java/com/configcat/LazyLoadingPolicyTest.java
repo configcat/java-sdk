@@ -102,7 +102,7 @@ public class LazyLoadingPolicyTest {
     void testCacheExpirationRespectedInTTLCalc() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
-        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode mode = PollingModes
                 .lazyLoad(1);
@@ -126,7 +126,7 @@ public class LazyLoadingPolicyTest {
     void testCacheExpirationRespectedInTTLCalc304() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(304).setBody(""));
 
-        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode mode = PollingModes
                 .lazyLoad(1);

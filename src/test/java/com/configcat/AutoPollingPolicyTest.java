@@ -204,7 +204,8 @@ public class AutoPollingPolicyTest {
     void testPollIntervalRespectsCacheExpiration() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
-        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+        //TODO it should return with date as well. entryStringFromConfigString should be fixed
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
@@ -287,7 +288,7 @@ public class AutoPollingPolicyTest {
     void testInitWaitTimeIgnoredWhenCacheIsNotExpired() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")).setBodyDelay(2, TimeUnit.SECONDS));
 
-        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),

@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 public class Entry {
@@ -22,7 +22,8 @@ public class Entry {
             return true;
         }
         public static long parseToLong(String dateTime){
-            return DateTimeUtils.DATE_TIME_FORMATTER.parse(dateTime).getLong(ChronoField.INSTANT_SECONDS);
+            return Instant.EPOCH.until(Instant.from(DateTimeUtils.DATE_TIME_FORMATTER.parse(dateTime)), ChronoUnit.MILLIS);
+
         }
 
         public  static String format(long timeInMilliseconds){
@@ -94,7 +95,7 @@ public class Entry {
         if(eTag.isEmpty()){
             throw new Exception("Invalid eTag format.");
         }
-        String configJson = cacheValue.substring(eTagIndex + 1, cacheValue.length() - 1);
+        String configJson = cacheValue.substring(eTagIndex + 1, cacheValue.length());
         if(configJson.isEmpty()){
             throw new Exception("Invalid config jsom format.");
         }

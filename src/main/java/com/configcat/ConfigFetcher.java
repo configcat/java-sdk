@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -114,9 +113,10 @@ class ConfigFetcher implements Closeable {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
-                    // TODO if header missing the get from system
                     String fetchTime = response.headers().get("date");
-
+                    if(fetchTime == null || fetchTime.isEmpty()){
+                        fetchTime = Entry.DateTimeUtils.format(System.currentTimeMillis());
+                    }
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
