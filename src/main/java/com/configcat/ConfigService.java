@@ -19,7 +19,6 @@ public class ConfigService implements Closeable {
     private Entry cachedEntry = Entry.EMPTY;
     private String cachedEntryString = "";
     private final ConfigCache cache;
-
     private final String cacheKey;
     private final ConfigFetcher configFetcher;
     private final ConfigCatLogger logger;
@@ -234,7 +233,7 @@ public class ConfigService implements Closeable {
                 return Entry.EMPTY;
             }
             cachedEntryString = cachedConfigJson;
-            Entry deserialized = Entry.deserializeFromCache(cachedConfigJson);
+            Entry deserialized = CacheUtils.deserialize(cachedConfigJson);
             return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
             this.logger.error(2200, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_READ_ERROR, e);
@@ -244,7 +243,7 @@ public class ConfigService implements Closeable {
 
     private void writeCache(Entry entry) {
         try {
-            String configToCache = entry.serializedForCache();
+            String configToCache = CacheUtils.serialize(entry);
             cachedEntryString = configToCache;
             cache.write(cacheKey, configToCache);
         } catch (Exception e) {

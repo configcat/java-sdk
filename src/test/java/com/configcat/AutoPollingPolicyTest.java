@@ -204,7 +204,6 @@ public class AutoPollingPolicyTest {
     void testPollIntervalRespectsCacheExpiration() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
-        //TODO it should return with date as well. entryStringFromConfigString should be fixed
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(2);
