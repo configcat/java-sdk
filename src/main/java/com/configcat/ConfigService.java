@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ConfigService implements Closeable {
 
-    private static final String CACHE_BASE = "%s_" + Constants.CONFIG_JSON_NAME + "_" +  Constants.SERIALIZATION_FORMAT_VERSION;
+    private static final String CACHE_BASE = "%s_" + Constants.CONFIG_JSON_NAME + "_" + Constants.SERIALIZATION_FORMAT_VERSION;
 
     private Entry cachedEntry = Entry.EMPTY;
     private String cachedEntryString = "";
@@ -104,13 +104,13 @@ public class ConfigService implements Closeable {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode) pollingMode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
                     .thenApply(entryResult -> !entryResult.value().isEmpty()
-                        ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
-                        : SettingResult.EMPTY);
+                            ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
+                            : SettingResult.EMPTY);
         } else {
             return fetchIfOlder(Constants.DISTANT_PAST, true)
                     .thenApply(entryResult -> !entryResult.value().isEmpty()
-                        ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
-                        : SettingResult.EMPTY);
+                            ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
+                            : SettingResult.EMPTY);
         }
 
     }
@@ -233,7 +233,7 @@ public class ConfigService implements Closeable {
                 return Entry.EMPTY;
             }
             cachedEntryString = cachedConfigJson;
-            Entry deserialized = CacheUtils.deserialize(cachedConfigJson);
+            Entry deserialized = Entry.fromString(cachedConfigJson);
             return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
             this.logger.error(2200, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_READ_ERROR, e);
@@ -243,7 +243,7 @@ public class ConfigService implements Closeable {
 
     private void writeCache(Entry entry) {
         try {
-            String configToCache = CacheUtils.serialize(entry);
+            String configToCache = entry.serialize();
             cachedEntryString = configToCache;
             cache.write(cacheKey, configToCache);
         } catch (Exception e) {

@@ -6,8 +6,8 @@ final class Helpers {
 
     static String cacheValueFromConfigJson(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
-        Entry entry = new Entry(config, "fakeTag", json, CacheUtils.DateTimeUtils.format(System.currentTimeMillis()));
-        return CacheUtils.serialize(entry);
+        Entry entry = new Entry(config, "fakeTag", json, DateTimeUtils.format(System.currentTimeMillis()));
+        return entry.serialize();
     }
 
     static void waitFor(Supplier<Boolean> predicate) throws InterruptedException {
