@@ -114,7 +114,7 @@ class ConfigFetcher implements Closeable {
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
                     String fetchTime = response.headers().get("date");
-                    if(fetchTime == null || fetchTime.isEmpty() || !CacheUtils.DateTimeUtils.isValidDate(fetchTime)){
+                    if(fetchTime == null || fetchTime.isEmpty() || CacheUtils.DateTimeUtils.isValidDate(fetchTime)){
                         fetchTime = CacheUtils.DateTimeUtils.format(System.currentTimeMillis());
                     }
                     if (response.isSuccessful() && body != null) {
