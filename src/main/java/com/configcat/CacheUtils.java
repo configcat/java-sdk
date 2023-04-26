@@ -15,7 +15,7 @@ public final class CacheUtils {
 
         /**
          * HTTP Date header formatter. Date: day-name, day month year hour:minute:second GMT
-         * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Date
+         *  @see <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Date>mdn docs</a>
          */
         public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
 
@@ -53,7 +53,7 @@ public final class CacheUtils {
             throw new Exception("Number of values is fewer than expected.");
         }
         String fetchTimeRaw = cacheValue.substring(0, fetchTimeIndex);
-        if (!CacheUtils.DateTimeUtils.isValidDate(fetchTimeRaw)) {
+        if (DateTimeUtils.isValidDate(fetchTimeRaw)) {
             throw new Exception("Invalid fetch time: " + fetchTimeRaw);
         }
 
@@ -61,7 +61,7 @@ public final class CacheUtils {
         if (eTag.isEmpty()) {
             throw new Exception("Empty eTag value.");
         }
-        String configJson = cacheValue.substring(eTagIndex + 1, cacheValue.length());
+        String configJson = cacheValue.substring(eTagIndex + 1);
         if (configJson.isEmpty()) {
             throw new Exception("Empty config jsom value.");
         }
