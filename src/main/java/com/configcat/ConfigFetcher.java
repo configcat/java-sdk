@@ -103,7 +103,7 @@ class ConfigFetcher implements Closeable {
                 if (!isClosed.get()) {
                     if (e instanceof SocketTimeoutException) {
                         logEventId = 1102;
-                        message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis() ,httpClient.readTimeoutMillis() ,httpClient.writeTimeoutMillis());
+                        message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
                     }
                     logger.error(logEventId, message, e);
                 }
@@ -114,7 +114,7 @@ class ConfigFetcher implements Closeable {
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
                     String fetchTime = response.headers().get("date");
-                    if(fetchTime == null || fetchTime.isEmpty() || CacheUtils.DateTimeUtils.isValidDate(fetchTime)){
+                    if (fetchTime == null || fetchTime.isEmpty() || CacheUtils.DateTimeUtils.isValidDate(fetchTime)) {
                         fetchTime = CacheUtils.DateTimeUtils.format(System.currentTimeMillis());
                     }
                     if (response.isSuccessful() && body != null) {
@@ -135,12 +135,12 @@ class ConfigFetcher implements Closeable {
                         logger.error(1100, message);
                         future.complete(FetchResponse.failed(message, true, fetchTime));
                     } else {
-                        String message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(),response.message());
+                        String message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message());
                         logger.error(1101, message);
                         future.complete(FetchResponse.failed(message, false, null));
                     }
                 } catch (SocketTimeoutException e) {
-                    String message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis() ,httpClient.readTimeoutMillis() ,httpClient.writeTimeoutMillis());
+                    String message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
                     logger.error(1102, message, e);
                     future.complete(FetchResponse.failed(message, false, null));
                 } catch (Exception e) {

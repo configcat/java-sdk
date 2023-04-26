@@ -38,7 +38,9 @@ class FetchResponse {
         return this.error;
     }
 
-    public String getFetchTime() {return  this.fetchTime;}
+    public String getFetchTime() {
+        return this.fetchTime;
+    }
 
     FetchResponse(Status status, Entry entry, String error, boolean fetchTimeUpdatable, String fetchTime) {
         this.status = status;
