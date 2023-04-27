@@ -11,7 +11,7 @@ public class EntrySerializationTest {
     private static final String SERIALIZED_DATA = "%s\n%s\n%s";
 
     @Test
-    public void serialize() {
+    void serialize() {
         String json = String.format(TEST_JSON, "test", "1");
         Config config = Utils.gson.fromJson(json, Config.class);
         String fetchTimeRaw = DateTimeUtils.format(System.currentTimeMillis());
@@ -23,7 +23,7 @@ public class EntrySerializationTest {
     }
 
     @Test
-    public void deserialize() throws Exception {
+    void deserialize() throws Exception {
         String json = String.format(TEST_JSON, "test", "1");
         long currentTimeMillis = System.currentTimeMillis();
         String fetchTimeRaw = DateTimeUtils.format(currentTimeMillis);
@@ -31,15 +31,15 @@ public class EntrySerializationTest {
         Entry entry = Entry.fromString(String.format(SERIALIZED_DATA, fetchTimeRaw, "fakeTag", json));
 
         assertNotNull(entry);
-        assertEquals(entry.getFetchTimeRaw(), fetchTimeRaw);
-        assertEquals(entry.getETag(), "fakeTag");
-        assertEquals(entry.getConfigJson(), json);
-        assertEquals(entry.getConfig().getEntries().size(), 1);
-        assertEquals(entry.getFetchTime(), Math.ceil(currentTimeMillis / 1000) * 1000);
+        assertEquals(fetchTimeRaw, entry.getFetchTimeRaw());
+        assertEquals("fakeTag", entry.getETag());
+        assertEquals(json, entry.getConfigJson());
+        assertEquals(1, entry.getConfig().getEntries().size());
+        assertEquals(Math.ceil(currentTimeMillis / 1000) * 1000, entry.getFetchTime());
     }
 
     @Test
-    public void deserializeMissingValue() throws Exception {
+    void deserializeMissingValue() throws Exception {
         Entry deserializeNull = Entry.fromString(null);
         assertTrue(deserializeNull.isEmpty());
         Entry deserializeEmpty = Entry.fromString("");
@@ -47,7 +47,7 @@ public class EntrySerializationTest {
     }
 
     @Test
-    public void deserializeWrongFormat() throws Exception {
+    void deserializeWrongFormat() {
         Exception assertThrows = assertThrows(Exception.class, () -> Entry.fromString("value with no new line"));
         assertEquals("Number of values is fewer than expected.", assertThrows.getMessage());
 
@@ -56,14 +56,14 @@ public class EntrySerializationTest {
     }
 
     @Test
-    public void deserializeInvalidDate() throws Exception {
+    void deserializeInvalidDate() {
         Exception assertThrows = assertThrows(Exception.class, () -> Entry.fromString(String.format(SERIALIZED_DATA, "invalid", "fakeTag", "json")));
 
         assertEquals("Invalid fetch time: invalid", assertThrows.getMessage());
     }
 
     @Test
-    public void deserializeInvalidETag() {
+    void deserializeInvalidETag() {
         long currentTimeMillis = System.currentTimeMillis();
         String fetchTimeRaw = DateTimeUtils.format(currentTimeMillis);
         Exception assertThrows = assertThrows(Exception.class, () -> Entry.fromString(String.format(SERIALIZED_DATA, fetchTimeRaw, "", "json")));
@@ -72,7 +72,7 @@ public class EntrySerializationTest {
     }
 
     @Test
-    public void deserializeInvalidJson() {
+    void deserializeInvalidJson() {
         long currentTimeMillis = System.currentTimeMillis();
         String fetchTimeRaw = DateTimeUtils.format(currentTimeMillis);
         Exception assertThrows = assertThrows(Exception.class, () -> Entry.fromString(String.format(SERIALIZED_DATA, fetchTimeRaw, "fakeTag", "")));
