@@ -1,6 +1,9 @@
 package com.configcat;
 
 import com.configcat.log.ConfigCatLogger;
+import com.configcat.polling.LazyLoadingMode;
+import com.configcat.polling.PollingMode;
+import com.configcat.polling.PollingModes;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;

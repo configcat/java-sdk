@@ -2,6 +2,9 @@ package com.configcat;
 
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
+import com.configcat.polling.AutoPollingMode;
+import com.configcat.polling.LazyLoadingMode;
+import com.configcat.polling.PollingMode;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 

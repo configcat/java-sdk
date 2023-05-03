@@ -7,6 +7,8 @@ import com.configcat.log.LogLevel;
 import com.configcat.override.OverrideBehaviour;
 import com.configcat.override.OverrideDataSource;
 import com.configcat.override.OverrideDataSourceBuilder;
+import com.configcat.polling.PollingMode;
+import com.configcat.polling.PollingModes;
 import com.google.gson.JsonElement;
 import okhttp3.OkHttpClient;
 import org.slf4j.LoggerFactory;

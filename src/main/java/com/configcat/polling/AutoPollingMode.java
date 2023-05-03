@@ -1,6 +1,6 @@
-package com.configcat;
+package com.configcat.polling;
 
-class AutoPollingMode extends PollingMode {
+public class AutoPollingMode extends PollingMode {
     private final int autoPollRateInSeconds;
     private final int maxInitWaitTimeSeconds;
 
@@ -12,7 +12,7 @@ class AutoPollingMode extends PollingMode {
         this.maxInitWaitTimeSeconds = maxInitWaitTimeSeconds;
     }
 
-    int getAutoPollRateInSeconds() {
+    public int getAutoPollRateInSeconds() {
         return autoPollRateInSeconds;
     }
 
@@ -21,7 +21,7 @@ class AutoPollingMode extends PollingMode {
     }
 
     @Override
-    String getPollingIdentifier() {
+    public String getPollingIdentifier() {
         return "a";
     }
 }

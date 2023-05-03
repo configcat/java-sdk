@@ -1,4 +1,4 @@
-package com.configcat;
+package com.configcat.polling;
 
 /**
  * Describes the polling modes.

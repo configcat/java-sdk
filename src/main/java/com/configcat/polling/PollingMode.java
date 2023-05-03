@@ -1,10 +1,10 @@
-package com.configcat;
+package com.configcat.polling;
 
 /**
  * The base class of a polling mode configuration.
  */
 public abstract class PollingMode {
-    String getPollingIdentifier() {
+    public String getPollingIdentifier() {
         return "n/a";
     }
 }

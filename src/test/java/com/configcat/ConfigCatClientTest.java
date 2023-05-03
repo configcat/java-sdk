@@ -1,6 +1,7 @@
 package com.configcat;
 
 import com.configcat.evaluation.EvaluationDetails;
+import com.configcat.polling.PollingModes;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
