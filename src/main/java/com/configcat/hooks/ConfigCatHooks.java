@@ -1,7 +1,7 @@
 package com.configcat.hooks;
 
-import com.configcat.Setting;
 import com.configcat.evaluation.EvaluationDetails;
+import com.configcat.models.Setting;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,7 @@
 package com.configcat.fetch;
 
-import com.configcat.Entry;
+
+import com.configcat.models.Entry;
 
 public class FetchResponse {
     public enum Status {

@@ -1,4 +1,4 @@
-package com.configcat.evaluation;
+package com.configcat.models;
 
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;

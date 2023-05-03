@@ -1,4 +1,4 @@
-package com.configcat;
+package com.configcat.models;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -19,7 +19,7 @@ public class Config {
         return entries;
     }
 
-    boolean isEmpty() {
+     public boolean isEmpty() {
         return EMPTY.equals(this);
     }
 

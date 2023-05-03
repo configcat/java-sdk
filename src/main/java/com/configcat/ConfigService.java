@@ -6,6 +6,7 @@ import com.configcat.fetch.FetchResponse;
 import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
+import com.configcat.models.Entry;
 import com.configcat.polling.AutoPollingMode;
 import com.configcat.polling.LazyLoadingMode;
 import com.configcat.polling.PollingMode;

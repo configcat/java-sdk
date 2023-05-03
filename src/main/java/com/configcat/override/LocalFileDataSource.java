@@ -1,9 +1,10 @@
 package com.configcat.override;
 
-import com.configcat.Config;
-import com.configcat.Setting;
+
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
+import com.configcat.models.Config;
+import com.configcat.models.Setting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;

@@ -1,5 +1,8 @@
 package com.configcat;
 
+import com.configcat.models.Config;
+import com.configcat.models.Entry;
+
 import java.util.function.Supplier;
 
 final class Helpers {

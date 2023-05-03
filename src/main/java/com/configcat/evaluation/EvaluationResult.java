@@ -1,5 +1,7 @@
 package com.configcat.evaluation;
 
+import com.configcat.models.PercentageRule;
+import com.configcat.models.RolloutRule;
 import com.google.gson.JsonElement;
 
 public class EvaluationResult {

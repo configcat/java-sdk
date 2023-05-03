@@ -1,6 +1,6 @@
 package com.configcat.override;
 
-import com.configcat.Setting;
+import com.configcat.models.Setting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 

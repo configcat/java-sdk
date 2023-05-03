@@ -1,4 +1,7 @@
-package com.configcat;
+package com.configcat.models;
+
+import com.configcat.DateTimeUtils;
+import com.configcat.Utils;
 
 public class Entry {
     private final Config config;
@@ -37,7 +40,7 @@ public class Entry {
         this.fetchTimeRaw = fetchTimeRaw;
     }
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return EMPTY.equals(this);
     }
 

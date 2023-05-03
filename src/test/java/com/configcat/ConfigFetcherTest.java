@@ -6,6 +6,8 @@ import com.configcat.fetch.FetchResponse;
 import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogger;
 import com.configcat.log.LogLevel;
+import com.configcat.models.Config;
+import com.configcat.models.Entry;
 import com.configcat.polling.PollingModes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

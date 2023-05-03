@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.models.Config;
+import com.configcat.models.Entry;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

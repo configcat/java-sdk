@@ -2,6 +2,8 @@ package com.configcat.evaluation;
 
 import com.configcat.Constants;
 import com.configcat.User;
+import com.configcat.models.PercentageRule;
+import com.configcat.models.RolloutRule;
 
 /**
  * Additional information about flag evaluation.

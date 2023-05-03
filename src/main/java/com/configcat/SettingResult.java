@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.models.Setting;
+
 import java.util.HashMap;
 import java.util.Map;
 

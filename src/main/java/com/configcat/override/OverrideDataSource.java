@@ -1,6 +1,6 @@
 package com.configcat.override;
 
-import com.configcat.Setting;
+import com.configcat.models.Setting;
 
 import java.io.Closeable;
 import java.io.IOException;
