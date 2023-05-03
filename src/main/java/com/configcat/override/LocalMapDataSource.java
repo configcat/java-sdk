@@ -1,12 +1,13 @@
-package com.configcat;
+package com.configcat.override;
 
+import com.configcat.Setting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
 
-class LocalMapDataSource extends OverrideDataSource {
+public class LocalMapDataSource extends OverrideDataSource {
     private final Map<String, Setting> loadedSettings = new HashMap<>();
 
     public LocalMapDataSource(Map<String, Object> source) {

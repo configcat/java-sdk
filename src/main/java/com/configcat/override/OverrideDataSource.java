@@ -1,11 +1,13 @@
-package com.configcat;
+package com.configcat.override;
+
+import com.configcat.Setting;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-class OverrideDataSource implements Closeable {
+public class OverrideDataSource implements Closeable {
     public Map<String, Setting> getLocalConfiguration() {
         return new HashMap<>();
     }

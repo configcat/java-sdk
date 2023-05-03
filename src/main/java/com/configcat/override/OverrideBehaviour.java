@@ -1,4 +1,4 @@
-package com.configcat;
+package com.configcat.override;
 
 /**
  * Describes how the overrides should behave.

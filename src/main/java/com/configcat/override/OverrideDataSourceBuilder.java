@@ -1,4 +1,4 @@
-package com.configcat;
+package com.configcat.override;
 
 import com.configcat.log.ConfigCatLogger;
 
@@ -23,7 +23,7 @@ public class OverrideDataSourceBuilder {
         this.map = map;
     }
 
-    OverrideDataSource build(ConfigCatLogger logger) {
+    public OverrideDataSource build(ConfigCatLogger logger) {
         if (this.map != null) {
             return new LocalMapDataSource(this.map);
         }

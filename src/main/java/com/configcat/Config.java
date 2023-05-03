@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
 import java.util.Map;
 
-class Config {
+public class Config {
     @SerializedName(value = "p")
     private Preferences preferences;
     @SerializedName(value = "f")
@@ -25,19 +25,3 @@ class Config {
 
     public static final Config EMPTY = new Config();
 }
-
-class Preferences {
-    @SerializedName(value = "u")
-    private String baseUrl;
-    @SerializedName(value = "r")
-    private int redirect;
-
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
-    public int getRedirect() {
-        return redirect;
-    }
-}
-

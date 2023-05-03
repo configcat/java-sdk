@@ -1,5 +1,7 @@
-package com.configcat;
+package com.configcat.override;
 
+import com.configcat.Config;
+import com.configcat.Setting;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
 import com.google.gson.Gson;
@@ -17,7 +19,7 @@ import java.util.Map;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
-class LocalFileDataSource extends OverrideDataSource {
+public class LocalFileDataSource extends OverrideDataSource {
 
     private final ConfigCatLogger logger;
     private final Gson gson = new GsonBuilder().create();
