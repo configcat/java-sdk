@@ -163,7 +163,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return EvaluationDetails.fromError(key, defaultValue, error + ": " + e.getMessage(), user);
         } catch (Exception e) {
-            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails",key,"defaultValue", defaultValue), e);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
             return EvaluationDetails.fromError(key, defaultValue, e.getMessage(), user);
         }
     }
@@ -188,7 +188,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         return this.getSettingsAsync()
-                .thenApply(settingsResult -> { 
+                .thenApply(settingsResult -> {
                     Result<Setting> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
                     if (checkSettingResult.error() != null) {
                         EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.error(), user);
@@ -197,7 +197,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     }
 
                     return this.evaluate(classOfT, checkSettingResult.value(),
-                        key, user != null ? user : this.defaultUser, settingsResult.fetchTime());
+                            key, user != null ? user : this.defaultUser, settingsResult.fetchTime());
                 });
     }
 
@@ -210,7 +210,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return new HashMap<>();
         } catch (Exception e) {
-            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValues", "empty map" ), e);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValues", "empty map"), e);
             return new HashMap<>();
         }
     }
@@ -238,7 +238,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error(1002,ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValuesAsync", "empty map" ), e);
+                        this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValuesAsync", "empty map"), e);
                         return new HashMap<>();
                     }
                 });
@@ -253,7 +253,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValueDetails", "empty list" ), e);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValueDetails", "empty list"), e);
             return new ArrayList<>();
         }
     }
@@ -280,7 +280,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValueDetailsAsync", "empty list" ), e);
+                        this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValueDetailsAsync", "empty list"), e);
                         return new ArrayList<>();
                     }
                 });
@@ -298,7 +298,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return null;
         } catch (Exception e) {
-            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getKeyAndValue", "null" ), e);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getKeyAndValue", "null"), e);
             return null;
         }
     }
@@ -321,7 +321,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error(0, "Thread interrupted.", e);
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllKeys", "empty array" ), e);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllKeys", "empty array"), e);
             return new ArrayList<>();
         }
     }
@@ -337,7 +337,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return settingResult.settings().keySet();
                     } catch (Exception e) {
-                        this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllKeysAsync", "empty array" ), e);
+                        this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllKeysAsync", "empty array"), e);
                         return new ArrayList<>();
                     }
                 });
@@ -725,7 +725,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         /**
          * Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard:
-         * https://app.configcat.com/organization/data-governance (Only Organization Admins have access)
+         * @see <a href="https://app.configcat.com/organization/data-governance"/> (Only Organization Admins have access)
          *
          * @param dataGovernance the {@link DataGovernance} parameter.
          */

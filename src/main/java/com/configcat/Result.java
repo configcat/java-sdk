@@ -21,7 +21,7 @@ public final class Result<T> {
         return new Result<>(value, error);
     }
 
-   public static <T> Result<T> success(T value) {
+    public static <T> Result<T> success(T value) {
         return new Result<>(value, null);
     }
 }

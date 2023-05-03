@@ -11,17 +11,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class RolloutIntegrationTests {
     private static final String VARIATION_TEST_KIND = "variation";
     private static final String VALUE_TEST_KIND = "value";
 
-    private ConfigCatClient client;
-    private Scanner csvScanner;
-    private String kind;
+    private final ConfigCatClient client;
+    private final Scanner csvScanner;
+    private final String kind;
 
     @Parameterized.Parameters(name
             = "{index}: Test with File={0}, ApiKey={1}")
@@ -97,7 +96,7 @@ public class RolloutIntegrationTests {
                 } else {
                     value = client.getValue(String.class, settingKey, user, null);
                 }
-                if (!value.toLowerCase().equals(testObject[i + 4].toLowerCase())) {
+                if (!value.equalsIgnoreCase(testObject[i + 4])) {
                     errors.add(String.format("Identifier: %s, Key: %s. UV: %s Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[3], testObject[i + 4], value));
                 }
                 i++;
@@ -109,6 +108,6 @@ public class RolloutIntegrationTests {
                 System.out.println(error);
             });
         }
-        assertTrue("Errors found: " + errors.size(), errors.size() == 0);
+        assertEquals("Errors found: " + errors.size(), 0, errors.size());
     }
 }

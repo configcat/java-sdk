@@ -32,11 +32,11 @@ public class ConfigFetcher implements Closeable {
     }
 
     public ConfigFetcher(OkHttpClient httpClient,
-                  ConfigCatLogger logger,
-                  String sdkKey,
-                  String url,
-                  boolean urlIsCustom,
-                  String pollingIdentifier) {
+                         ConfigCatLogger logger,
+                         String sdkKey,
+                         String url,
+                         boolean urlIsCustom,
+                         String pollingIdentifier) {
         this.logger = logger;
         this.sdkKey = sdkKey;
         this.urlIsCustom = urlIsCustom;

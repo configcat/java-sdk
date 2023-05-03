@@ -9,7 +9,7 @@ public class Config {
     @SerializedName(value = "p")
     private Preferences preferences;
     @SerializedName(value = "f")
-    private Map<String, Setting> entries = new HashMap<>();
+    private final Map<String, Setting> entries = new HashMap<>();
 
     public Preferences getPreferences() {
         return preferences;
@@ -19,7 +19,7 @@ public class Config {
         return entries;
     }
 
-     public boolean isEmpty() {
+    public boolean isEmpty() {
         return EMPTY.equals(this);
     }
 

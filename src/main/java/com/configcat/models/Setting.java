@@ -32,7 +32,7 @@ public class Setting {
      * Variation ID (for analytical purposes).
      */
     @SerializedName(value = "i")
-    private String variationId = "";
+    private final String variationId = "";
 
     public void setValue(JsonElement value) {
         this.value = value;
