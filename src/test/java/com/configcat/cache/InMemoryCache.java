@@ -1,17 +1,17 @@
-package com.configcat;
+package com.configcat.cache;
 
 import java.util.HashMap;
 
-class InMemoryCache extends ConfigCache {
+public class InMemoryCache extends ConfigCache {
     HashMap<String, String> map = new HashMap<>();
 
     @Override
-    protected String read(String key) {
+    public String read(String key) {
         return map.get(key);
     }
 
     @Override
-    protected void write(String key, String value) {
+    public void write(String key, String value) {
         this.map.put(key, value);
     }
 

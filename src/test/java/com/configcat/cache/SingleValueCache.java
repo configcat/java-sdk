@@ -1,6 +1,6 @@
-package com.configcat;
+package com.configcat.cache;
 
-class SingleValueCache extends ConfigCache {
+public class SingleValueCache extends ConfigCache {
     private String value;
 
     public SingleValueCache(String value) {
@@ -8,12 +8,12 @@ class SingleValueCache extends ConfigCache {
     }
 
     @Override
-    protected String read(String key) {
+    public String read(String key) {
         return this.value;
     }
 
     @Override
-    protected void write(String key, String value) {
+    public void write(String key, String value) {
         this.value = value;
     }
 }

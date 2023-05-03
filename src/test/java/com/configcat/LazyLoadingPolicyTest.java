@@ -1,5 +1,9 @@
 package com.configcat;
 
+import com.configcat.cache.ConfigCache;
+import com.configcat.cache.FailingCache;
+import com.configcat.cache.NullConfigCache;
+import com.configcat.cache.SingleValueCache;
 import com.configcat.log.ConfigCatLogger;
 import com.configcat.polling.LazyLoadingMode;
 import com.configcat.polling.PollingMode;

@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.cache.ConfigCache;
+import com.configcat.cache.NullConfigCache;
 import com.configcat.evaluation.*;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
