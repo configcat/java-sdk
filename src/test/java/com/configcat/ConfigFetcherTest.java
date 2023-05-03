@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.log.ConfigCatLogger;
+import com.configcat.log.LogLevel;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.OkHttpClient;

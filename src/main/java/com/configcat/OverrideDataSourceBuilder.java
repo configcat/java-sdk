@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.log.ConfigCatLogger;
+
 import java.util.Map;
 
 /**

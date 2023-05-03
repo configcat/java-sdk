@@ -1,4 +1,4 @@
-package com.configcat;
+package com.configcat.log;
 
 /**
  * Describes the log level.

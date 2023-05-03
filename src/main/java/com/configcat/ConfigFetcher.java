@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.log.ConfigCatLogMessages;
+import com.configcat.log.ConfigCatLogger;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 

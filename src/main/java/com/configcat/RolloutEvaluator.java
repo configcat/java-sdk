@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.log.ConfigCatLogMessages;
+import com.configcat.log.ConfigCatLogger;
 import com.google.gson.JsonElement;
 import de.skuzzle.semantic.Version;
 import org.apache.commons.codec.binary.Hex;

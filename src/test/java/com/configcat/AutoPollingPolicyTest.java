@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.log.ConfigCatLogger;
+import com.configcat.log.LogLevel;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;

@@ -1,8 +1,9 @@
-package com.configcat;
+package com.configcat.log;
 
+import com.configcat.ConfigCatHooks;
 import org.slf4j.Logger;
 
-class ConfigCatLogger {
+public class ConfigCatLogger {
     private final Logger logger;
     private final LogLevel logLevel;
     private final ConfigCatHooks configCatHooks;

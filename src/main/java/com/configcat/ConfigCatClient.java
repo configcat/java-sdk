@@ -1,5 +1,8 @@
 package com.configcat;
 
+import com.configcat.log.ConfigCatLogMessages;
+import com.configcat.log.ConfigCatLogger;
+import com.configcat.log.LogLevel;
 import com.google.gson.JsonElement;
 import okhttp3.OkHttpClient;
 import org.slf4j.LoggerFactory;
