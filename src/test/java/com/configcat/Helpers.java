@@ -4,13 +4,10 @@ import java.util.function.Supplier;
 
 final class Helpers {
 
-    static String entryStringFromConfigString(String json) {
+    static String cacheValueFromConfigJson(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
-        return entryToJson(new Entry(config, "fakeTag", System.currentTimeMillis()));
-    }
-
-    static String entryToJson(Entry entry) {
-        return Utils.gson.toJson(entry);
+        Entry entry = new Entry(config, "fakeTag", json, DateTimeUtils.format(System.currentTimeMillis()));
+        return entry.serialize();
     }
 
     static void waitFor(Supplier<Boolean> predicate) throws InterruptedException {

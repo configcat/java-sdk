@@ -14,12 +14,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ConfigService implements Closeable {
 
-    private static final String CACHE_BASE = "java_" + Constants.CONFIG_JSON_NAME + "_%s";
+    private static final String CACHE_BASE = "%s_" + Constants.CONFIG_JSON_NAME + "_" + Constants.SERIALIZATION_FORMAT_VERSION;
 
     private Entry cachedEntry = Entry.EMPTY;
     private String cachedEntryString = "";
     private final ConfigCache cache;
-
     private final String cacheKey;
     private final ConfigFetcher configFetcher;
     private final ConfigCatLogger logger;
@@ -105,13 +104,13 @@ public class ConfigService implements Closeable {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode) pollingMode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
                     .thenApply(entryResult -> !entryResult.value().isEmpty()
-                        ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
-                        : SettingResult.EMPTY);
+                            ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
+                            : SettingResult.EMPTY);
         } else {
             return fetchIfOlder(Constants.DISTANT_PAST, true)
                     .thenApply(entryResult -> !entryResult.value().isEmpty()
-                        ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
-                        : SettingResult.EMPTY);
+                            ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
+                            : SettingResult.EMPTY);
         }
 
     }
@@ -210,7 +209,7 @@ public class ConfigService implements Closeable {
                 completeRunningTask(Result.success(entry));
             } else {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
+                    cachedEntry = cachedEntry.withFetchTime(response.getFetchTime());
                     writeCache(cachedEntry);
                 }
                 completeRunningTask(response.isFailed()
@@ -229,12 +228,12 @@ public class ConfigService implements Closeable {
 
     private Entry readCache() {
         try {
-            String json = cache.read(cacheKey);
-            if (json != null && json.equals(cachedEntryString)) {
+            String cachedConfigJson = cache.read(cacheKey);
+            if (cachedConfigJson != null && cachedConfigJson.equals(cachedEntryString)) {
                 return Entry.EMPTY;
             }
-            cachedEntryString = json;
-            Entry deserialized = Utils.gson.fromJson(json, Entry.class);
+            cachedEntryString = cachedConfigJson;
+            Entry deserialized = Entry.fromString(cachedConfigJson);
             return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
             this.logger.error(2200, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_READ_ERROR, e);
@@ -244,7 +243,7 @@ public class ConfigService implements Closeable {
 
     private void writeCache(Entry entry) {
         try {
-            String configToCache = Utils.gson.toJson(entry);
+            String configToCache = entry.serialize();
             cachedEntryString = configToCache;
             cache.write(cacheKey, configToCache);
         } catch (Exception e) {
