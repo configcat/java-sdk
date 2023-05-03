@@ -1,5 +1,6 @@
-package com.configcat;
+package com.configcat.hooks;
 
+import com.configcat.Setting;
 import com.configcat.evaluation.EvaluationDetails;
 
 import java.util.ArrayList;

@@ -1,6 +1,6 @@
 package com.configcat.log;
 
-import com.configcat.ConfigCatHooks;
+import com.configcat.hooks.ConfigCatHooks;
 import org.slf4j.Logger;
 
 public class ConfigCatLogger {
