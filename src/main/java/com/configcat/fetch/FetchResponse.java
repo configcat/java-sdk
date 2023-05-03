@@ -1,6 +1,8 @@
-package com.configcat;
+package com.configcat.fetch;
 
-class FetchResponse {
+import com.configcat.Entry;
+
+public class FetchResponse {
     public enum Status {
         FETCHED,
         NOT_MODIFIED,

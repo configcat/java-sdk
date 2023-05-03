@@ -1,6 +1,6 @@
 package com.configcat;
 
-final class Result<T> {
+public final class Result<T> {
     private final T value;
     private final String error;
 
@@ -9,19 +9,19 @@ final class Result<T> {
         this.error = error;
     }
 
-    T value() {
+    public T value() {
         return this.value;
     }
 
-    String error() {
+    public String error() {
         return this.error;
     }
 
-    static <T> Result<T> error(String error, T value) {
+    public static <T> Result<T> error(String error, T value) {
         return new Result<>(value, error);
     }
 
-    static <T> Result<T> success(T value) {
+   public static <T> Result<T> success(T value) {
         return new Result<>(value, null);
     }
 }
