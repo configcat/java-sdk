@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.evaluation.EvaluationDetails;
+
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;

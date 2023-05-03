@@ -26,7 +26,7 @@ public class User {
             this.attributes.putAll(custom);
     }
 
-    String getIdentifier() {
+    public String getIdentifier() {
         return this.identifier;
     }
 
@@ -39,7 +39,7 @@ public class User {
         return new Builder();
     }
 
-    String getAttribute(String key) {
+    public String getAttribute(String key) {
         if (key == null)
             throw new IllegalArgumentException("key is null or empty");
 

@@ -1,4 +1,7 @@
-package com.configcat;
+package com.configcat.evaluation;
+
+import com.configcat.Constants;
+import com.configcat.User;
 
 /**
  * Additional information about flag evaluation.
@@ -34,11 +37,11 @@ public class EvaluationDetails<T> {
         this.matchedEvaluationPercentageRule = matchedEvaluationPercentageRule;
     }
 
-    static <T> EvaluationDetails<T> fromError(String key, T defaultValue, String error, User user) {
+    public static <T> EvaluationDetails<T> fromError(String key, T defaultValue, String error, User user) {
         return new EvaluationDetails<>(defaultValue, key, "", user, true, error, Constants.DISTANT_PAST, null, null);
     }
 
-    <TR> EvaluationDetails<TR> asTypeSpecific() {
+    public <TR> EvaluationDetails<TR> asTypeSpecific() {
         return new EvaluationDetails<>((TR) value, key, variationId, user, isDefaultValue, error, fetchTimeUnixMilliseconds, matchedEvaluationRule, matchedEvaluationPercentageRule);
     }
 

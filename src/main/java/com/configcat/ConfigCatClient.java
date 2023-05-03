@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.configcat.evaluation.*;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
 import com.configcat.log.LogLevel;

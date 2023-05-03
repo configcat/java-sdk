@@ -1,8 +1,8 @@
-package com.configcat;
+package com.configcat.evaluation;
 
 import com.google.gson.JsonElement;
 
-class EvaluationResult {
+public class EvaluationResult {
     public final JsonElement value;
     public final String variationId;
     public final RolloutRule targetingRule;

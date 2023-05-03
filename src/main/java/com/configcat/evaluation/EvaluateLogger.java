@@ -1,4 +1,6 @@
-package com.configcat;
+package com.configcat.evaluation;
+
+import com.configcat.User;
 
 import java.util.ArrayList;
 import java.util.List;

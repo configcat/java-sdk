@@ -1,5 +1,7 @@
-package com.configcat;
+package com.configcat.evaluation;
 
+import com.configcat.Setting;
+import com.configcat.User;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
 import com.google.gson.JsonElement;
@@ -11,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-class RolloutEvaluator {
+public class RolloutEvaluator {
     protected static final String[] COMPARATOR_TEXTS = new String[]{
             "IS ONE OF",
             "IS NOT ONE OF",

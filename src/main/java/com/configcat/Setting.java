@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.evaluation.PercentageRule;
+import com.configcat.evaluation.RolloutRule;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 

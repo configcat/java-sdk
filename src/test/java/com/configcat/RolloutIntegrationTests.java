@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.configcat.evaluation.EvaluationDetails;
 import org.junit.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.runner.RunWith;
