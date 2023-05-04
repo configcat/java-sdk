@@ -174,13 +174,13 @@ public class ConfigFetcher implements Closeable {
         }
     }
 
-    Request getRequest(String etag) {
+    Request getRequest(String eTag) {
         String requestUrl = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME + ".json";
         Request.Builder builder = new Request.Builder()
                 .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/" + this.mode + "-" + Constants.VERSION);
 
-        if (etag != null && !etag.isEmpty())
-            builder.addHeader("If-None-Match", etag);
+        if (eTag != null && !eTag.isEmpty())
+            builder.addHeader("If-None-Match", eTag);
 
         return builder.url(requestUrl).build();
     }
