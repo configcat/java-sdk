@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.configcat.cache.CacheException;
 import com.configcat.cache.ConfigCache;
 import com.configcat.fetch.ConfigFetcher;
 import com.configcat.fetch.FetchResponse;
@@ -146,8 +147,8 @@ public class ConfigFetcherTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         ConfigCache cache = mock(ConfigCache.class);
 
-        doThrow(new Exception()).when(cache).read(anyString());
-        doThrow(new Exception()).when(cache).write(anyString(), anyString());
+        doThrow(new CacheException()).when(cache).read(anyString());
+        doThrow(new CacheException()).when(cache).write(anyString(), anyString());
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
                 logger,

@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.configcat.cache.CacheException;
 import com.configcat.cache.ConfigCache;
 import com.configcat.cache.NullConfigCache;
 import com.configcat.cache.SingleValueCache;
@@ -171,8 +172,8 @@ public class AutoPollingPolicyTest {
 
         ConfigCache cache = mock(ConfigCache.class);
 
-        doThrow(new Exception()).when(cache).read(anyString());
-        doThrow(new Exception()).when(cache).write(anyString(), anyString());
+        doThrow(new CacheException()).when(cache).read(anyString());
+        doThrow(new CacheException()).when(cache).write(anyString(), anyString());
 
         PollingMode pollingMode = PollingModes.autoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
