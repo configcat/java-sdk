@@ -1,6 +1,6 @@
 package com.configcat.polling;
 
-public class LazyLoadingMode extends PollingMode {
+public class LazyLoadingMode implements PollingMode {
     private final int cacheRefreshIntervalInSeconds;
 
     LazyLoadingMode(int cacheRefreshIntervalInSeconds) {

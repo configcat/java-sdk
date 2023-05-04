@@ -1,6 +1,6 @@
 package com.configcat.cache;
 
-public class SingleValueCache extends ConfigCache {
+public class SingleValueCache implements ConfigCache {
     private String value;
 
     public SingleValueCache(String value) {

@@ -3,7 +3,7 @@ package com.configcat.cache;
 /**
  * A cache API used to make custom cache implementations for {@link com.configcat.ConfigCatClient}.
  */
-public abstract class ConfigCache {
+public interface ConfigCache {
     /**
      * Child classes has to implement this method, the {@link com.configcat.ConfigCatClient}
      * uses it to get the actual value from the cache.
@@ -12,7 +12,7 @@ public abstract class ConfigCache {
      * @return the cached configuration.
      * @throws Exception if unable to read the cache.
      */
-    public abstract String read(String key) throws Exception;
+     String read(String key) throws Exception;
 
     /**
      * * Child classes has to implement this method, the {@link com.configcat.ConfigCatClient}
@@ -22,6 +22,6 @@ public abstract class ConfigCache {
      * @param value the new value to cache.
      * @throws Exception if unable to save the value.
      */
-    public abstract void write(String key, String value) throws Exception;
+     void write(String key, String value) throws Exception;
 }
 

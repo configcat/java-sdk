@@ -26,9 +26,9 @@ public class ConfigFetcher implements Closeable {
     private String url;
 
     enum RedirectMode {
-        NoRedirect,
-        ShouldRedirect,
-        ForceRedirect
+        NO_REDIRECT,
+        SHOULD_REDIRECT,
+        FORCE_REDIRECT
     }
 
     public ConfigFetcher(OkHttpClient httpClient,
@@ -69,16 +69,16 @@ public class ConfigFetcher implements Closeable {
                 int redirect = config.getPreferences().getRedirect();
 
                 // we have a custom url set, and we didn't get a forced redirect
-                if (this.urlIsCustom && redirect != RedirectMode.ForceRedirect.ordinal()) {
+                if (this.urlIsCustom && redirect != RedirectMode.FORCE_REDIRECT.ordinal()) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
                 this.url = newUrl;
 
-                if (redirect == RedirectMode.NoRedirect.ordinal()) { // no redirect
+                if (redirect == RedirectMode.NO_REDIRECT.ordinal()) { // no redirect
                     return CompletableFuture.completedFuture(fetchResponse);
                 } else { // redirect
-                    if (redirect == RedirectMode.ShouldRedirect.ordinal()) {
+                    if (redirect == RedirectMode.SHOULD_REDIRECT.ordinal()) {
                         this.logger.warn(3002, ConfigCatLogMessages.DATA_GOVERNANCE_IS_OUT_OF_SYNC_WARN);
                     }
 
@@ -175,14 +175,14 @@ public class ConfigFetcher implements Closeable {
     }
 
     Request getRequest(String etag) {
-        String url = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME + ".json";
+        String requestUrl = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME + ".json";
         Request.Builder builder = new Request.Builder()
                 .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/" + this.mode + "-" + Constants.VERSION);
 
         if (etag != null && !etag.isEmpty())
             builder.addHeader("If-None-Match", etag);
 
-        return builder.url(url).build();
+        return builder.url(requestUrl).build();
     }
 
     private Result<Config> deserializeConfig(String json) {

@@ -10,6 +10,10 @@ public final class PollingModes {
     private static final int DEFAULT_CACHE_REFRESH_INTERVAL_IN_SECONDS = 60;
 
 
+    private PollingModes() {
+        /* prevent from instantiation */
+    }
+
     /**
      * Set up the auto polling mode with default parameters.
      *

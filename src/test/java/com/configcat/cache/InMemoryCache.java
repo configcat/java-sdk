@@ -2,7 +2,7 @@ package com.configcat.cache;
 
 import java.util.HashMap;
 
-public class InMemoryCache extends ConfigCache {
+public class InMemoryCache implements ConfigCache {
     HashMap<String, String> map = new HashMap<>();
 
     @Override

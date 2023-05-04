@@ -724,8 +724,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         /**
-         * Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard:
-         * @see <a href="https://app.configcat.com/organization/data-governance"/> (Only Organization Admins have access)
+         * Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard. (Only Organization Admins have access)
+         *
+         * @see <a href="https://app.configcat.com/organization/data-governance">Data Governance</a>
          *
          * @param dataGovernance the {@link DataGovernance} parameter.
          */

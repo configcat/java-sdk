@@ -1,6 +1,6 @@
 package com.configcat.polling;
 
-public class AutoPollingMode extends PollingMode {
+public class AutoPollingMode implements PollingMode {
     private final int autoPollRateInSeconds;
     private final int maxInitWaitTimeSeconds;
 

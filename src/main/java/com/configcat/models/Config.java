@@ -9,7 +9,7 @@ public class Config {
     @SerializedName(value = "p")
     private Preferences preferences;
     @SerializedName(value = "f")
-    private final Map<String, Setting> entries = new HashMap<>();
+    private Map<String, Setting> entries = new HashMap<>();
 
     public Preferences getPreferences() {
         return preferences;

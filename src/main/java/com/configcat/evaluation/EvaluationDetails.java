@@ -49,6 +49,8 @@ public class EvaluationDetails<T> {
 
     /**
      * The evaluated value of the feature flag or setting.
+     *
+     * @return The value.
      */
     public T getValue() {
         return value;
