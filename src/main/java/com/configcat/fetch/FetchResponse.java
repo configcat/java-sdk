@@ -4,7 +4,7 @@ package com.configcat.fetch;
 import com.configcat.models.Entry;
 
 public class FetchResponse {
-    public enum Status {
+    enum Status {
         FETCHED,
         NOT_MODIFIED,
         FAILED
