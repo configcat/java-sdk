@@ -1,6 +1,5 @@
 package com.configcat;
 
-import com.configcat.log.ConfigCatLogger;
 import com.configcat.log.LogLevel;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;

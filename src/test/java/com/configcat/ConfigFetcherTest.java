@@ -2,10 +2,6 @@ package com.configcat;
 
 import com.configcat.cache.CacheException;
 import com.configcat.cache.ConfigCache;
-import com.configcat.fetch.ConfigFetcher;
-import com.configcat.fetch.FetchResponse;
-import com.configcat.hooks.ConfigCatHooks;
-import com.configcat.log.ConfigCatLogger;
 import com.configcat.log.LogLevel;
 import com.configcat.models.Config;
 import com.configcat.models.Entry;

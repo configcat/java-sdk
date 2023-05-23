@@ -1,4 +1,4 @@
-package com.configcat.fetch;
+package com.configcat;
 
 
 import com.configcat.models.Entry;

@@ -1,4 +1,4 @@
-package com.configcat.hooks;
+package com.configcat;
 
 import com.configcat.evaluation.EvaluationDetails;
 import com.configcat.models.Setting;
@@ -65,7 +65,7 @@ public class ConfigCatHooks {
         }
     }
 
-    public void invokeOnClientReady() {
+    void invokeOnClientReady() {
         synchronized (sync) {
             for (Runnable func : this.onClientReady) {
                 func.run();
@@ -73,7 +73,7 @@ public class ConfigCatHooks {
         }
     }
 
-    public void invokeOnError(String error) {
+    void invokeOnError(String error) {
         synchronized (sync) {
             for (Consumer<String> func : this.onError) {
                 func.accept(error);
@@ -81,7 +81,7 @@ public class ConfigCatHooks {
         }
     }
 
-    public void invokeOnConfigChanged(Map<String, Setting> settingMap) {
+    void invokeOnConfigChanged(Map<String, Setting> settingMap) {
         synchronized (sync) {
             for (Consumer<Map<String, Setting>> func : this.onConfigChanged) {
                 func.accept(settingMap);
@@ -89,7 +89,7 @@ public class ConfigCatHooks {
         }
     }
 
-    public void invokeOnFlagEvaluated(EvaluationDetails<Object> evaluationDetails) {
+    void invokeOnFlagEvaluated(EvaluationDetails<Object> evaluationDetails) {
         synchronized (sync) {
             for (Consumer<EvaluationDetails<Object>> func : this.onFlagEvaluated) {
                 func.accept(evaluationDetails);
@@ -97,7 +97,7 @@ public class ConfigCatHooks {
         }
     }
 
-    public void clear() {
+    void clear() {
         synchronized (sync) {
             this.onConfigChanged.clear();
             this.onError.clear();

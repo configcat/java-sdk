@@ -1,8 +1,5 @@
-package com.configcat.evaluation;
+package com.configcat;
 
-import com.configcat.User;
-import com.configcat.log.ConfigCatLogMessages;
-import com.configcat.log.ConfigCatLogger;
 import com.configcat.models.PercentageRule;
 import com.configcat.models.RolloutRule;
 import com.configcat.models.Setting;

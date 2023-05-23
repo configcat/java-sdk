@@ -1,8 +1,5 @@
-package com.configcat.fetch;
+package com.configcat;
 
-import com.configcat.*;
-import com.configcat.log.ConfigCatLogMessages;
-import com.configcat.log.ConfigCatLogger;
 import com.configcat.models.Config;
 import com.configcat.models.Entry;
 import okhttp3.*;
@@ -14,7 +11,7 @@ import java.net.SocketTimeoutException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ConfigFetcher implements Closeable {
+class ConfigFetcher implements Closeable {
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
     private final OkHttpClient httpClient;

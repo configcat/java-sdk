@@ -1,9 +1,9 @@
-package com.configcat.log;
+package com.configcat;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class ConfigCatLogMessages {
+final class ConfigCatLogMessages {
 
     /**
      * Log message for Config Service Cannot Initiate Http Calls warning. The log eventId 3200.

@@ -1,4 +1,4 @@
-package com.configcat.evaluation;
+package com.configcat;
 
 import com.configcat.models.PercentageRule;
 import com.configcat.models.RolloutRule;

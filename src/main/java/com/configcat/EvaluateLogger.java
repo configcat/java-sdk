@@ -1,11 +1,9 @@
-package com.configcat.evaluation;
-
-import com.configcat.User;
+package com.configcat;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class EvaluateLogger {
+class EvaluateLogger {
 
     public EvaluateLogger(final String key) {
         entries.add("Evaluating getValue(" + key + ").");

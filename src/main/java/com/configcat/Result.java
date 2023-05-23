@@ -1,6 +1,6 @@
 package com.configcat;
 
-public final class Result<T> {
+final class Result<T> {
     private final T value;
     private final String error;
 
