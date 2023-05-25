@@ -107,22 +107,19 @@ class ConfigFetcher implements Closeable {
                     }
                     logger.error(logEventId, message, e);
                 }
-                future.complete(FetchResponse.failed(message, false, null));
+                future.complete(FetchResponse.failed(message, false, Constants.DISTANT_PAST));
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
-                    String fetchTime = response.headers().get("date");
-                    if (fetchTime == null || fetchTime.isEmpty() || DateTimeUtils.isValidDate(fetchTime)) {
-                        fetchTime = DateTimeUtils.format(System.currentTimeMillis());
-                    }
+                    long fetchTime = System.currentTimeMillis();
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
                         Result<Config> result = deserializeConfig(content);
                         if (result.error() != null) {
-                            future.complete(FetchResponse.failed(result.error(), false, null));
+                            future.complete(FetchResponse.failed(result.error(), false, Constants.DISTANT_PAST));
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
@@ -137,16 +134,16 @@ class ConfigFetcher implements Closeable {
                     } else {
                         String message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message());
                         logger.error(1101, message);
-                        future.complete(FetchResponse.failed(message, false, null));
+                        future.complete(FetchResponse.failed(message, false, Constants.DISTANT_PAST));
                     }
                 } catch (SocketTimeoutException e) {
                     String message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
                     logger.error(1102, message, e);
-                    future.complete(FetchResponse.failed(message, false, null));
+                    future.complete(FetchResponse.failed(message, false, Constants.DISTANT_PAST));
                 } catch (Exception e) {
                     String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                     logger.error(1103, message, e);
-                    future.complete(FetchResponse.failed(message, false, null));
+                    future.complete(FetchResponse.failed(message, false, Constants.DISTANT_PAST));
                 }
             }
         });
