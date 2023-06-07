@@ -209,7 +209,7 @@ public class ConfigService implements Closeable {
                 completeRunningTask(Result.success(entry));
             } else {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry = cachedEntry.withFetchTime(response.getFetchTime());
+                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
                     writeCache(cachedEntry);
                 }
                 completeRunningTask(response.isFailed()
