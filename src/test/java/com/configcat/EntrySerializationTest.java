@@ -19,25 +19,25 @@ public class EntrySerializationTest {
 
         String serializedString = entry.serialize();
 
-        assertEquals(String.format(SERIALIZED_DATA, fetchTime / 1000, "fakeTag", json), serializedString);
+        assertEquals(String.format(SERIALIZED_DATA, fetchTime, "fakeTag", json), serializedString);
     }
 
     @Test
-    void deserialize() throws Exception {
+    void deserialize()  {
         String json = String.format(TEST_JSON, "test", "1");
         long currentTimeMillis = System.currentTimeMillis();
 
-        Entry entry = Entry.fromString(String.format(SERIALIZED_DATA, currentTimeMillis / 1000, "fakeTag", json));
+        Entry entry = Entry.fromString(String.format(SERIALIZED_DATA, currentTimeMillis, "fakeTag", json));
 
         assertNotNull(entry);
         assertEquals("fakeTag", entry.getETag());
         assertEquals(json, entry.getConfigJson());
         assertEquals(1, entry.getConfig().getEntries().size());
-        assertEquals(Math.ceil(currentTimeMillis / 1000) * 1000, entry.getFetchTime());
+        assertEquals(currentTimeMillis, entry.getFetchTime());
     }
 
     @Test
-    void deserializeMissingValue() throws Exception {
+    void deserializeMissingValue()  {
         Entry deserializeNull = Entry.fromString(null);
         assertTrue(deserializeNull.isEmpty());
         Entry deserializeEmpty = Entry.fromString("");

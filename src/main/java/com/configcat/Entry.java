@@ -40,8 +40,7 @@ public class Entry {
     public static final Entry EMPTY = new Entry(Config.EMPTY, "", "", Constants.DISTANT_PAST);
 
     public String serialize() {
-        long fetchTimeSeconds = fetchTime / 1000;
-        return fetchTimeSeconds + "\n" + getETag() + "\n" + getConfigJson();
+        return getFetchTime() + "\n" + getETag() + "\n" + getConfigJson();
     }
 
     public static Entry fromString(String cacheValue) throws IllegalArgumentException {
@@ -58,7 +57,7 @@ public class Entry {
         if (!DateTimeUtils.isValidDate(fetchTimeRaw)) {
             throw new IllegalArgumentException("Invalid fetch time: " + fetchTimeRaw);
         }
-        long fetchTimeUnixMillis = Long.parseLong(fetchTimeRaw) * 1000;
+        long fetchTimeUnixMillis = Long.parseLong(fetchTimeRaw);
 
 
         String eTag = cacheValue.substring(fetchTimeIndex + 1, eTagIndex);
