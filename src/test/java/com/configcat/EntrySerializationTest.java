@@ -23,6 +23,17 @@ public class EntrySerializationTest {
     }
 
     @Test
+    void payloadSerializationPlatformIndependent()  {
+        String payloadTestConfigJson  = "{\"p\":{\"u\":\"https://cdn-global.configcat.com\",\"r\":0},\"f\":{\"testKey\":{\"v\":\"testValue\",\"t\":1,\"p\":[],\"r\":[]}}}";
+
+        Config config = Utils.gson.fromJson(payloadTestConfigJson, Config.class);
+        Entry entry = new Entry(config, "test-etag", payloadTestConfigJson, 1686756435844L);
+        String serializedString = entry.serialize();
+
+        assertEquals(String.format(SERIALIZED_DATA, 1686756435844L, "test-etag", payloadTestConfigJson), serializedString);
+    }
+
+    @Test
     void deserialize()  {
         String json = String.format(TEST_JSON, "test", "1");
         long currentTimeMillis = System.currentTimeMillis();

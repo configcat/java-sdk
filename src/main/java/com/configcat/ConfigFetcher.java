@@ -166,7 +166,7 @@ class ConfigFetcher implements Closeable {
     }
 
     Request getRequest(String etag) {
-        String url = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME + ".json";
+        String url = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME;
         Request.Builder builder = new Request.Builder()
                 .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/" + this.mode + "-" + Constants.VERSION);
 
