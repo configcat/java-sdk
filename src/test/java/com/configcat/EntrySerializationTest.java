@@ -30,7 +30,7 @@ public class EntrySerializationTest {
         Entry entry = new Entry(config, "test-etag", payloadTestConfigJson, 1686756435844L);
         String serializedString = entry.serialize();
 
-        assertEquals(String.format(SERIALIZED_DATA, 1686756435844L, "test-etag", payloadTestConfigJson), serializedString);
+        assertEquals("1686756435844\ntest-etag\n" + payloadTestConfigJson, serializedString);
     }
 
     @Test
