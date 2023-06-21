@@ -6,7 +6,7 @@ final class Helpers {
 
     static String cacheValueFromConfigJson(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
-        Entry entry = new Entry(config, "fakeTag", json, DateTimeUtils.format(System.currentTimeMillis()));
+        Entry entry = new Entry(config, "fakeTag", json, System.currentTimeMillis());
         return entry.serialize();
     }
 
