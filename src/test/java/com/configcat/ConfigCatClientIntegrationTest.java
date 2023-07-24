@@ -198,16 +198,12 @@ public class ConfigCatClientIntegrationTest {
         // makes a call to a real url which would fail, null expected
         String config = cl.getValue(String.class, "test", null);
         assertNull(config);
-
-        cl.close();
     }
 
     @Test
     public void getConfigurationJsonStringWithDefaultConfig() throws InterruptedException, ExecutionException, TimeoutException, IOException {
         ConfigCatClient cl = ConfigCatClient.get("configcat-sdk-1/TEST_KEY-DEFAULT-89012/1234567890123456789012");
         assertNull(cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
-
-        cl.close();
     }
 
     @Test

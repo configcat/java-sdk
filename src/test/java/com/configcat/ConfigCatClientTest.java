@@ -464,8 +464,6 @@ public class ConfigCatClientTest {
         ConfigCatClient client3 = ConfigCatClient.get(Helpers.SDK_KEY);
 
         assertSame(client2, client3);
-
-        client3.close();
     }
 
     @Test
