@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigCatClientIntegrationTest {
 
-    private static final String APIKEY = "TEST_KEY";
     private ConfigCatClient client;
     private MockWebServer server;
 
@@ -29,7 +28,7 @@ public class ConfigCatClientIntegrationTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        this.client = ConfigCatClient.get(APIKEY, options -> {
+        this.client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.httpClient(new OkHttpClient.Builder().build());
             options.pollingMode(PollingModes.lazyLoad(2));
             options.baseUrl(this.server.url("/").toString());
@@ -191,20 +190,24 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getConfigurationJsonStringWithDefaultConfigTimeout() {
+    public void getConfigurationJsonStringWithDefaultConfigTimeout() throws IOException {
 
 
-        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> options.httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build()));
+        ConfigCatClient cl = ConfigCatClient.get("configcat-sdk-1/TEST_KEY1-123456789012/1234567890123456789012", options -> options.httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build()));
 
         // makes a call to a real url which would fail, null expected
         String config = cl.getValue(String.class, "test", null);
         assertNull(config);
+
+        cl.close();
     }
 
     @Test
-    public void getConfigurationJsonStringWithDefaultConfig() throws InterruptedException, ExecutionException, TimeoutException {
-        ConfigCatClient cl = ConfigCatClient.get("APIKEY_DEFAULT");
+    public void getConfigurationJsonStringWithDefaultConfig() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+        ConfigCatClient cl = ConfigCatClient.get("configcat-sdk-1/TEST_KEY-DEFAULT-89012/1234567890123456789012");
         assertNull(cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
+
+        cl.close();
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.configcat;
 import java.util.function.Supplier;
 
 final class Helpers {
+    public static final String SDK_KEY = "configcat-sdk-1/TEST_KEY-0123456789012/1234567890123456789012";
 
     static String cacheValueFromConfigJson(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
