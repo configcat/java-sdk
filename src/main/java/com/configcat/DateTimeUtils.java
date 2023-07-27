@@ -17,7 +17,7 @@ public class DateTimeUtils {
         return true;
     }
 
-    public static String doubleToFormatedUTC(double dateInDouble) {
+    public static String doubleToFormattedUTC(double dateInDouble) {
         //TODO is this the format we want
         long dateInMillisec = (long) dateInDouble * 1000;
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");

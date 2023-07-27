@@ -28,7 +28,7 @@ public class EvaluateLogger {
     }
 
     public void logMatch(String comparisonAttribute, double userValue, Comparator comparator, double comparisonValue, Object value) {
-        entries.add("Evaluating rule: [" + comparisonAttribute + ":" + userValue + " (" + DateTimeUtils.doubleToFormatedUTC(userValue) +")] [" + comparator.getName() + "] [" + comparisonValue + " (" + DateTimeUtils.doubleToFormatedUTC(comparisonValue) +")] => match, returning: " + value + "");
+        entries.add("Evaluating rule: [" + comparisonAttribute + ":" + userValue + " (" + DateTimeUtils.doubleToFormattedUTC(userValue) +")] [" + comparator.getName() + "] [" + comparisonValue + " (" + DateTimeUtils.doubleToFormattedUTC(comparisonValue) +")] => match, returning: " + value + "");
     }
 
     public void logNoMatch(String comparisonAttribute, String userValue, Comparator comparator, String comparisonValue) {
