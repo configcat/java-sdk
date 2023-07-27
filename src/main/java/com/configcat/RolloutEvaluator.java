@@ -163,7 +163,7 @@ class RolloutEvaluator {
                                 Double comparisonDoubleValue = Double.parseDouble(comparisonValue.replaceAll(",", "."));
                                 if ((Comparator.DATE_BEFORE.equals(comparator)&& userDoubleValue < comparisonDoubleValue) ||
                                         (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue)){
-                                    evaluateLogger.logMatchDate(comparisonAttribute, userDoubleValue, comparator, comparisonDoubleValue, value);
+                                    evaluateLogger.logMatch(comparisonAttribute, userDoubleValue, comparator, comparisonDoubleValue, value);
                                     return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (NumberFormatException e) {
