@@ -4,8 +4,8 @@ package com.configcat;
  * Describes the Rollout Evaluator Comparators.
  */
 public enum Comparator {
-    CONTAINS(2, "CONTAINS"),
-    DOES_NOT_CONTAIN(3, "DOES NOT CONTAIN"),
+    CONTAINS_ANY_OF(2, "CONTAINS ANY OF"),
+    NOT_CONTAINS_ANY_OF(3, "NOT CONTAINS ANY OF"),
     SEMVER_IS_ONE_OF(4, "IS ONE OF (SemVer)"),
     SEMVER_IS_NOT_ONE_OF(5, "IS NOT ONE OF (SemVer)"),
     SEMVER_LESS(6, "< (SemVer)"),
@@ -18,8 +18,8 @@ public enum Comparator {
     NUMBER_LESS_EQUALS(13, "<= (Number)"),
     NUMBER_GREATER(14, "> (Number)"),
     NUMBER_GREATER_EQUALS(15, ">= (Number)"),
-    SENSITIVE_IS_ONE_OF(16, "IS ONE OF (Sensitive)"),
-    SENSITIVE_IS_NOT_ONE_OF(17, "IS NOT ONE OF (Sensitive)"),
+    SENSITIVE_IS_ONE_OF(16, "IS ONE OF (hashed)"),
+    SENSITIVE_IS_NOT_ONE_OF(17, "IS NOT ONE OF (hashed)"),
     DATE_BEFORE(18, "BEFORE (UTC DateTime)"),
     DATE_AFTER(19, "AFTER (UTC DateTime)"),
     HASHED_EQUALS(20, "EQUALS (hashed)"),
