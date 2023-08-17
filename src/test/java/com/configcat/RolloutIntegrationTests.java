@@ -8,6 +8,8 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 import static org.junit.Assert.assertTrue;
@@ -90,12 +92,35 @@ public class RolloutIntegrationTests {
             int i = 0;
             for (String settingKey : settingKeys) {
                 String value;
-                if (this.kind.equals(VARIATION_TEST_KIND)) {
-                    EvaluationDetails<String> valueDetails = client.getValueDetails(String.class, settingKey, user, null);
+
+
+
+                Class typeOfExpectedResult;
+                if(settingKey.startsWith("integer") || settingKey.startsWith("whole")){
+                    typeOfExpectedResult = Integer.class;
+                } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal")) {
+                    typeOfExpectedResult = Double.class;
+                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") ) {
+                    typeOfExpectedResult = Boolean.class;
+                } else {
+                    //handle as String in any other case
+                    typeOfExpectedResult = String.class;
+                }
+                if (kind.equals(VARIATION_TEST_KIND)) {
+                    EvaluationDetails<?> valueDetails = client.getValueDetails(typeOfExpectedResult, settingKey, user, null);
                     value = valueDetails.getVariationId();
                 } else {
-                    value = client.getValue(String.class, settingKey, user, null);
+                    Object rawResult = client.getValue(typeOfExpectedResult, settingKey, user, null);
+                    if(typeOfExpectedResult.equals(Double.class)){
+                        DecimalFormat decimalFormat = new DecimalFormat("0.#####");
+                        decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.UK));
+                        value = decimalFormat.format(rawResult);
+                    } else {
+                        //handle as String in any other case
+                        value = String.valueOf(rawResult);
+                    }
                 }
+
                 if (!value.toLowerCase().equals(testObject[i + 4].toLowerCase())) {
                     errors.add(String.format("Identifier: %s, Key: %s. UV: %s Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[3], testObject[i + 4], value));
                 }
@@ -110,4 +135,5 @@ public class RolloutIntegrationTests {
         }
         assertTrue("Errors found: " + errors.size(), errors.size() == 0);
     }
+
 }

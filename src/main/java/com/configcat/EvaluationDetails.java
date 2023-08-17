@@ -11,8 +11,10 @@ public class EvaluationDetails<T> {
     private final boolean isDefaultValue;
     private final String error;
     private final long fetchTimeUnixMilliseconds;
-    private final RolloutRule matchedEvaluationRule;
-    private final PercentageRule matchedEvaluationPercentageRule;
+    //TODO rename
+    private final TargetingRule matchedEvaluationRule;
+    //TODO rename
+    private final PercentageOption matchedEvaluationPercentageRule;
 
     public EvaluationDetails(T value,
                              String key,
@@ -21,8 +23,8 @@ public class EvaluationDetails<T> {
                              boolean isDefaultValue,
                              String error,
                              long fetchTimeUnixMilliseconds,
-                             RolloutRule matchedEvaluationRule,
-                             PercentageRule matchedEvaluationPercentageRule) {
+                             TargetingRule matchedEvaluationRule,
+                             PercentageOption matchedEvaluationPercentageRule) {
         this.value = value;
         this.key = key;
         this.variationId = variationId;
@@ -87,6 +89,7 @@ public class EvaluationDetails<T> {
     /**
      * The last fetch time of the config.json in unix milliseconds format.
      */
+    //TODO remove if actually not used
     public Long getFetchTimeUnixMilliseconds() {
         return fetchTimeUnixMilliseconds;
     }
@@ -94,14 +97,14 @@ public class EvaluationDetails<T> {
     /**
      * If the evaluation was based on a targeting rule, this field contains that specific rule.
      */
-    public RolloutRule getMatchedEvaluationRule() {
+    public TargetingRule getMatchedEvaluationRule() {
         return matchedEvaluationRule;
     }
 
     /**
      * If the evaluation was based on a percentage rule, this field contains that specific rule.
      */
-    public PercentageRule getMatchedEvaluationPercentageRule() {
+    public PercentageOption getMatchedEvaluationPercentageRule() {
         return matchedEvaluationPercentageRule;
     }
 }

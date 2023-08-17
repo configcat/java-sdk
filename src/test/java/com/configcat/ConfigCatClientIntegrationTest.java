@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -21,7 +22,10 @@ public class ConfigCatClientIntegrationTest {
     private ConfigCatClient client;
     private MockWebServer server;
 
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_STRING_VALUE = "{p: {s: 'test-salt' }, f: { fakeKey: { t: 1, v: {s: %s}, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_BOOLEAN_VALUE = "{p: {s: 'test-salt' }, f: { fakeKey: { t: 0, v: {b: %s}, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_INT_VALUE = "{p: {s: 'test-salt' }, f: { fakeKey: { t: 2, v: {i: %d}, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_DOUBLE_VALUE = "{p: {s: 'test-salt' }, f: { fakeKey: { t: 3, v: {d: %.3f}, p: [] ,r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -45,7 +49,7 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void getStringValue() {
         String sValue = "ááúúóüüőőööúúűű";
-        String result = String.format(TEST_JSON, sValue);
+        String result = String.format(TEST_JSON_STRING_VALUE, sValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         String config = this.client.getValue(String.class, "fakeKey", null);
         assertEquals(sValue, config);
@@ -70,7 +74,7 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getBooleanValue() {
-        String result = String.format(TEST_JSON, "true");
+        String result = String.format(TEST_JSON_BOOLEAN_VALUE, "true");
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         boolean config = this.client.getValue(Boolean.class, "fakeKey", false);
         assertTrue(config);
@@ -78,7 +82,7 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getBooleanValuePrimitive() {
-        String result = String.format(TEST_JSON, "true");
+        String result = String.format(TEST_JSON_BOOLEAN_VALUE, "true");
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         boolean config = this.client.getValue(boolean.class, "fakeKey", false);
         assertTrue(config);
@@ -103,7 +107,7 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void getIntegerValue() {
         int iValue = 342423;
-        String result = String.format(TEST_JSON, iValue);
+        String result = String.format(TEST_JSON_INT_VALUE, iValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         int config = this.client.getValue(Integer.class, "fakeKey", 0);
         assertEquals(iValue, config);
@@ -112,7 +116,7 @@ public class ConfigCatClientIntegrationTest {
     @Test
     public void getIntegerValuePrimitive() {
         int iValue = 342423;
-        String result = String.format(TEST_JSON, iValue);
+        String result = String.format(TEST_JSON_INT_VALUE, iValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         int config = this.client.getValue(int.class, "fakeKey", 0);
         assertEquals(iValue, config);
@@ -137,11 +141,11 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getDoubleValue() {
-        double iValue = 432.234;
-        String result = String.format(TEST_JSON, iValue);
+        double dValue = 432.234;
+        String result = String.format(Locale.US, TEST_JSON_DOUBLE_VALUE, dValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         double config = this.client.getValue(double.class, "fakeKey", 0.0);
-        assertEquals(iValue, config);
+        assertEquals(dValue, config);
     }
 
     @Test
@@ -154,7 +158,7 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getDefaultValueWhenKeyNotExist() {
-        String result = String.format(TEST_JSON, "true");
+        String result = String.format(TEST_JSON_BOOLEAN_VALUE, "true");
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         boolean config = this.client.getValue(Boolean.class, "nonExistingKey", false);
         assertFalse(config);
@@ -171,8 +175,8 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void invalidateCache() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON_STRING_VALUE, "test")));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON_STRING_VALUE, "test2")));
 
         assertEquals("test", this.client.getValue(String.class, "fakeKey", null));
         this.client.forceRefresh();
@@ -181,7 +185,7 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void invalidateCacheFail() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON_STRING_VALUE, "test")));
         server.enqueue(new MockResponse().setResponseCode(500));
 
         assertEquals("test", this.client.getValue(String.class, "fakeKey", null));
@@ -229,17 +233,22 @@ public class ConfigCatClientIntegrationTest {
         User user = new User.Builder()
                 .email("test@configcat.com")
                 .build("test@configcat.com");
-
+        //TODO is this test case changed?
         EvaluationDetails<String> details = cl.getValueDetails(String.class, "stringContainsDogDefaultCat", user, "");
         assertEquals("stringContainsDogDefaultCat", details.getKey());
         assertEquals("Dog", details.getValue());
         assertFalse(details.isDefaultValue());
         assertNull(details.getError());
         assertEquals("d0cd8f06", details.getVariationId());
-        assertEquals("Email", details.getMatchedEvaluationRule().getComparisonAttribute());
-        assertEquals("@configcat.com", details.getMatchedEvaluationRule().getComparisonValue());
+        //the target should have one condition
+        assertEquals(1, details.getMatchedEvaluationRule().getConditions().length);
         assertNull(details.getMatchedEvaluationPercentageRule());
-        assertEquals(2, details.getMatchedEvaluationRule().getComparator());
+
+        Condition condition = details.getMatchedEvaluationRule().getConditions()[0];
+        assertEquals("Email", condition.getComparisonCondition().getComparisonAttribute());
+        assertEquals(2, condition.getComparisonCondition().getComparator());
+        assertEquals(1, condition.getComparisonCondition().getStringArrayValue().length);
+        assertEquals("@configcat.com", condition.getComparisonCondition().getStringArrayValue()[0]);
         assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
     }
 
@@ -259,10 +268,15 @@ public class ConfigCatClientIntegrationTest {
                 assertFalse(details.isDefaultValue());
                 assertNull(details.getError());
                 assertEquals("d0cd8f06", details.getVariationId());
-                assertEquals("Email", details.getMatchedEvaluationRule().getComparisonAttribute());
-                assertEquals("@configcat.com", details.getMatchedEvaluationRule().getComparisonValue());
+
+                assertEquals(1, details.getMatchedEvaluationRule().getConditions().length);
                 assertNull(details.getMatchedEvaluationPercentageRule());
-                assertEquals(2, details.getMatchedEvaluationRule().getComparator());
+
+                Condition condition = details.getMatchedEvaluationRule().getConditions()[0];
+                assertEquals("Email", condition.getComparisonCondition().getComparisonAttribute());
+                assertEquals(2, condition.getComparisonCondition().getComparator());
+                assertEquals(1, condition.getComparisonCondition().getStringArrayValue().length);
+                assertEquals("@configcat.com", condition.getComparisonCondition().getStringArrayValue()[0]);
                 assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
                 called.set(true);
             });

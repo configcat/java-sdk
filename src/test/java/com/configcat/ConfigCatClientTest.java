@@ -20,13 +20,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigCatClientTest {
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
-    private static final String TEST_JSON_MULTIPLE = "{ f: { key1: { v: true, i: 'fakeId1', p: [] ,r: [] }, key2: { v: false, i: 'fakeId2', p: [] ,r: [] } } }";
-    public static final String TEST_JSON_DEFAULT_USER = "{'f':{'fakeKey':{'v':'defaultValue','i':'defaultId', 'r':[{'o':'0','a':'Identifier','t':2,'c':'test1','v':'fakeValue1','i':'test1Id'},{'o':'1','a':'Identifier','t':2,'c':'test2','v':'fakeValue2','i':'test2Id'}]}}}";
-    public static final String RULES_JSON = "{ f: { key: { v: 'def', t: 1, i: 'defVar', p: [] ,r: [" +
-            "{ v: 'fake1', i: 'id1', a: 'Identifier', t: 2, c: '@test1.com' }," +
-            "{ v: 'fake2', i: 'id2', a: 'Identifier', t: 2, c: '@test2.com' }," +
-            "] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-slat' }, f: { fakeKey: {  t: 1, v: {s: 'fakeValue'}, s: 0, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_MULTIPLE = "{ p: { s: 'test-slat' }, f: { key1: { t: 0, v: {b: true}, i: 'fakeId1', p: [] ,r: [] }, key2: { t: 0, v: {b: false}, i: 'fakeId2', p: [] ,r: [] } } }";
+    public static final String TEST_JSON_DEFAULT_USER = "{ p: { s: 'test-slat' }, 'f':{'fakeKey':{  t: 1, 'v': {s: 'defaultValue'},'i':'defaultId', r: [ {c: [ {t: { a: 'Identifier', c: 2, l: ['test1']}}],s: { v: {s: 'fakeValue1'},i: 'test1Id'}},{c: [{t: {a: 'Identifier', c: 2,l: ['test2']}}],s: { v: {s: 'fakeValue2'},i: 'test2Id'}}] } } }";
+    public static final String RULES_JSON = "{ p: { s: 'test-slat' }, f: { key: {  t: 1, v: {s: 'def'}, t: 1, i: 'defVar', p: [] , r: [ {c: [ {t: { a: 'Identifier', c: 2, l: ['@test1.com']}}],s: { v: {s: 'fake1'},i: 'id1'}},{c: [{t: {a: 'Identifier', c: 2,l: ['@test2.com']}}],s: { v: {s: 'fake2'},i: 'id2'}}] } } }";
 
     @Test
     public void ensuresSDKKeyIsNotNull() {
@@ -82,6 +79,8 @@ public class ConfigCatClientTest {
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.get("configcat-proxy/", options -> options.baseUrl("https://my-configcat-proxy")));
         assertEquals("SDK Key 'configcat-proxy/' is invalid.", builderException.getMessage());
+
+        ConfigCatClient.closeAll();
     }
 
     @Test
@@ -795,17 +794,17 @@ public class ConfigCatClientTest {
 
     @Test
     void testCacheKey() throws NoSuchFieldException, IllegalAccessException, IOException {
-        //Test Data: SDKKey "configcat-sdk-1/TEST_KEY-0123456789012/1234567890123456789012", HASH "dbd2c54f946f95ed3d76e788950f8a3a6c01e0a6"
+        //Test Data: SDKKey "configcat-sdk-1/TEST_KEY-0123456789012/1234567890123456789012", HASH "f83ba5d45bceb4bb704410f51b704fb6dfa19942"
         ConfigCatClient clTest1 = ConfigCatClient.get("configcat-sdk-1/TEST_KEY-0123456789012/1234567890123456789012");
 
         String test1SdkKeyCacheKeyWithReflection = getCacheKeyWithReflection(clTest1);
-        assertEquals("dbd2c54f946f95ed3d76e788950f8a3a6c01e0a6", test1SdkKeyCacheKeyWithReflection);
+        assertEquals("f83ba5d45bceb4bb704410f51b704fb6dfa19942", test1SdkKeyCacheKeyWithReflection);
 
-        //Test Data: SDKKey "configcat-sdk-1/TEST_KEY2-123456789012/1234567890123456789012", HASH "71a778682cbfa4bb87862ab4733c37de35ebcbee"
+        //Test Data: SDKKey "configcat-sdk-1/TEST_KEY2-123456789012/1234567890123456789012", HASH "da7bfd8662209c8ed3f9db96daed4f8d91ba5876"
         ConfigCatClient clTest2 = ConfigCatClient.get("configcat-sdk-1/TEST_KEY2-123456789012/1234567890123456789012");
 
         String test2SdkKeyCacheKeyWithReflection = getCacheKeyWithReflection(clTest2);
-        assertEquals("71a778682cbfa4bb87862ab4733c37de35ebcbee", test2SdkKeyCacheKeyWithReflection);
+        assertEquals("da7bfd8662209c8ed3f9db96daed4f8d91ba5876", test2SdkKeyCacheKeyWithReflection);
 
         ConfigCatClient.closeAll();
     }

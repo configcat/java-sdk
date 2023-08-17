@@ -13,7 +13,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LocalTests {
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { t: 1, v: { s: %s }, p: [], r: [] } } }";
 
     @Test
     public void withClient() throws IOException {

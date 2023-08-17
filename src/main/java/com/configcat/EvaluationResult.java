@@ -1,17 +1,15 @@
 package com.configcat;
 
-import com.google.gson.JsonElement;
-
 class EvaluationResult {
-    public final JsonElement value;
+    public final SettingsValue value;
     public final String variationId;
-    public final RolloutRule targetingRule;
-    public final PercentageRule percentageRule;
+    public final TargetingRule targetingRule;
+    public final PercentageOption percentageOption;
 
-    EvaluationResult(JsonElement value, String variationId, RolloutRule targetingRule, PercentageRule percentageRule) {
+    EvaluationResult(SettingsValue value, String variationId, TargetingRule targetingRule, PercentageOption percentageOption) {
         this.value = value;
         this.variationId = variationId;
         this.targetingRule = targetingRule;
-        this.percentageRule = percentageRule;
+        this.percentageOption = percentageOption;
     }
 }

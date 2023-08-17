@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EvaluateLogger {
+    //TODO rework to handle OR and other new scenarios
 
     public EvaluateLogger(final String key) {
         entries.add("Evaluating getValue(" + key + ").");
@@ -23,20 +24,20 @@ public class EvaluateLogger {
         entries.add("User object: " + user + ".");
     }
 
-    public void logMatch(String comparisonAttribute, String userValue, Comparator comparator, String comparisonValue, Object value) {
-        entries.add("Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + comparator.getName() + "] [" + comparisonValue + "] => match, returning: " + value + "");
+    public void logMatch(String comparisonAttribute, String userValue, Comparator comparator, Object comparisonValue, Object value) {
+        entries.add("Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + comparator.getName() + "] [" + comparisonValue.toString() + "] => match, returning: " + value + "");
     }
 
     public void logMatch(String comparisonAttribute, double userValue, Comparator comparator, double comparisonValue, Object value) {
         entries.add("Evaluating rule: [" + comparisonAttribute + ":" + userValue + " (" + DateTimeUtils.doubleToFormattedUTC(userValue) +")] [" + comparator.getName() + "] [" + comparisonValue + " (" + DateTimeUtils.doubleToFormattedUTC(comparisonValue) +")] => match, returning: " + value + "");
     }
 
-    public void logNoMatch(String comparisonAttribute, String userValue, Comparator comparator, String comparisonValue) {
+    public void logNoMatch(String comparisonAttribute, String userValue, Comparator comparator, Object comparisonValue) {
         entries.add("Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + comparator.getName() + "] [" + comparisonValue + "] => no match");
     }
 
-    public String logFormatError(String comparisonAttribute, String userValue, Comparator comparator, String comparisonValue, Exception exception) {
-        String message = "Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + comparator.getName() + "] [" + comparisonValue + "] => SKIP rule. Validation error: " + exception + "";
+    public String logFormatError(String comparisonAttribute, String userValue, Comparator comparator, Object comparisonValue, Exception exception) {
+        String message = "Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + comparator.getName() + "] [" + comparisonValue.toString() + "] => SKIP rule. Validation error: " + exception + "";
         entries.add(message);
         return message;
     }
