@@ -44,7 +44,7 @@ class RolloutEvaluator {
             }
 
             if (setting.getPercentageOptions() != null && setting.getPercentageOptions().length > 0) {
-                EvaluationResult percentageOptionsEvaluationResult = evaluatePercentageOptions(setting.getPercentageOptions(), setting.getPercentageAttribute(), key, user, evaluateLogger);
+                EvaluationResult percentageOptionsEvaluationResult = evaluatePercentageOptions(setting.getPercentageOptions(), setting.getPercentageAttribute(), key, user, null, evaluateLogger);
                 if (percentageOptionsEvaluationResult != null) return percentageOptionsEvaluationResult;
             }
 
@@ -55,7 +55,7 @@ class RolloutEvaluator {
         }
     }
 
-    private boolean evaluateComparisonCondition(ComparisonCondition comparisonCondition, User user, String configSalt, String key, EvaluateLogger evaluateLogger){
+    private boolean evaluateComparisonCondition(ComparisonCondition comparisonCondition, User user, String configSalt, String key, EvaluateLogger evaluateLogger) {
         String comparisonAttribute = comparisonCondition.getComparisonAttribute();
         Comparator comparator = Comparator.fromId(comparisonCondition.getComparator());
         String userValue = user.getAttribute(comparisonAttribute);
@@ -64,10 +64,10 @@ class RolloutEvaluator {
         //TODO Check if all value available. User missing is separated handle in every Condition checks? cc/sc/pfc
         //TODO what if CV value is not the right one for the comparator?  How to hand,e CV missing? etc.
 //        if (comparisonValue == null || comparisonValue.isEmpty() ||
-                            if(userValue == null || userValue.isEmpty()) {
-                        //evaluateLogger.logNoMatch(comparisonAttribute, userValue, comparator, comparisonValue);
-                        return false;
-                    }
+        if (userValue == null || userValue.isEmpty()) {
+            //evaluateLogger.logNoMatch(comparisonAttribute, userValue, comparator, comparisonValue);
+            return false;
+        }
 
         //TODO comparator null? error?
         //TODO in case of exception catch return false. is this oK?
@@ -78,7 +78,7 @@ class RolloutEvaluator {
                 List<String> containsValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
                 containsValues.replaceAll(String::trim);
                 containsValues.removeAll(Arrays.asList(null, ""));
-                for (String containsValue: containsValues) {
+                for (String containsValue : containsValues) {
                     if (userValue.contains(containsValue))
                         return true;
                 }
@@ -87,7 +87,7 @@ class RolloutEvaluator {
                 List<String> notContainsValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
                 notContainsValues.replaceAll(String::trim);
                 notContainsValues.removeAll(Arrays.asList(null, ""));
-                for (String notcontainsValue: notContainsValues) {
+                for (String notcontainsValue : notContainsValues) {
                     if (userValue.contains(notcontainsValue))
                         return false;
                 }
@@ -98,7 +98,7 @@ class RolloutEvaluator {
                 inSemVerValues.replaceAll(String::trim);
                 inSemVerValues.removeAll(Arrays.asList(null, ""));
                 try {
-                    Version userVersion = Version.parseVersion(userValue, true);
+                    Version userVersion = Version.parseVersion(userValue.trim(), true);
                     boolean matched = false;
                     for (String semVer : inSemVerValues) {
                         matched = userVersion.compareTo(Version.parseVersion(semVer, true)) == 0 || matched;
@@ -115,10 +115,10 @@ class RolloutEvaluator {
             case SEMVER_GREATER:
             case SEMVER_GREATER_EQUALS:
                 try {
-                    Version cmpUserVersion = Version.parseVersion(userValue, true);
+                    Version cmpUserVersion = Version.parseVersion(userValue.trim(), true);
                     String comparisonValue = comparisonCondition.getStringValue();
                     Version matchValue = Version.parseVersion(comparisonValue.trim(), true);
-                    return (Comparator.SEMVER_LESS.equals(comparator)&& cmpUserVersion.isLowerThan(matchValue)) ||
+                    return (Comparator.SEMVER_LESS.equals(comparator) && cmpUserVersion.isLowerThan(matchValue)) ||
                             (Comparator.SEMVER_LESS_EQULAS.equals(comparator) && cmpUserVersion.compareTo(matchValue) <= 0) ||
                             (Comparator.SEMVER_GREATER.equals(comparator) && cmpUserVersion.isGreaterThan(matchValue)) ||
                             (Comparator.SEMVER_GREATER_EQUALS.equals(comparator) && cmpUserVersion.compareTo(matchValue) >= 0);
@@ -134,7 +134,7 @@ class RolloutEvaluator {
             case NUMBER_GREATER:
             case NUMBER_GREATER_EQUALS:
                 try {
-                    Double userDoubleValue = Double.parseDouble(userValue.replaceAll(",", "."));
+                    Double userDoubleValue = Double.parseDouble(userValue.trim().replaceAll(",", "."));
                     Double comparisonDoubleValue = comparisonCondition.getDoubleValue();
 
                     return (Comparator.NUMBER_EQUALS.equals(comparator) && userDoubleValue.equals(comparisonDoubleValue)) ||
@@ -165,11 +165,12 @@ class RolloutEvaluator {
             case DATE_BEFORE:
             case DATE_AFTER:
                 try {
-                    Double userDoubleValue = Double.parseDouble(userValue.replaceAll(",", "."));
+                    Double userDoubleValue = Double.parseDouble(userValue.trim().replaceAll(",", "."));
                     Double comparisonDoubleValue = comparisonCondition.getDoubleValue();
-                   return (Comparator.DATE_BEFORE.equals(comparator)&& userDoubleValue < comparisonDoubleValue) ||
+                    return (Comparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
                             (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
                 } catch (NumberFormatException e) {
+                    //TODO add new error handling to Date '{userAttributeValue}' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)
                     String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonCondition.getDoubleValue(), e);
                     this.logger.warn(0, message);
                     return false;
@@ -184,55 +185,70 @@ class RolloutEvaluator {
                 return !hashNotEquals.equals(comparisonCondition.getStringValue());
             case HASHED_STARTS_WITH:
             case HASHED_ENDS_WITH:
+            case HASHED_NOT_STARTS_WITH:
+            case HASHED_NOT_ENDS_WITH:
                 //TODO add salt and salt error handle
-                String comparisonValueHashedStartsEnds = comparisonCondition.getStringValue();
-                int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
-                if(indexOf <= 0){
-                    return false;
-                }
-                String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
-                try {
-                    int comparedTextLengthInt = Integer.parseInt(comparedTextLength);
-                    if(userValue.length() < comparedTextLengthInt){
+                List<String> withValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
+                withValues.replaceAll(String::trim);
+                withValues.removeAll(Arrays.asList(null, ""));
+                boolean foundEqual = false;
+                for (String comparisonValueHashedStartsEnds : withValues) {
+                    int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
+                    //TODO is it false or skip
+                    if (indexOf <= 0) {
                         return false;
                     }
-                    String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
-                    if(comparisonHashValue.isEmpty()){
+                    String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
+                    try {
+                        int comparedTextLengthInt = Integer.parseInt(comparedTextLength);
+                        if (userValue.length() < comparedTextLengthInt) {
+                            return false;
+                        }
+                        String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
+                        if (comparisonHashValue.isEmpty()) {
+                            return false;
+                        }
+                        String userValueSubString;
+                        if (Comparator.HASHED_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
+                            userValueSubString = userValue.substring(0, comparedTextLengthInt);
+                        } else { //HASHED_ENDS_WITH
+                            userValueSubString = userValue.substring(userValue.length() - comparedTextLengthInt);
+                        }
+                        String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, key);
+                        if(hashUserValueSub.equals(comparisonHashValue)){
+                            foundEqual = true;
+                        }
+                    } catch (NumberFormatException e) {
+                        String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValueHashedStartsEnds, e);
+                        this.logger.warn(0, message);
                         return false;
                     }
-                    String userValueSubString;
-                    if(Comparator.HASHED_STARTS_WITH.equals(comparator)){
-                        userValueSubString = userValue.substring(0, comparedTextLengthInt);
-                    } else { //HASHED_ENDS_WITH
-                        userValueSubString = userValue.substring(userValue.length() - comparedTextLengthInt);
-                    }
-                    String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, key);
-                    return hashUserValueSub.equals(comparisonHashValue);
-                } catch (NumberFormatException e) {
-                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValueHashedStartsEnds, e);
-                    this.logger.warn(0, message);
-                    return false;
                 }
+                if (Comparator.HASHED_NOT_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_ENDS_WITH.equals(comparator)) {
+                    return !foundEqual;
+                }
+                return foundEqual;
             case HASHED_ARRAY_CONTAINS:
                 //TODO add salt and salt error handle
                 String[] userCSVContainsHashSplit = userValue.split(",");
-                if(userCSVContainsHashSplit.length == 0){
+                if (userCSVContainsHashSplit.length == 0) {
                     return false;
                 }
-                for (String userValueSlice: userCSVContainsHashSplit) {
+                for (String userValueSlice : userCSVContainsHashSplit) {
                     String userValueSliceHash = getSaltedUserValue(userValueSlice, configSalt, key);
                     if (userValueSliceHash.equals(comparisonCondition.getStringValue())) {
-                    return true;                    }
+                        return true;
+                    }
                 }
                 return false;
             case HASHED_ARRAY_NOT_CONTAINS:
                 //TODO add salt and salt error handle
                 String[] userCSVNotContainsHashSplit = userValue.split(",");
-                if(userCSVNotContainsHashSplit.length == 0){
+                if (userCSVNotContainsHashSplit.length == 0) {
                     return false;
                 }
                 boolean containsFlag = false;
-                for (String userValueSlice: userCSVNotContainsHashSplit) {
+                for (String userValueSlice : userCSVNotContainsHashSplit) {
                     String userValueSliceHash = getSaltedUserValue(userValueSlice, configSalt, key);
                     if (userValueSliceHash.equals(comparisonCondition.getStringValue())) {
                         containsFlag = true;
@@ -249,12 +265,12 @@ class RolloutEvaluator {
         return new String(Hex.encodeHex(DigestUtils.sha256(userValue + configJsonSalt + key)));
     }
 
-    private boolean evaluateSegmentCondition(SegmentCondition segmentCondition){
+    private boolean evaluateSegmentCondition(SegmentCondition segmentCondition) {
         //TODO implement
         return true;
     }
 
-    private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition){
+    private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition) {
         //TODO implement
         return true;
     }
@@ -266,25 +282,21 @@ class RolloutEvaluator {
 
         for (TargetingRule rule : setting.getTargetingRules()) {
 
-            //TODO
-            if(!evaluateConditions(rule.getConditions(), user, setting.getConfigSalt(), key, evaluateLogger)){
+            if (!evaluateConditions(rule.getConditions(), user, setting.getConfigSalt(), key, evaluateLogger)) {
                 continue;
             }
             // Conditions match, if rule.getServedValue() not null. we shuold return as logMatch value from SV
             //if no SV then PO should be aviable
-            if(rule.getServedValue() != null){
+            if (rule.getServedValue() != null) {
                 return new EvaluationResult(rule.getServedValue().getValue(), rule.getServedValue().getVariationId(), rule, null);
             }
             //if (PO.lenght <= 0) error case no SV and no PO
-            if(rule.getPercentageOptions() == null || rule.getPercentageOptions().length == 0){
+            if (rule.getPercentageOptions() == null || rule.getPercentageOptions().length == 0) {
                 //TODO error? log something?
                 continue;
             }
-            //TODO can be percentage option here?
-            //rule.getPercentageOption();
-            //should this be the same evalPO? rework to ony pass the PO[]?
-            //TODO here the result should contaion the tr as weLL?
-            return evaluatePercentageOptions(rule.getPercentageOptions(), setting.getPercentageAttribute(), key, user, evaluateLogger );
+            return evaluatePercentageOptions(rule.getPercentageOptions(), setting.getPercentageAttribute(), key, user, rule, evaluateLogger);
+
         }
         //TODO loogging should be reworked.
         // evaluateLogger.logNoMatch(comparisonAttribute, userValue, comparator, comparisonCondition);
@@ -295,42 +307,42 @@ class RolloutEvaluator {
         //Conditions are ANDs so if One is not matching return false, if all matching return true
         //TODO rework logging based on changes possibly
         boolean conditionsEvaluationResult = false;
-        for (Condition condition: conditions) {
+        for (Condition condition : conditions) {
             //TODO log IF, AND based on order
 
             //TODO Condition, what if condition invalid? more then one condition added or none. rework basic if
-            if(condition.getComparisonCondition() != null){
-                conditionsEvaluationResult = evaluateComparisonCondition(condition.getComparisonCondition(), user,configSalt, key, evaluateLogger);
-            } else if(condition.getSegmentCondition() != null){
+            if (condition.getComparisonCondition() != null) {
+                conditionsEvaluationResult = evaluateComparisonCondition(condition.getComparisonCondition(), user, configSalt, key, evaluateLogger);
+            } else if (condition.getSegmentCondition() != null) {
                 //TODO evalSC
                 conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition());
-            }else if(condition.getPrerequisiteFlagCondition() != null){
+            } else if (condition.getPrerequisiteFlagCondition() != null) {
                 conditionsEvaluationResult = evaluatePrerequisiteFlagCondition(condition.getPrerequisiteFlagCondition());
                 //TODO evalPFC
             }
             // else throw Some exception here?
-           if(!conditionsEvaluationResult){
-               //TODO no match for the TR. LOG and go to the next one?
-               //TODO this should be return from a condEvalMethod
+            if (!conditionsEvaluationResult) {
+                //TODO no match for the TR. LOG and go to the next one?
+                //TODO this should be return from a condEvalMethod
                 return false;
-           }
+            }
         }
         return conditionsEvaluationResult;
     }
 
     @Nullable
-    private static EvaluationResult evaluatePercentageOptions(PercentageOption[] percentageOptions, String percentageOptionAttribute, String key, User user, EvaluateLogger evaluateLogger) {
+    private static EvaluationResult evaluatePercentageOptions(PercentageOption[] percentageOptions, String percentageOptionAttribute, String key, User user, TargetingRule parentTargetingRule, EvaluateLogger evaluateLogger) {
         //TODO if user missing? based on .net skipp should be logged here
         //TODO setting.getPercentageAttribute()?
         String percentageOptionAttributeValue;
         String percentageOptionAttributeName = percentageOptionAttribute;
-        if(percentageOptionAttributeName == null || percentageOptionAttributeName.isEmpty()){
+        if (percentageOptionAttributeName == null || percentageOptionAttributeName.isEmpty()) {
             //TODO add some const for the "Identifier"
             percentageOptionAttributeName = "Identifier";
             percentageOptionAttributeValue = user.getIdentifier();
-        }else{
+        } else {
             percentageOptionAttributeValue = user.getAttribute(percentageOptionAttributeName);
-            if(percentageOptionAttributeValue == null){
+            if (percentageOptionAttributeValue == null) {
                 //TODO log skip beacuse atribute value missing
                 //TODO return with default?
                 return null;
@@ -340,7 +352,7 @@ class RolloutEvaluator {
         //TODO salt must be added?
         String hashCandidate = key + percentageOptionAttributeValue;
         int scale = 100;
-        String hexHash =  new String(Hex.encodeHex(DigestUtils.sha1(hashCandidate))).substring(0, 7);
+        String hexHash = new String(Hex.encodeHex(DigestUtils.sha1(hashCandidate))).substring(0, 7);
         int longHash = Integer.parseInt(hexHash, 16);
         int scaled = longHash % scale;
 
@@ -350,7 +362,7 @@ class RolloutEvaluator {
             bucket += rule.getPercentage();
             if (scaled < bucket) {
                 evaluateLogger.logPercentageEvaluationReturnValue(rule.getValue().toString());
-                return new EvaluationResult(rule.getValue(), rule.getVariationId(), null, rule);
+                return new EvaluationResult(rule.getValue(), rule.getVariationId(), parentTargetingRule, rule);
             }
         }
         //TODO log when options % not 100? so we don't need a return here?

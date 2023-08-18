@@ -623,10 +623,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
             clientOptions = options;
         }
 
-        if (!isValidKey(sdkKey, clientOptions.isBaseURLCustom())) {
+        if (!OverrideBehaviour.LOCAL_ONLY.equals(clientOptions.overrideBehaviour) && !isValidKey(sdkKey, clientOptions.isBaseURLCustom())) {
             throw new IllegalArgumentException("SDK Key '" + sdkKey + "' is invalid.");
         }
-
 
         synchronized (INSTANCES) {
             ConfigCatClient client = INSTANCES.get(sdkKey);

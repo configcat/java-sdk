@@ -241,10 +241,10 @@ public class ConfigCatClientIntegrationTest {
         assertNull(details.getError());
         assertEquals("d0cd8f06", details.getVariationId());
         //the target should have one condition
-        assertEquals(1, details.getMatchedEvaluationRule().getConditions().length);
-        assertNull(details.getMatchedEvaluationPercentageRule());
+        assertEquals(1, details.getMatchedTargetingRule().getConditions().length);
+        assertNull(details.getMatchedPercentageOption());
 
-        Condition condition = details.getMatchedEvaluationRule().getConditions()[0];
+        Condition condition = details.getMatchedTargetingRule().getConditions()[0];
         assertEquals("Email", condition.getComparisonCondition().getComparisonAttribute());
         assertEquals(2, condition.getComparisonCondition().getComparator());
         assertEquals(1, condition.getComparisonCondition().getStringArrayValue().length);
@@ -269,10 +269,10 @@ public class ConfigCatClientIntegrationTest {
                 assertNull(details.getError());
                 assertEquals("d0cd8f06", details.getVariationId());
 
-                assertEquals(1, details.getMatchedEvaluationRule().getConditions().length);
-                assertNull(details.getMatchedEvaluationPercentageRule());
+                assertEquals(1, details.getMatchedTargetingRule().getConditions().length);
+                assertNull(details.getMatchedPercentageOption());
 
-                Condition condition = details.getMatchedEvaluationRule().getConditions()[0];
+                Condition condition = details.getMatchedTargetingRule().getConditions()[0];
                 assertEquals("Email", condition.getComparisonCondition().getComparisonAttribute());
                 assertEquals(2, condition.getComparisonCondition().getComparator());
                 assertEquals(1, condition.getComparisonCondition().getStringArrayValue().length);
