@@ -175,7 +175,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     }
 
                     return this.evaluate(classOfT, checkSettingResult.value(),
-                            key, user != null ? user : this.defaultUser, settingsResult.fetchTime());
+                            key, user != null ? user : this.defaultUser, settingsResult.fetchTime(), settingsResult.settings());
                 });
     }
 
@@ -209,7 +209,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         for (String key : keys) {
                             Setting setting = settings.get(key);
 
-                            SettingsValue evaluated = this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user)).value;
+                            SettingsValue evaluated = this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user), null, settings).value;
                             Object value = this.parseObject(this.classBySettingType(setting.getType()), evaluated, setting.getType());
                             result.put(key, value);
                         }
@@ -252,7 +252,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                             Setting setting = settings.get(key);
 
                             EvaluationDetails<Object> evaluationDetails = this.evaluateObject(this.classBySettingType(setting.getType()), setting,
-                                    key, user != null ? user : this.defaultUser, settingResult.fetchTime());
+                                    key, user != null ? user : this.defaultUser, settingResult.fetchTime(), settings);
                             result.add(evaluationDetails);
                         }
 
@@ -502,7 +502,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return defaultValue;
             }
 
-            return this.evaluate(classOfT, checkSettingResult.value(), key, getEvaluateUser(user), settingResult.fetchTime()).getValue();
+            return this.evaluate(classOfT, checkSettingResult.value(), key, getEvaluateUser(user), settingResult.fetchTime(), settingResult.settings()).getValue();
         } catch (Exception e) {
             String errorMessage = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.logger.error(2001, errorMessage, e);
@@ -525,9 +525,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.getSettingsValue(), setting.getType()));
                 }
 
-                for (TargetingRule rolloutRule : setting.getTargetingRules()) {
-                    if (variationId.equals(rolloutRule.getServedValue().getVariationId())) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.getServedValue().getValue(), setting.getType()));
+                for (TargetingRule targetingRule : setting.getTargetingRules()) {
+                    if (variationId.equals(targetingRule.getServedValue().getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getServedValue().getValue(), setting.getType()));
                     }
                 }
 
@@ -558,8 +558,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return settingsValue.getDoubleValue();
         else if ((classOfT == Boolean.class || classOfT == boolean.class) && settingsValue.getBooleanValue() !=  null && SettingType.BOOLEAN.equals(settingType))
             return settingsValue.getBooleanValue();
-        else
-            throw new IllegalArgumentException("The type of a setting must match the type of the setting's default value. "
+
+        throw new IllegalArgumentException("The type of a setting must match the type of the setting's default value. "
                     + "Setting's type was {" + settingType + "} but the default value's type was {" + classOfT + "}. "
                     + "Please use a default value which corresponds to the setting type {" + settingType + "}.");
     }
@@ -656,8 +656,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return splitSDKKey.length == 3 && splitSDKKey[0].equals(Constants.SDK_KEY_PREFIX) && splitSDKKey[1].length() == Constants.SDK_KEY_SECTION_LENGTH && splitSDKKey[2].length() == Constants.SDK_KEY_SECTION_LENGTH;
     }
 
-    private EvaluationDetails<Object> evaluateObject(Class classOfT, Setting setting, String key, User user, Long fetchTime) {
-        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user);
+    private EvaluationDetails<Object> evaluateObject(Class classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
+        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, null, settings);
         EvaluationDetails<Object> details = new EvaluationDetails<>(
                 this.parseObject(classOfT, evaluationResult.value, setting.getType()),
                 key,
@@ -672,8 +672,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return details;
     }
 
-    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
-        return evaluateObject(classOfT, setting, key, user, fetchTime).asTypeSpecific();
+    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
+        return evaluateObject(classOfT, setting, key, user, fetchTime, settings).asTypeSpecific();
     }
 
     /**

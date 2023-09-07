@@ -3,12 +3,11 @@ package com.configcat;
 import de.skuzzle.semantic.Version;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 class RolloutEvaluator {
     private final ConfigCatLogger logger;
@@ -17,34 +16,32 @@ class RolloutEvaluator {
         this.logger = logger;
     }
 
-    public EvaluationResult evaluate(Setting setting, String key, User user) {
+    public EvaluationResult evaluate(Setting setting, String key, User user, List<String> visitedKeys, Map<String, Setting> settings) {
         //TODO this  is a huge method, try to make it smaller
 
         //TODO logger trick implement? in case info? check it
+        //TODO how to handle prerequisite logger?
         EvaluateLogger evaluateLogger = new EvaluateLogger(key);
-
         try {
 
-            if (user == null) {
-                //TODO handle missing user logging. based on changes.
-                if ((setting.getTargetingRules() != null && setting.getTargetingRules().length > 0) ||
-                        (setting.getPercentageOptions() != null && setting.getPercentageOptions().length > 0)) {
-                    this.logger.warn(3001, ConfigCatLogMessages.getTargetingIsNotPossible(key));
-                }
-
-                evaluateLogger.logReturnValue(setting.getSettingsValue().toString());
-                return new EvaluationResult(setting.getSettingsValue(), setting.getVariationId(), null, null);
+            if (user != null) {
+                //TODO log needed
+                evaluateLogger.logUserObject(user);
             }
 
-            evaluateLogger.logUserObject(user);
+            if(visitedKeys == null) {
+                visitedKeys = new ArrayList<>();
+            }
+            visitedKeys.add(key);
+            EvaluationContext context = new EvaluationContext(key, user, visitedKeys, settings);
 
             if (setting.getTargetingRules() != null) {
-                EvaluationResult targetingRulesEvaluationResult = evaluateTargetingRules(setting, user, key, evaluateLogger);
+                EvaluationResult targetingRulesEvaluationResult = evaluateTargetingRules(setting, context, evaluateLogger);
                 if (targetingRulesEvaluationResult != null) return targetingRulesEvaluationResult;
             }
 
             if (setting.getPercentageOptions() != null && setting.getPercentageOptions().length > 0) {
-                EvaluationResult percentageOptionsEvaluationResult = evaluatePercentageOptions(setting.getPercentageOptions(), setting.getPercentageAttribute(), key, user, null, evaluateLogger);
+                EvaluationResult percentageOptionsEvaluationResult = evaluatePercentageOptions(setting.getPercentageOptions(), setting.getPercentageAttribute(), context, null, evaluateLogger);
                 if (percentageOptionsEvaluationResult != null) return percentageOptionsEvaluationResult;
             }
 
@@ -55,10 +52,10 @@ class RolloutEvaluator {
         }
     }
 
-    private boolean evaluateComparisonCondition(ComparisonCondition comparisonCondition, User user, String configSalt, String key, EvaluateLogger evaluateLogger) {
+    private boolean evaluateComparisonCondition(ComparisonCondition comparisonCondition, EvaluationContext context, String configSalt, EvaluateLogger evaluateLogger) {
         String comparisonAttribute = comparisonCondition.getComparisonAttribute();
         Comparator comparator = Comparator.fromId(comparisonCondition.getComparator());
-        String userValue = user.getAttribute(comparisonAttribute);
+        String userValue = context.getUser().getAttribute(comparisonAttribute);
 
 
         //TODO Check if all value available. User missing is separated handle in every Condition checks? cc/sc/pfc
@@ -153,14 +150,14 @@ class RolloutEvaluator {
                 List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
                 inValuesSensitive.replaceAll(String::trim);
                 inValuesSensitive.removeAll(Arrays.asList(null, ""));
-                String hashValueOne = getSaltedUserValue(userValue, configSalt, key);
+                String hashValueOne = getSaltedUserValue(userValue, configSalt, context.getKey());
                 return inValuesSensitive.contains(hashValueOne);
             case SENSITIVE_IS_NOT_ONE_OF:
                 //TODO add salt and salt error handle
                 List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
                 notInValuesSensitive.replaceAll(String::trim);
                 notInValuesSensitive.removeAll(Arrays.asList(null, ""));
-                String hashValueNotOne = getSaltedUserValue(userValue, configSalt, key);
+                String hashValueNotOne = getSaltedUserValue(userValue, configSalt, context.getKey());
                 return !notInValuesSensitive.contains(hashValueNotOne);
             case DATE_BEFORE:
             case DATE_AFTER:
@@ -177,11 +174,11 @@ class RolloutEvaluator {
                 }
             case HASHED_EQUALS:
                 //TODO add salt and salt error handle
-                String hashEquals = getSaltedUserValue(userValue, configSalt, key);
+                String hashEquals = getSaltedUserValue(userValue, configSalt, context.getKey());
                 return hashEquals.equals(comparisonCondition.getStringValue());
             case HASHED_NOT_EQUALS:
                 //TODO add salt and salt error handle
-                String hashNotEquals = getSaltedUserValue(userValue, configSalt, key);
+                String hashNotEquals = getSaltedUserValue(userValue, configSalt, context.getKey());
                 return !hashNotEquals.equals(comparisonCondition.getStringValue());
             case HASHED_STARTS_WITH:
             case HASHED_ENDS_WITH:
@@ -202,7 +199,7 @@ class RolloutEvaluator {
                     try {
                         int comparedTextLengthInt = Integer.parseInt(comparedTextLength);
                         if (userValue.length() < comparedTextLengthInt) {
-                            return false;
+                            continue;
                         }
                         String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
                         if (comparisonHashValue.isEmpty()) {
@@ -214,7 +211,7 @@ class RolloutEvaluator {
                         } else { //HASHED_ENDS_WITH
                             userValueSubString = userValue.substring(userValue.length() - comparedTextLengthInt);
                         }
-                        String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, key);
+                        String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, context.getKey());
                         if(hashUserValueSub.equals(comparisonHashValue)){
                             foundEqual = true;
                         }
@@ -235,7 +232,7 @@ class RolloutEvaluator {
                     return false;
                 }
                 for (String userValueSlice : userCSVContainsHashSplit) {
-                    String userValueSliceHash = getSaltedUserValue(userValueSlice, configSalt, key);
+                    String userValueSliceHash = getSaltedUserValue(userValueSlice, configSalt, context.getKey());
                     if (userValueSliceHash.equals(comparisonCondition.getStringValue())) {
                         return true;
                     }
@@ -249,7 +246,7 @@ class RolloutEvaluator {
                 }
                 boolean containsFlag = false;
                 for (String userValueSlice : userCSVNotContainsHashSplit) {
-                    String userValueSliceHash = getSaltedUserValue(userValueSlice, configSalt, key);
+                    String userValueSliceHash = getSaltedUserValue(userValueSlice, configSalt, context.getKey());
                     if (userValueSliceHash.equals(comparisonCondition.getStringValue())) {
                         containsFlag = true;
                     }
@@ -260,7 +257,6 @@ class RolloutEvaluator {
         return true;
     }
 
-    @NotNull
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String key) {
         return new String(Hex.encodeHex(DigestUtils.sha256(userValue + configJsonSalt + key)));
     }
@@ -270,19 +266,41 @@ class RolloutEvaluator {
         return true;
     }
 
-    private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition) {
-        //TODO implement
-        return true;
+    private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition, EvaluationContext context, EvaluateLogger evaluateLogger) {
+        //TODO add logger evaluateLogger
+        String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
+        Setting prerequsiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
+        if(prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequsiteFlagSetting == null){
+            // TODO Log error
+            return false;
+        }
+        if(context.getVisitedKeys().contains(prerequisiteFlagKey)){
+            //TODO log eval , return error message?
+            //TODO log warning circular
+            // logger.warn();
+        }
+
+        EvaluationResult evaluateResult = evaluate(prerequsiteFlagSetting, context.getKey(), context.getUser(), context.getVisitedKeys(), context.getSettings());
+        if(evaluateResult.value == null) {
+            //TODO log some error
+            return false;
+        }
+        PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
+        SettingsValue conditionValue = prerequisiteFlagCondition.getValue();
+        if(PrerequisiteComparator.EQUALS.equals(prerequisiteComparator)){
+            return conditionValue.equals(evaluateResult.value);
+        } else {
+            return !conditionValue.equals(evaluateResult.value);
+        }
     }
 
-    @Nullable
-    private EvaluationResult evaluateTargetingRules(Setting setting, User user, String key, EvaluateLogger evaluateLogger) {
+    private EvaluationResult evaluateTargetingRules(Setting setting, EvaluationContext context, EvaluateLogger evaluateLogger) {
         //TODO evaluation context should be added?
         //TODO logger eval targeting rules apply first ....
 
         for (TargetingRule rule : setting.getTargetingRules()) {
 
-            if (!evaluateConditions(rule.getConditions(), user, setting.getConfigSalt(), key, evaluateLogger)) {
+            if (!evaluateConditions(rule.getConditions(), context, setting.getConfigSalt(), evaluateLogger)) {
                 continue;
             }
             // Conditions match, if rule.getServedValue() not null. we shuold return as logMatch value from SV
@@ -295,7 +313,7 @@ class RolloutEvaluator {
                 //TODO error? log something?
                 continue;
             }
-            return evaluatePercentageOptions(rule.getPercentageOptions(), setting.getPercentageAttribute(), key, user, rule, evaluateLogger);
+            return evaluatePercentageOptions(rule.getPercentageOptions(), setting.getPercentageAttribute(), context, rule, evaluateLogger);
 
         }
         //TODO loogging should be reworked.
@@ -303,7 +321,7 @@ class RolloutEvaluator {
         return null;
     }
 
-    private boolean evaluateConditions(Condition[] conditions, User user, String configSalt, String key, EvaluateLogger evaluateLogger) {
+    private boolean evaluateConditions(Condition[] conditions, EvaluationContext context, String configSalt, EvaluateLogger evaluateLogger) {
         //Conditions are ANDs so if One is not matching return false, if all matching return true
         //TODO rework logging based on changes possibly
         boolean conditionsEvaluationResult = false;
@@ -312,12 +330,12 @@ class RolloutEvaluator {
 
             //TODO Condition, what if condition invalid? more then one condition added or none. rework basic if
             if (condition.getComparisonCondition() != null) {
-                conditionsEvaluationResult = evaluateComparisonCondition(condition.getComparisonCondition(), user, configSalt, key, evaluateLogger);
+                conditionsEvaluationResult = evaluateComparisonCondition(condition.getComparisonCondition(), context, configSalt, evaluateLogger);
             } else if (condition.getSegmentCondition() != null) {
                 //TODO evalSC
                 conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition());
             } else if (condition.getPrerequisiteFlagCondition() != null) {
-                conditionsEvaluationResult = evaluatePrerequisiteFlagCondition(condition.getPrerequisiteFlagCondition());
+                conditionsEvaluationResult = evaluatePrerequisiteFlagCondition(condition.getPrerequisiteFlagCondition(),context, evaluateLogger);
                 //TODO evalPFC
             }
             // else throw Some exception here?
@@ -330,27 +348,22 @@ class RolloutEvaluator {
         return conditionsEvaluationResult;
     }
 
-    @Nullable
-    private static EvaluationResult evaluatePercentageOptions(PercentageOption[] percentageOptions, String percentageOptionAttribute, String key, User user, TargetingRule parentTargetingRule, EvaluateLogger evaluateLogger) {
+    private static EvaluationResult evaluatePercentageOptions(PercentageOption[] percentageOptions, String percentageOptionAttribute, EvaluationContext context, TargetingRule parentTargetingRule, EvaluateLogger evaluateLogger) {
         //TODO if user missing? based on .net skipp should be logged here
-        //TODO setting.getPercentageAttribute()?
         String percentageOptionAttributeValue;
         String percentageOptionAttributeName = percentageOptionAttribute;
         if (percentageOptionAttributeName == null || percentageOptionAttributeName.isEmpty()) {
-            //TODO add some const for the "Identifier"
             percentageOptionAttributeName = "Identifier";
-            percentageOptionAttributeValue = user.getIdentifier();
+            percentageOptionAttributeValue = context.getUser().getIdentifier();
         } else {
-            percentageOptionAttributeValue = user.getAttribute(percentageOptionAttributeName);
+            percentageOptionAttributeValue = context.getUser().getAttribute(percentageOptionAttributeName);
             if (percentageOptionAttributeValue == null) {
-                //TODO log skip beacuse atribute value missing
-                //TODO return with default?
+                //TODO log skip because attribute value missing
                 return null;
             }
         }
-        //TODO log misisng Evalu % option based on .....
-        //TODO salt must be added?
-        String hashCandidate = key + percentageOptionAttributeValue;
+        //TODO log missing Eval % option based on .....
+        String hashCandidate = context.getKey() + percentageOptionAttributeValue;
         int scale = 100;
         String hexHash = new String(Hex.encodeHex(DigestUtils.sha1(hashCandidate))).substring(0, 7);
         int longHash = Integer.parseInt(hexHash, 16);
@@ -365,7 +378,6 @@ class RolloutEvaluator {
                 return new EvaluationResult(rule.getValue(), rule.getVariationId(), parentTargetingRule, rule);
             }
         }
-        //TODO log when options % not 100? so we don't need a return here?
         return null;
     }
 
