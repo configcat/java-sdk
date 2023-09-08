@@ -209,7 +209,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         for (String key : keys) {
                             Setting setting = settings.get(key);
 
-                            SettingsValue evaluated = this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user), null, settings).value;
+                            SettingsValue evaluated = this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user), null, settings, new EvaluateLogger(key)).value;
                             Object value = this.parseObject(this.classBySettingType(setting.getType()), evaluated, setting.getType());
                             result.put(key, value);
                         }
@@ -657,7 +657,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private EvaluationDetails<Object> evaluateObject(Class classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
-        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, null, settings);
+        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, null, settings, new EvaluateLogger(key));
         EvaluationDetails<Object> details = new EvaluationDetails<>(
                 this.parseObject(classOfT, evaluationResult.value, setting.getType()),
                 key,

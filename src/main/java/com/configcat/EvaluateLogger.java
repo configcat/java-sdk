@@ -1,49 +1,64 @@
 package com.configcat;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class EvaluateLogger {
-    //TODO rework to handle OR and other new scenarios
+
+    private final StringBuilder stringBuilder = new StringBuilder();
 
     public EvaluateLogger(final String key) {
-        entries.add("Evaluating getValue(" + key + ").");
+        stringBuilder.append("Evaluating '" + key + "'");
+        indentLevel = 0;
     }
 
-    private final List<String> entries = new ArrayList<>();
+    private int indentLevel;
 
-    public void logReturnValue(String value) {
-        entries.add("Returning " + value + ".");
+    public final void logUserObject(final User user){
+        stringBuilder.append(" for User '" +user.toString()+"'");
+
     }
 
-    public void logPercentageEvaluationReturnValue(String value) {
-        entries.add("Evaluating % options. Returning " + value + ".");
+    public final void append(final String line){
+        stringBuilder.append(line);
     }
 
-    public void logUserObject(User user) {
-        entries.add("User object: " + user + ".");
+    public final void increaseIndentLevel(){
+        indentLevel++;
     }
 
-    public void logMatch(String comparisonAttribute, String userValue, Comparator comparator, Object comparisonValue, Object value) {
-        entries.add("Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + comparator.getName() + "] [" + comparisonValue.toString() + "] => match, returning: " + value + "");
+    public final void decreaseIndentLevel(){
+        //TODO validate it cannot be less then 0?
+        indentLevel--;
     }
 
-    public void logMatch(String comparisonAttribute, double userValue, Comparator comparator, double comparisonValue, Object value) {
-        entries.add("Evaluating rule: [" + comparisonAttribute + ":" + userValue + " (" + DateTimeUtils.doubleToFormattedUTC(userValue) +")] [" + comparator.getName() + "] [" + comparisonValue + " (" + DateTimeUtils.doubleToFormattedUTC(comparisonValue) +")] => match, returning: " + value + "");
-    }
+    public final void newLine(){
 
-    public void logNoMatch(String comparisonAttribute, String userValue, Comparator comparator, Object comparisonValue) {
-        entries.add("Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + comparator.getName() + "] [" + comparisonValue + "] => no match");
-    }
-
-    public String logFormatError(String comparisonAttribute, String userValue, Comparator comparator, Object comparisonValue, Exception exception) {
-        String message = "Evaluating rule: [" + comparisonAttribute + ":" + userValue + "] [" + comparator.getName() + "] [" + comparisonValue.toString() + "] => SKIP rule. Validation error: " + exception + "";
-        entries.add(message);
-        return message;
     }
 
     public String toPrint() {
-        return String.join(System.lineSeparator(), this.entries);
+        return stringBuilder.toString();
     }
 
+    public void logReturnValue(String toString) {
+        //TODO implement something similar
+    }
+
+    public String logFormatError(String comparisonAttribute, String userValue, Comparator comparator, List<String> inSemVerValues, Exception e) {
+        //TODO implement something similar
+        return "";
+    }
+
+    public String logFormatError(String comparisonAttribute, String userValue, Comparator comparator, String stringValue, Exception e) {
+        //TODO implement something similar
+        return "";
+    }
+
+    public String logFormatError(String comparisonAttribute, String userValue, Comparator comparator, Double doubleValue, NumberFormatException e) {
+        //TODO implement something similar
+        return "";
+    }
+
+    public void logPercentageEvaluationReturnValue(String toString) {
+        //TODO implement something similar
+    }
 }

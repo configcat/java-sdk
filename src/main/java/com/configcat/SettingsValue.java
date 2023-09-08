@@ -2,6 +2,8 @@ package com.configcat;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Objects;
+
 public class SettingsValue {
     @SerializedName("b")
     private Boolean booleanValue;
@@ -45,6 +47,19 @@ public class SettingsValue {
 
     public Double getDoubleValue() {
         return doubleValue;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SettingsValue that = (SettingsValue) o;
+        return Objects.equals(booleanValue, that.booleanValue) && Objects.equals(stringValue, that.stringValue) && Objects.equals(integerValue, that.integerValue) && Objects.equals(doubleValue, that.doubleValue);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(booleanValue, stringValue, integerValue, doubleValue);
     }
 }
 

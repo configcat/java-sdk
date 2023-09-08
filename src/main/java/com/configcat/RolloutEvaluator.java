@@ -16,16 +16,10 @@ class RolloutEvaluator {
         this.logger = logger;
     }
 
-    public EvaluationResult evaluate(Setting setting, String key, User user, List<String> visitedKeys, Map<String, Setting> settings) {
-        //TODO this  is a huge method, try to make it smaller
-
+    public EvaluationResult evaluate(Setting setting, String key, User user, List<String> visitedKeys, Map<String, Setting> settings, EvaluateLogger evaluateLogger) {
         //TODO logger trick implement? in case info? check it
-        //TODO how to handle prerequisite logger?
-        EvaluateLogger evaluateLogger = new EvaluateLogger(key);
         try {
-
             if (user != null) {
-                //TODO log needed
                 evaluateLogger.logUserObject(user);
             }
 
@@ -53,10 +47,16 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateComparisonCondition(ComparisonCondition comparisonCondition, EvaluationContext context, String configSalt, EvaluateLogger evaluateLogger) {
+        //TODO evalLogger CC eval is happening
+         if(context.getUser() == null){
+             // evaluateLogger "Skipping % options because the User Object is missing."
+             //TODO isUserMissing in context? check pyhton
+             return false;
+         }
+
         String comparisonAttribute = comparisonCondition.getComparisonAttribute();
         Comparator comparator = Comparator.fromId(comparisonCondition.getComparator());
         String userValue = context.getUser().getAttribute(comparisonAttribute);
-
 
         //TODO Check if all value available. User missing is separated handle in every Condition checks? cc/sc/pfc
         //TODO what if CV value is not the right one for the comparator?  How to hand,e CV missing? etc.
@@ -68,6 +68,12 @@ class RolloutEvaluator {
 
         //TODO comparator null? error?
         //TODO in case of exception catch return false. is this oK?
+        if(comparator == null){
+            return false;
+            //TODO do we log the comparator is invalid somewhere?
+//            default:
+//                throw  new RuntimeException("Comparison operator is invalid.");
+        }
         switch (comparator) {
             //TODO log match should be handled on return and just for the TR?
             // evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, containsValues, value);
@@ -227,43 +233,49 @@ class RolloutEvaluator {
                 return foundEqual;
             case HASHED_ARRAY_CONTAINS:
                 //TODO add salt and salt error handle
+                List<String> containsHashedValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
                 String[] userCSVContainsHashSplit = userValue.split(",");
                 if (userCSVContainsHashSplit.length == 0) {
                     return false;
                 }
                 for (String userValueSlice : userCSVContainsHashSplit) {
-                    String userValueSliceHash = getSaltedUserValue(userValueSlice, configSalt, context.getKey());
-                    if (userValueSliceHash.equals(comparisonCondition.getStringValue())) {
+                    String userValueSliceHash = getSaltedUserValue(userValueSlice.trim(), configSalt, context.getKey());
+                    if (containsHashedValues.contains(userValueSliceHash)) {
                         return true;
                     }
                 }
                 return false;
             case HASHED_ARRAY_NOT_CONTAINS:
                 //TODO add salt and salt error handle
+                List<String> notContainsHashedValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
                 String[] userCSVNotContainsHashSplit = userValue.split(",");
                 if (userCSVNotContainsHashSplit.length == 0) {
                     return false;
                 }
                 boolean containsFlag = false;
                 for (String userValueSlice : userCSVNotContainsHashSplit) {
-                    String userValueSliceHash = getSaltedUserValue(userValueSlice, configSalt, context.getKey());
-                    if (userValueSliceHash.equals(comparisonCondition.getStringValue())) {
+                    String userValueSliceHash = getSaltedUserValue(userValueSlice.trim(), configSalt, context.getKey());
+                    if (notContainsHashedValues.contains(userValueSliceHash)) {
                         containsFlag = true;
                     }
                 }
                 return !containsFlag;
-
         }
-        return true;
+        return false;
     }
 
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String key) {
         return new String(Hex.encodeHex(DigestUtils.sha256(userValue + configJsonSalt + key)));
     }
 
-    private boolean evaluateSegmentCondition(SegmentCondition segmentCondition) {
+    private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, EvaluateLogger evaluateLogger) {
         //TODO implement
-        return true;
+        if(context.getUser() == null){
+            // evaluateLogger "Skipping % options because the User Object is missing."
+            //TODO isUserMissing in context? check pyhton
+            return false;
+        }
+        return false;
     }
 
     private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition, EvaluationContext context, EvaluateLogger evaluateLogger) {
@@ -278,9 +290,10 @@ class RolloutEvaluator {
             //TODO log eval , return error message?
             //TODO log warning circular
             // logger.warn();
+            return false;
         }
 
-        EvaluationResult evaluateResult = evaluate(prerequsiteFlagSetting, context.getKey(), context.getUser(), context.getVisitedKeys(), context.getSettings());
+        EvaluationResult evaluateResult = evaluate(prerequsiteFlagSetting, prerequisiteFlagKey, context.getUser(), context.getVisitedKeys(), context.getSettings(), evaluateLogger);
         if(evaluateResult.value == null) {
             //TODO log some error
             return false;
@@ -313,7 +326,11 @@ class RolloutEvaluator {
                 //TODO error? log something?
                 continue;
             }
-            return evaluatePercentageOptions(rule.getPercentageOptions(), setting.getPercentageAttribute(), context, rule, evaluateLogger);
+            EvaluationResult evaluatePercentageOptionsResult = evaluatePercentageOptions(rule.getPercentageOptions(), setting.getPercentageAttribute(), context, rule, evaluateLogger);
+            if(evaluatePercentageOptionsResult == null){
+                continue;
+            }
+            return evaluatePercentageOptionsResult;
 
         }
         //TODO loogging should be reworked.
@@ -333,10 +350,10 @@ class RolloutEvaluator {
                 conditionsEvaluationResult = evaluateComparisonCondition(condition.getComparisonCondition(), context, configSalt, evaluateLogger);
             } else if (condition.getSegmentCondition() != null) {
                 //TODO evalSC
-                conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition());
+                conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition(), context, evaluateLogger);
             } else if (condition.getPrerequisiteFlagCondition() != null) {
                 conditionsEvaluationResult = evaluatePrerequisiteFlagCondition(condition.getPrerequisiteFlagCondition(),context, evaluateLogger);
-                //TODO evalPFC
+                //TODO here, we should return with value....
             }
             // else throw Some exception here?
             if (!conditionsEvaluationResult) {
@@ -349,7 +366,11 @@ class RolloutEvaluator {
     }
 
     private static EvaluationResult evaluatePercentageOptions(PercentageOption[] percentageOptions, String percentageOptionAttribute, EvaluationContext context, TargetingRule parentTargetingRule, EvaluateLogger evaluateLogger) {
-        //TODO if user missing? based on .net skipp should be logged here
+        if (context.getUser() == null){
+            // evaluateLogger "Skipping % options because the User Object is missing."
+            //TODO isUserMissing in context? check pyhton
+            return null;
+        }
         String percentageOptionAttributeValue;
         String percentageOptionAttributeName = percentageOptionAttribute;
         if (percentageOptionAttributeName == null || percentageOptionAttributeName.isEmpty()) {
