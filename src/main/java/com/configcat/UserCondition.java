@@ -2,7 +2,7 @@ package com.configcat;
 
 import com.google.gson.annotations.SerializedName;
 
-public class ComparisonCondition {
+public class UserCondition {
 
     @SerializedName(value = "a")
     private String comparisonAttribute;

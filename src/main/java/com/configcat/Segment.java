@@ -8,13 +8,13 @@ public class Segment {
     private String name;
 
     @SerializedName(value = "r")
-    private ComparisonCondition[] segmentRules;
+    private UserCondition[] segmentRules;
 
     public String getName() {
         return name;
     }
 
-    public ComparisonCondition[] getSegmentRules() {
+    public UserCondition[] getSegmentRules() {
         return segmentRules;
     }
 }
