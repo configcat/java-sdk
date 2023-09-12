@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName;
 
 public class Segment {
 
-
     @SerializedName(value = "n")
     private String name;
 
@@ -13,5 +12,9 @@ public class Segment {
 
     public String getName() {
         return name;
+    }
+
+    public ComparisonCondition[] getSegmentRules() {
+        return segmentRules;
     }
 }

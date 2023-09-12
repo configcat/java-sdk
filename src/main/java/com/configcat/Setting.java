@@ -15,9 +15,10 @@ public class Setting {
     @SerializedName(value = "v")
     private SettingsValue settingsValue;
     @SerializedName(value = "i")
-    private String variationId = "";
+    private String variationId;
 
     private String configSalt;
+    private Segment[] segments;
 
     public void setSettingsValue(SettingsValue settingsValue) {
         this.settingsValue = settingsValue;
@@ -30,6 +31,11 @@ public class Setting {
     public void  setConfigSalt(String configSalt){
         this.configSalt = configSalt;
     }
+
+    public void setSegments(Segment[] segments) {
+        this.segments = segments;
+    }
+
     public SettingType getType() {
         return type;
     }
@@ -55,5 +61,9 @@ public class Setting {
 
     public String getConfigSalt(){
         return configSalt;
+    }
+
+    public Segment[] getSegments() {
+        return segments;
     }
 }
