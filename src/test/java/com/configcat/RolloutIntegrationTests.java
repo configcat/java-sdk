@@ -28,15 +28,15 @@ public class RolloutIntegrationTests {
             = "{index}: Test with File={0}, ApiKey={1}")
     public static Iterable<Object[]> data() {
         return Arrays.asList(new Object[][]{
-//                {"testmatrix.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", VALUE_TEST_KIND, null},
-//                {"testmatrix_semantic.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA", VALUE_TEST_KIND, null},
-//                {"testmatrix_number.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw", VALUE_TEST_KIND, null},
-//                {"testmatrix_semantic_2.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w", VALUE_TEST_KIND, null},
-//                {"testmatrix_sensitive.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA", VALUE_TEST_KIND, null},
-//                {"testmatrix_variationId.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA", VARIATION_TEST_KIND, null},
-//                {"testmatrix_and_or.csv", "configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/FfwncdJg1kq0lBqxhYC_7g", VALUE_TEST_KIND, "https://test-cdn-eu.configcat.com"},
-//                {"testmatrix_comparators_v6.csv", "configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/Lv2mD9Tgx0Km27nuHjw_FA", VALUE_TEST_KIND, "https://test-cdn-eu.configcat.com"},
-//                {"testmatrix_prerequisite_flag.csv", "configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LGO_8DM9OUGpJixrqqqQcA", VALUE_TEST_KIND, "https://test-cdn-eu.configcat.com"},
+                {"testmatrix.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", VALUE_TEST_KIND, null},
+                {"testmatrix_semantic.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA", VALUE_TEST_KIND, null},
+                {"testmatrix_number.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw", VALUE_TEST_KIND, null},
+                {"testmatrix_semantic_2.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w", VALUE_TEST_KIND, null},
+                {"testmatrix_sensitive.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA", VALUE_TEST_KIND, null},
+                {"testmatrix_variationId.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA", VARIATION_TEST_KIND, null},
+                {"testmatrix_and_or.csv", "configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/FfwncdJg1kq0lBqxhYC_7g", VALUE_TEST_KIND, "https://test-cdn-eu.configcat.com"},
+                {"testmatrix_comparators_v6.csv", "configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/Lv2mD9Tgx0Km27nuHjw_FA", VALUE_TEST_KIND, "https://test-cdn-eu.configcat.com"},
+                {"testmatrix_prerequisite_flag.csv", "configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LGO_8DM9OUGpJixrqqqQcA", VALUE_TEST_KIND, "https://test-cdn-eu.configcat.com"},
                 {"testmatrix_segment.csv", "configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LP0_4hhbQkmVVJcsbO_2Lw", VALUE_TEST_KIND, "https://test-cdn-eu.configcat.com"},
         });
     }

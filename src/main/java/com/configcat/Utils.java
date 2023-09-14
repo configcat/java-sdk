@@ -14,7 +14,6 @@ final class Utils {
         for (Setting setting: config.getEntries().values()) {
             setting.setConfigSalt(config.getPreferences().getSalt());
             setting.setSegments(config.getSegments());
-            //TODO check override case
         }
         return config;
     }

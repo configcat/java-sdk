@@ -61,5 +61,18 @@ public class SettingsValue {
     public int hashCode() {
         return Objects.hash(booleanValue, stringValue, integerValue, doubleValue);
     }
+
+    @Override
+    public String toString() {
+        if(booleanValue != null){
+            return booleanValue.toString();
+        } else if (integerValue != null) {
+            return  integerValue.toString();
+        } else if (doubleValue != null){
+            return doubleValue.toString();
+        } else {
+            return stringValue;
+        }
+    }
 }
 

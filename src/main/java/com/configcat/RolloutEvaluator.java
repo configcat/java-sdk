@@ -47,10 +47,12 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateUserCondition(UserCondition userCondition, EvaluationContext context, String configSalt, String contextSalt, EvaluateLogger evaluateLogger) {
-        //TODO evalLogger CC eval is happening
          if(context.getUser() == null){
-             // evaluateLogger "Skipping % options because the User Object is missing."
-             //TODO isUserMissing in context? check pyhton
+             //TODO eval logger error must be logged as well
+             if(!context.isUserMissing()){
+                 context.setUserMissing(true);
+                 this.logger.warn(3001, ConfigCatLogMessages.getUserObjectMissing(context.getKey()));
+             }
              return false;
          }
 
@@ -58,11 +60,10 @@ class RolloutEvaluator {
         Comparator comparator = Comparator.fromId(userCondition.getComparator());
         String userValue = context.getUser().getAttribute(comparisonAttribute);
 
-        //TODO Check if all value available. User missing is separated handle in every Condition checks? cc/sc/pfc
-        //TODO what if CV value is not the right one for the comparator?  How to hand,e CV missing? etc.
 //        if (comparisonValue == null || comparisonValue.isEmpty() ||
         if (userValue == null || userValue.isEmpty()) {
-            //evaluateLogger.logNoMatch(comparisonAttribute, userValue, comparator, comparisonValue);
+            logger.warn(3003, ConfigCatLogMessages.getUserAttributeMissing(context.getKey(), userCondition, comparisonAttribute));
+            //TODO eval logger needed
             return false;
         }
 
@@ -109,8 +110,10 @@ class RolloutEvaluator {
 
                     return (matched && Comparator.SEMVER_IS_ONE_OF.equals(comparator)) || (!matched && Comparator.SEMVER_IS_NOT_ONE_OF.equals(comparator));
                 } catch (Exception e) {
-                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, inSemVerValues, e);
-                    this.logger.warn(0, message);
+                    //TODO eval log
+                    //String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, inSemVerValues, e);
+                    String reason = "'"+userValue+"' is not a valid semantic version";
+                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason,comparisonAttribute));
                     return false;
                 }
             case SEMVER_LESS:
@@ -126,8 +129,10 @@ class RolloutEvaluator {
                             (Comparator.SEMVER_GREATER.equals(comparator) && cmpUserVersion.isGreaterThan(matchValue)) ||
                             (Comparator.SEMVER_GREATER_EQUALS.equals(comparator) && cmpUserVersion.compareTo(matchValue) >= 0);
                 } catch (Exception e) {
-                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, userCondition.getStringValue(), e);
-                    this.logger.warn(0, message);
+                    //TODO eval log
+//                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, userCondition.getStringValue(), e);
+                    String reason = "'"+userValue+"' is not a valid semantic version";
+                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason,comparisonAttribute));
                     return false;
                 }
             case NUMBER_EQUALS:
@@ -147,8 +152,10 @@ class RolloutEvaluator {
                             (Comparator.NUMBER_GREATER.equals(comparator) && userDoubleValue > comparisonDoubleValue) ||
                             (Comparator.NUMBER_GREATER_EQUALS.equals(comparator) && userDoubleValue >= comparisonDoubleValue);
                 } catch (NumberFormatException e) {
-                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, userCondition.getDoubleValue(), e);
-                    this.logger.warn(0, message);
+                    // TODO eval log
+                    //String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, userCondition.getDoubleValue(), e);
+                    String reason = "'"+userValue+"' is not a valid decimal number";
+                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason,comparisonAttribute));
                     return false;
                 }
             case SENSITIVE_IS_ONE_OF:
@@ -159,7 +166,7 @@ class RolloutEvaluator {
                 String hashValueOne = getSaltedUserValue(userValue, configSalt, contextSalt);
                 return inValuesSensitive.contains(hashValueOne);
             case SENSITIVE_IS_NOT_ONE_OF:
-                //TODO add salt and salt error handle
+                //TODO salt error handle
                 List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 notInValuesSensitive.replaceAll(String::trim);
                 notInValuesSensitive.removeAll(Arrays.asList(null, ""));
@@ -173,31 +180,31 @@ class RolloutEvaluator {
                     return (Comparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
                             (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
                 } catch (NumberFormatException e) {
-                    //TODO add new error handling to Date '{userAttributeValue}' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)
-                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, userCondition.getDoubleValue(), e);
-                    this.logger.warn(0, message);
+                    // TODO eval log
+                    //String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, userCondition.getDoubleValue(), e);
+                    String reason = "'"+userValue+"' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)";
+                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason,comparisonAttribute));
                     return false;
                 }
             case HASHED_EQUALS:
-                //TODO add salt and salt error handle
+                //TODO salt error handle
                 String hashEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
                 return hashEquals.equals(userCondition.getStringValue());
             case HASHED_NOT_EQUALS:
-                //TODO add salt and salt error handle
+                //TODO salt error handle
                 String hashNotEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
                 return !hashNotEquals.equals(userCondition.getStringValue());
             case HASHED_STARTS_WITH:
             case HASHED_ENDS_WITH:
             case HASHED_NOT_STARTS_WITH:
             case HASHED_NOT_ENDS_WITH:
-                //TODO add salt and salt error handle
+                //TODO salt error handle
                 List<String> withValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 withValues.replaceAll(String::trim);
                 withValues.removeAll(Arrays.asList(null, ""));
                 boolean foundEqual = false;
                 for (String comparisonValueHashedStartsEnds : withValues) {
                     int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
-                    //TODO is it false or skip
                     if (indexOf <= 0) {
                         return false;
                     }
@@ -232,7 +239,7 @@ class RolloutEvaluator {
                 }
                 return foundEqual;
             case HASHED_ARRAY_CONTAINS:
-                //TODO add salt and salt error handle
+                //TODO salt error handle
                 List<String> containsHashedValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 String[] userCSVContainsHashSplit = userValue.split(",");
                 for (String userValueSlice : userCSVContainsHashSplit) {
@@ -243,7 +250,7 @@ class RolloutEvaluator {
                 }
                 return false;
             case HASHED_ARRAY_NOT_CONTAINS:
-                //TODO add salt and salt error handle
+                //TODO and salt error handle
                 List<String> notContainsHashedValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 String[] userCSVNotContainsHashSplit = userValue.split(",");
                 if (userCSVNotContainsHashSplit.length == 0) {
@@ -267,8 +274,11 @@ class RolloutEvaluator {
 
     private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
         if(context.getUser() == null){
-            // evaluateLogger "Skipping % options because the User Object is missing."
-            //TODO isUserMissing in context? check pyhton
+            //TODO eval logger error must be logged as well
+            if(!context.isUserMissing()){
+                context.setUserMissing(true);
+                logger.warn(3001, ConfigCatLogMessages.getUserObjectMissing(context.getKey()));
+            }
             return false;
         }
         //TODO get index.
@@ -307,13 +317,13 @@ class RolloutEvaluator {
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
         Setting prerequsiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
         if(prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequsiteFlagSetting == null){
-            // TODO Log error
+            // TODO new InvalidOperationException("Prerequisite flag key is missing or invalid."); EVAL?
             return false;
         }
         if(context.getVisitedKeys().contains(prerequisiteFlagKey)){
             //TODO log eval , return error message?
-            //TODO log warning circular
-            // logger.warn();
+            String dependencyCycle = LogHelper.formatCircularDependencyList(context.getVisitedKeys(), prerequisiteFlagKey);
+            this.logger.warn(3004, ConfigCatLogMessages.getCircularDependencyDetected(context.getKey(),prerequisiteFlagCondition, dependencyCycle));
             return false;
         }
 
@@ -389,10 +399,12 @@ class RolloutEvaluator {
         return conditionsEvaluationResult;
     }
 
-    private static EvaluationResult evaluatePercentageOptions(PercentageOption[] percentageOptions, String percentageOptionAttribute, EvaluationContext context, TargetingRule parentTargetingRule, EvaluateLogger evaluateLogger) {
+    private EvaluationResult evaluatePercentageOptions(PercentageOption[] percentageOptions, String percentageOptionAttribute, EvaluationContext context, TargetingRule parentTargetingRule, EvaluateLogger evaluateLogger) {
         if (context.getUser() == null){
-            // evaluateLogger "Skipping % options because the User Object is missing."
-            //TODO isUserMissing in context? check pyhton
+            if(!context.isUserMissing()){
+                context.setUserMissing(true);
+                this.logger.warn(3001, ConfigCatLogMessages.getUserObjectMissing(context.getKey()));
+            }
             return null;
         }
         String percentageOptionAttributeValue;
@@ -403,7 +415,10 @@ class RolloutEvaluator {
         } else {
             percentageOptionAttributeValue = context.getUser().getAttribute(percentageOptionAttributeName);
             if (percentageOptionAttributeValue == null) {
-                //TODO log skip because attribute value missing
+                if(!context.isUserAttributeMissing()){
+                    context.setUserAttributeMissing(true);
+                    this.logger.warn(3003, ConfigCatLogMessages.getUserAttributeMissing(context.getKey(),percentageOptionAttributeName));
+                }
                 return null;
             }
         }
