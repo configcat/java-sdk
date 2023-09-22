@@ -46,7 +46,7 @@ final class ConfigCatLogMessages {
     /**
      * Log message for Config Json Is Not Presented errors when the method returns with default value. The log eventId is 1000.
      *
-     * @param key The feature flag key.
+     * @param key               The feature flag key.
      * @param defaultParamName  The default parameter name.
      * @param defaultParamValue The default parameter value.
      * @return The formatted error message.
@@ -200,49 +200,49 @@ final class ConfigCatLogMessages {
     /**
      * Log message for User Attribute is missing warning. The log eventId 3003.
      *
-     * @param key The feature flag setting key.
+     * @param key           The feature flag setting key.
      * @param userCondition The user condition where the attribute is checked.
      * @param attributeName The user attribute name.
      * @return The formatted warn message.
      */
     public static String getUserAttributeMissing(final String key, final UserCondition userCondition, final String attributeName) {
-        return "Cannot evaluate condition ("+LogHelper.formatUserCondition(userCondition)+") for setting '"+key+"' (the User."+attributeName+" attribute is missing). You should set the User."+attributeName+" attribute in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/";
+        return "Cannot evaluate condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' (the User." + attributeName + " attribute is missing). You should set the User." + attributeName + " attribute in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/";
     }
 
     /**
      * Log message for User Attribute is missing warning. The log eventId 3003.
      *
-     * @param key The feature flag setting key.
+     * @param key           The feature flag setting key.
      * @param attributeName The user attribute name.
      * @return The formatted warn message.
      */
     public static String getUserAttributeMissing(final String key, final String attributeName) {
-        return "Cannot evaluate % options for setting '"+key+"' (the User."+attributeName+" attribute is missing). You should set the User."+attributeName+" attribute in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/";
+        return "Cannot evaluate % options for setting '" + key + "' (the User." + attributeName + " attribute is missing). You should set the User." + attributeName + " attribute in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/";
     }
 
     /**
      * Log message for User Attribute is invalid warning. The log eventId 3004.
      *
-     * @param key The feature flag setting key.
+     * @param key           The feature flag setting key.
      * @param userCondition The user condition where the attribute is checked.
-     * @param reason Why the attribute is invalid.
+     * @param reason        Why the attribute is invalid.
      * @param attributeName The user attribute name.
      * @return The formatted warn message.
      */
     public static String getUserAttributeInvalid(final String key, final UserCondition userCondition, final String reason, final String attributeName) {
-        return "Cannot evaluate condition ("+LogHelper.formatUserCondition(userCondition)+") for setting '"+key+"' ("+reason+"). Please check the User."+attributeName+" attribute and make sure that its value corresponds to the comparison operator.";
+        return "Cannot evaluate condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' (" + reason + "). Please check the User." + attributeName + " attribute and make sure that its value corresponds to the comparison operator.";
     }
 
     /**
-     * Log message for User Attribute is invalid warning. The log eventId 3004.
+     * Log message for User Attribute is invalid warning. The log eventId 3005.
      *
-     * @param key The feature flag setting key.
+     * @param key                       The feature flag setting key.
      * @param prerequisiteFlagCondition The condition where the circularity is detected.
-     * @param dependencyCycle The dependency cycle.
+     * @param dependencyCycle           The dependency cycle.
      * @return The formatted warn message.
      */
     public static String getCircularDependencyDetected(final String key, final PrerequisiteFlagCondition prerequisiteFlagCondition, final String dependencyCycle) {
-        return "Cannot evaluate condition ("+LogHelper.formatPrerequisiteFlagCondition(prerequisiteFlagCondition)+") for setting '"+key+"' (circular dependency detected between the following depending flags: "+dependencyCycle+"). Please check your feature flag definition and eliminate the circular dependency.";
+        return "Cannot evaluate condition (" + LogHelper.formatPrerequisiteFlagCondition(prerequisiteFlagCondition) + ") for setting '" + key + "' (circular dependency detected between the following depending flags: " + dependencyCycle + "). Please check your feature flag definition and eliminate the circular dependency.";
     }
 
     /**

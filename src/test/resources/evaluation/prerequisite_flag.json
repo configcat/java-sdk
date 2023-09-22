@@ -1,0 +1,36 @@
+{
+  "configUrl": "https://test-app.configcat.com/v2/08d89dea-13b2-406b-8ecf-ee94414208a2/08db465d-5756-49ff-8e53-fb90fd760632/08db4c16-c78b-473c-8b68-ca6723c98bfa/08db465d-a64e-4881-8ed0-62b6c9e68e33",
+  "sdkKey": "configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/FfwncdJg1kq0lBqxhYC_7g",
+  "baseUrl": "https://test-cdn-eu.configcat.com",
+  "tests": [
+    {
+      "key": "dependentFeatureWithUserCondition",
+      "defaultValue": "default",
+      "returnValue": "Chicken",
+      "expectedLog": "prerequisite_flag_no_user_needed_by_dep.txt"
+    },
+    {
+      "key": "dependentFeature",
+      "defaultValue": "default",
+      "returnValue": "Chicken",
+      "expectedLog": "prerequisite_flag_no_user_needed_by_prereq.txt"
+    },
+    {
+      "key": "dependentFeatureWithUserCondition2",
+      "defaultValue": "default",
+      "returnValue": "Frog",
+      "expectedLog": "prerequisite_flag_no_user_needed_by_both.txt"
+    },
+    {
+      "key": "dependentFeature",
+      "defaultValue": "default",
+      "user": {
+        "Identifier": "12345",
+        "Email": "kate@configcat.com",
+        "Country": "USA"
+      },
+      "returnValue": "Horse",
+      "expectedLog": "prerequisite_flag.txt"
+    }
+  ]
+}

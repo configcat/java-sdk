@@ -1,26 +1,28 @@
 package com.configcat;
 
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * An object containing attributes to properly identify a given user for variation evaluation.
  * Its only mandatory attribute is the {@code identifier}.
  */
 public class User {
+    private static final String IDENTIFIER = "Identifier";
+    private static final String EMAIL = "Email";
+    private static final String COUNTRY = "Country";
     private final String identifier;
     private final Map<String, String> attributes;
 
     private User(String identifier, String email, String country, Map<String, String> custom) {
         this.identifier = identifier == null ? "" : identifier;
         this.attributes = new TreeMap<>();
-        this.attributes.put("Identifier", identifier);
+        this.attributes.put(IDENTIFIER, identifier);
 
         if (country != null && !country.isEmpty())
-            this.attributes.put("Country", country);
+            this.attributes.put(COUNTRY, country);
 
         if (email != null && !email.isEmpty())
-            this.attributes.put("Email", email);
+            this.attributes.put(EMAIL, email);
 
         if (custom != null)
             this.attributes.putAll(custom);
@@ -48,7 +50,30 @@ public class User {
 
     @Override
     public String toString() {
-        return "User" + attributes + "";
+
+        LinkedHashMap<String, String> tmp = new LinkedHashMap<>();
+        if(attributes.containsKey(IDENTIFIER)){
+            tmp.put(IDENTIFIER, attributes.get(IDENTIFIER));
+        }
+        if(attributes.containsKey(EMAIL)){
+            tmp.put(EMAIL, attributes.get(EMAIL));
+        }
+        if(attributes.containsKey(COUNTRY)){
+            tmp.put(COUNTRY, attributes.get(COUNTRY));
+        }
+        tmp.putAll(attributes);
+        StringBuilder userStringBuilder = new StringBuilder();
+        userStringBuilder.append('{');
+        Iterator it = tmp.entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry me = (Map.Entry)it.next();
+            userStringBuilder.append('"').append(me.getKey()).append("\":\"").append(me.getValue()).append('"');
+            if(it.hasNext()){
+                userStringBuilder.append(',');
+            }
+        }
+        userStringBuilder.append('}');
+        return userStringBuilder.toString();
     }
 
     /**

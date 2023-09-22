@@ -1,13 +1,18 @@
 package com.configcat;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 final class LogHelper {
 
     private static final String HASHED_VALUE = "<hashed value>";
-    private static final String INVALID_VALUE = "<invalid value>";
+    public static final String INVALID_VALUE = "<invalid value>";
+    public static final String INVALID_NAME = "<invalid name>";
+    public static final String INVALID_REFERENCE = "<invalid reference>";
 
     private static final int MAX_LIST_ELEMENT = 10;
 
@@ -18,8 +23,6 @@ final class LogHelper {
             return INVALID_VALUE;
         }
         List<String> comparisonValues = new ArrayList<>(Arrays.asList(comparisonValue));
-        comparisonValues.replaceAll(String::trim);
-        comparisonValues.removeAll(Arrays.asList(null, ""));
         if(comparisonValues.isEmpty()){
             return  INVALID_VALUE;
         }
@@ -32,11 +35,17 @@ final class LogHelper {
             if(comparisonValues.size() > MAX_LIST_ELEMENT){
                 int count = comparisonValues.size() - MAX_LIST_ELEMENT;
                 String countPostFix = count == 1 ? "value" : "values";
-                listPostFix = "... <" + count +" more " + countPostFix+">";
+                listPostFix = " ... <" + count +" more " + countPostFix+">";
             }
             List<String> subList = comparisonValues.subList(0, Math.min(MAX_LIST_ELEMENT, comparisonValues.size()));
             StringBuilder formatListBuilder = new StringBuilder();
-            subList.forEach(s -> formatListBuilder.append("'").append(s).append("', "));
+            int subListSize = subList.size();
+            for (int i = 0; i < subListSize; i++){
+                formatListBuilder.append("'").append(subList.get(i)).append("'");
+                if( i != subListSize - 1){
+                    formatListBuilder.append(", ");
+                }
+            }
             formatListBuilder.append(listPostFix);
             formattedList = formatListBuilder.toString();
         }
@@ -45,17 +54,19 @@ final class LogHelper {
     }
 
     private static String formatStringComparisonValue(String comparisonValue, boolean isSensitive){
-        return isSensitive ? HASHED_VALUE : comparisonValue;
+        return "'" + (isSensitive ? HASHED_VALUE :  comparisonValue) + "'";
     }
 
     private static String formatDoubleComparisonValue(Double comparisonValue, boolean isDate){
         if(comparisonValue == null){
             return INVALID_VALUE;
         }
+        DecimalFormat decimalFormat = new DecimalFormat("0.#####");
+        decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.UK));
         if(isDate){
-            return comparisonValue + " (" + DateTimeUtils.doubleToFormattedUTC(comparisonValue) + " UTC)";
+            return "'" + decimalFormat.format(comparisonValue) + "' (" + DateTimeUtils.doubleToFormattedUTC(comparisonValue) + " UTC)";
         }
-        return comparisonValue.toString();
+        return "'" + decimalFormat.format(comparisonValue) + "'";
     }
 
     public static String formatUserCondition(UserCondition userCondition){
@@ -104,9 +115,21 @@ final class LogHelper {
                 comparisonValue = INVALID_VALUE;
         }
 
-        return "User." + userCondition.getComparisonAttribute() + " " + userComparator.getName() + " '" + comparisonValue + "'";
+        return "User." + userCondition.getComparisonAttribute() + " " + userComparator.getName() + " " + comparisonValue;
     }
-
+    public static String formatSegmentFlagCondition(SegmentCondition segmentCondition, Segment segment){
+        String segmentName;
+        if(segment != null){
+            segmentName = segment.getName();
+            if(segmentName == null || segmentName.isEmpty()){
+                segmentName = INVALID_NAME;
+            }
+        } else {
+            segmentName = INVALID_REFERENCE;
+        }
+        SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
+        return "User " + segmentComparator.getName() + " '" + segmentName + "'";
+    }
     public static String formatPrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition){
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
         PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
