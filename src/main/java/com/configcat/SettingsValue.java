@@ -64,11 +64,11 @@ public class SettingsValue {
 
     @Override
     public String toString() {
-        if(booleanValue != null){
+        if (booleanValue != null) {
             return booleanValue.toString();
         } else if (integerValue != null) {
-            return  integerValue.toString();
-        } else if (doubleValue != null){
+            return integerValue.toString();
+        } else if (doubleValue != null) {
             return doubleValue.toString();
         } else {
             return stringValue;

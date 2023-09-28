@@ -291,10 +291,10 @@ class RolloutEvaluator {
         boolean result;
 
         SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
-        if(segmentComparator == null){
+        if (segmentComparator == null) {
             throw new IllegalArgumentException("Segment comparison operator is invalid.");
         }
-        switch (segmentComparator){
+        switch (segmentComparator) {
             case IS_IN_SEGMENT:
                 result = segmentRulesResult;
                 break;
@@ -342,10 +342,10 @@ class RolloutEvaluator {
         SettingsValue conditionValue = prerequisiteFlagCondition.getValue();
         boolean result;
 
-        if(prerequisiteComparator == null){
+        if (prerequisiteComparator == null) {
             throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
         }
-        switch (prerequisiteComparator){
+        switch (prerequisiteComparator) {
             case EQUALS:
                 result = conditionValue.equals(evaluateResult.value);
                 break;
@@ -465,7 +465,7 @@ class RolloutEvaluator {
                 break;
             }
         }
-        if(targetingRule != null){
+        if (targetingRule != null) {
             evaluateLogger.logTargetingRuleConsequence(targetingRule, error, conditionsEvaluationResult, newLine);
         }
         if (error != null) {

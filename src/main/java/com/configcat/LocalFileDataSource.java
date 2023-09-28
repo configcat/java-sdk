@@ -82,18 +82,18 @@ class LocalFileDataSource extends OverrideDataSource {
         }
     }
 
-    private  Setting convertJsonToSettingsValue(JsonElement jsonElement){
+    private Setting convertJsonToSettingsValue(JsonElement jsonElement) {
         Setting setting = new Setting();
         SettingsValue settingsValue = new SettingsValue();
         SettingType settingType;
-        if(!jsonElement.isJsonPrimitive()){
+        if (!jsonElement.isJsonPrimitive()) {
             throw new IllegalArgumentException("Invalid Config Json content: " + jsonElement);
         }
         JsonPrimitive primitive = jsonElement.getAsJsonPrimitive();
-        if(primitive.isBoolean()){
+        if (primitive.isBoolean()) {
             settingsValue.setBooleanValue(primitive.getAsBoolean());
             settingType = SettingType.BOOLEAN;
-        }else if(primitive.isString()){
+        } else if (primitive.isString()) {
             settingsValue.setStringValue(primitive.getAsString());
             settingType = SettingType.STRING;
         } else {
@@ -102,7 +102,7 @@ class LocalFileDataSource extends OverrideDataSource {
             try {
                 settingsValue.setIntegerValue(Integer.parseInt(numberAsSting));
                 settingType = SettingType.INT;
-            }catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 // if int parse failed try double parse
                 settingsValue.setDoubleValue(Double.parseDouble(numberAsSting));
                 settingType = SettingType.DOUBLE;

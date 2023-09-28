@@ -1,6 +1,9 @@
 package com.configcat;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * An object containing attributes to properly identify a given user for variation evaluation.
@@ -52,23 +55,23 @@ public class User {
     public String toString() {
 
         LinkedHashMap<String, String> tmp = new LinkedHashMap<>();
-        if(attributes.containsKey(IDENTIFIER)){
+        if (attributes.containsKey(IDENTIFIER)) {
             tmp.put(IDENTIFIER, attributes.get(IDENTIFIER));
         }
-        if(attributes.containsKey(EMAIL)){
+        if (attributes.containsKey(EMAIL)) {
             tmp.put(EMAIL, attributes.get(EMAIL));
         }
-        if(attributes.containsKey(COUNTRY)){
+        if (attributes.containsKey(COUNTRY)) {
             tmp.put(COUNTRY, attributes.get(COUNTRY));
         }
         tmp.putAll(attributes);
         StringBuilder userStringBuilder = new StringBuilder();
         userStringBuilder.append('{');
         Iterator it = tmp.entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry me = (Map.Entry)it.next();
+        while (it.hasNext()) {
+            Map.Entry me = (Map.Entry) it.next();
             userStringBuilder.append('"').append(me.getKey()).append("\":\"").append(me.getValue()).append('"');
-            if(it.hasNext()){
+            if (it.hasNext()) {
                 userStringBuilder.append(',');
             }
         }

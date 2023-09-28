@@ -60,12 +60,13 @@ public class EvaluationTest {
                 {"list_truncation"},
         });
     }
+
     public EvaluationTest(String testDescriptorName) throws IOException {
         this.testDescriptorName = testDescriptorName;
         String testDescriptorContent = readFile(EVALUATION_FOLDER + testDescriptorName + JSON_EXTENSION);
         TestSet testSet = GSON.fromJson(testDescriptorContent, TestSet.class);
         String sdkKey = testSet.getSdkKey();
-        if(sdkKey == null || sdkKey.isEmpty()){
+        if (sdkKey == null || sdkKey.isEmpty()) {
             sdkKey = TEST_SDK_KEY;
         }
 
@@ -75,7 +76,7 @@ public class EvaluationTest {
             options.pollingMode(PollingModes.manualPoll());
             options.logLevel(LogLevel.INFO);
             options.baseUrl(testSet.getBaseUrl());
-            if(jsonOverride != null && !jsonOverride.isEmpty()){
+            if (jsonOverride != null && !jsonOverride.isEmpty()) {
                 options.flagOverrides(OverrideDataSourceBuilder.classPathResource(EVALUATION_FOLDER + testDescriptorName + "/" + jsonOverride), OverrideBehaviour.LOCAL_OVER_REMOTE);
             }
 
@@ -94,7 +95,7 @@ public class EvaluationTest {
     @Test
     public void testEvaluation() throws IOException {
         ArrayList<String> errors = new ArrayList<>();
-        for (TestCase test: tests) {
+        for (TestCase test : tests) {
 
             String settingKey = test.getKey();
 
@@ -107,11 +108,11 @@ public class EvaluationTest {
             clientLogger.addAppender(listAppender);
 
             Class typeOfExpectedResult;
-            if(settingKey.startsWith("int") || settingKey.startsWith("whole") || settingKey.startsWith("mainInt")){
+            if (settingKey.startsWith("int") || settingKey.startsWith("whole") || settingKey.startsWith("mainInt")) {
                 typeOfExpectedResult = Integer.class;
-            } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal")|| settingKey.startsWith("mainDouble")){
+            } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal") || settingKey.startsWith("mainDouble")) {
                 typeOfExpectedResult = Double.class;
-            } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment") || settingKey.equals("featureWithSegmentTargeting") || settingKey.equals("featureWithNegatedSegmentTargeting")){
+            } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment") || settingKey.equals("featureWithSegmentTargeting") || settingKey.equals("featureWithNegatedSegmentTargeting")) {
                 typeOfExpectedResult = Boolean.class;
             } else {
                 //handle as String in any other case
@@ -149,31 +150,31 @@ public class EvaluationTest {
     @NotNull
     private static Consumer<ILoggingEvent> parseLogEvent(StringBuilder logResultBuilder) {
         return log ->
-            logResultBuilder.append(formatLogLevel(log.getLevel())).append(" ").append(log.getFormattedMessage()).append("\n");
+                logResultBuilder.append(formatLogLevel(log.getLevel())).append(" ").append(log.getFormattedMessage()).append("\n");
     }
 
-    private static String formatLogLevel(Level level){
-        if (Level.INFO_INT == level.levelInt){
+    private static String formatLogLevel(Level level) {
+        if (Level.INFO_INT == level.levelInt) {
             return "INFO";
         }
-        if (Level.ERROR_INT == level.levelInt){
+        if (Level.ERROR_INT == level.levelInt) {
             return "ERROR";
         }
-        if (Level.WARN_INT == level.levelInt){
+        if (Level.WARN_INT == level.levelInt) {
             return "WARNING";
         }
-        return  "DEBUG";
+        return "DEBUG";
     }
 
-    private User convertJsonObjectToUser(JsonObject jsonObject){
+    private User convertJsonObjectToUser(JsonObject jsonObject) {
         User user = null;
-        if(jsonObject != null){
+        if (jsonObject != null) {
             String email = "";
             String country = "";
             Set<String> keySet = jsonObject.keySet();
             String identifier = jsonObject.get("Identifier").getAsString();
             keySet.remove("Identifier");
-            if (jsonObject.has("Email")){
+            if (jsonObject.has("Email")) {
                 email = jsonObject.get("Email").getAsString();
                 keySet.remove("Email");
             }
@@ -194,6 +195,7 @@ public class EvaluationTest {
         }
         return user;
     }
+
     private Object parseObject(Class<?> classOfT, JsonElement element) {
         if (classOfT == String.class)
             return element.getAsString();
@@ -210,24 +212,24 @@ public class EvaluationTest {
 
     private String readFile(String filePath) throws IOException {
 
-            try (InputStream stream = getClass().getClassLoader().getResourceAsStream(filePath)) {
-                if (stream == null) {
-                    throw new IOException();
-                }
-                byte[] buffer = new byte[4096];
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                int temp;
-                while ((temp = stream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, temp);
-                }
-                return new String(outputStream.toByteArray(), Charset.defaultCharset());
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream(filePath)) {
+            if (stream == null) {
+                throw new IOException();
             }
+            byte[] buffer = new byte[4096];
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            int temp;
+            while ((temp = stream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, temp);
+            }
+            return new String(outputStream.toByteArray(), Charset.defaultCharset());
+        }
 
     }
 
 }
 
-class TestSet{
+class TestSet {
     @SerializedName(value = "sdkKey")
     private String sdkKey;
     @SerializedName(value = "baseUrl")
@@ -254,7 +256,7 @@ class TestSet{
     }
 }
 
-class TestCase{
+class TestCase {
     @SerializedName(value = "key")
     private String key;
     @SerializedName(value = "defaultValue")

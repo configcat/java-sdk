@@ -12,8 +12,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class RolloutIntegrationTests {
@@ -101,11 +100,11 @@ public class RolloutIntegrationTests {
                 String value;
 
                 Class typeOfExpectedResult;
-                if(settingKey.startsWith("int") || settingKey.startsWith("whole") || settingKey.startsWith("mainInt")){
+                if (settingKey.startsWith("int") || settingKey.startsWith("whole") || settingKey.startsWith("mainInt")) {
                     typeOfExpectedResult = Integer.class;
-                } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal")|| settingKey.startsWith("mainDouble")){
+                } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal") || settingKey.startsWith("mainDouble")) {
                     typeOfExpectedResult = Double.class;
-                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment")){
+                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment")) {
                     typeOfExpectedResult = Boolean.class;
                 } else {
                     //handle as String in any other case
@@ -116,7 +115,7 @@ public class RolloutIntegrationTests {
                     value = valueDetails.getVariationId();
                 } else {
                     Object rawResult = client.getValue(typeOfExpectedResult, settingKey, user, null);
-                    if(typeOfExpectedResult.equals(Double.class)){
+                    if (typeOfExpectedResult.equals(Double.class)) {
                         DecimalFormat decimalFormat = new DecimalFormat("0.#####");
                         decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.UK));
                         value = decimalFormat.format(rawResult);
@@ -138,7 +137,7 @@ public class RolloutIntegrationTests {
                 System.out.println(error);
             });
         }
-        assertTrue("Errors found: " + errors.size(), errors.size() == 0);
+        assertEquals("Errors found: " + errors.size(), 0, errors.size());
     }
 
 }

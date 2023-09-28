@@ -28,7 +28,7 @@ public class Setting {
         this.type = type;
     }
 
-    public void  setConfigSalt(String configSalt){
+    public void setConfigSalt(String configSalt) {
         this.configSalt = configSalt;
     }
 
@@ -47,6 +47,7 @@ public class Setting {
     public PercentageOption[] getPercentageOptions() {
         return percentageOptions;
     }
+
     public TargetingRule[] getTargetingRules() {
         return targetingRules;
     }
@@ -59,7 +60,7 @@ public class Setting {
         return variationId;
     }
 
-    public String getConfigSalt(){
+    public String getConfigSalt() {
         return configSalt;
     }
 
