@@ -8,5 +8,5 @@ final class Constants {
     static final String CONFIG_JSON_NAME = "config_v5.json";
     static final String SERIALIZATION_FORMAT_VERSION = "v2";
 
-    static final String VERSION = "8.2.2";
+    static final String VERSION = "8.3.0";
 }
