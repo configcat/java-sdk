@@ -105,10 +105,24 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the values of all feature flags or settings synchronously.
      *
+     * @return a collection of all values.
+     */
+    Map<String, Object> getAllValues();
+
+    /**
+     * Gets the values of all feature flags or settings synchronously.
+     *
      * @param user the user object.
      * @return a collection of all values.
      */
     Map<String, Object> getAllValues(User user);
+
+    /**
+     * Gets the values of all feature flags or settings asynchronously.
+     *
+     * @return a future which computes the collection of all values.
+     */
+    CompletableFuture<Map<String, Object>> getAllValuesAsync();
 
     /**
      * Gets the values of all feature flags or settings asynchronously.
@@ -121,10 +135,24 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the detailed values of all feature flags or settings synchronously.
      *
+     * @return a collection of all the evaluation results with details
+     */
+    List<EvaluationDetails<Object>> getAllValueDetails();
+
+    /**
+     * Gets the detailed values of all feature flags or settings synchronously.
+     *
      * @param user the user object.
      * @return a collection of all the evaluation results with details
      */
     List<EvaluationDetails<Object>> getAllValueDetails(User user);
+
+    /**
+     * Gets the detailed values of all feature flags or settings asynchronously.
+     *
+     * @return a future which computes the collection of all detailed values.
+     */
+    CompletableFuture<List<EvaluationDetails<Object>>> getAllValueDetailsAsync();
 
     /**
      * Gets the detailed values of all feature flags or settings asynchronously.
