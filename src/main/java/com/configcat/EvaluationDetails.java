@@ -87,7 +87,6 @@ public class EvaluationDetails<T> {
     /**
      * The last fetch time of the config.json in unix milliseconds format.
      */
-    //TODO remove if actually not used
     public Long getFetchTimeUnixMilliseconds() {
         return fetchTimeUnixMilliseconds;
     }

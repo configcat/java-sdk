@@ -37,7 +37,6 @@ public class EvaluationTest {
     private TestCase[] tests;
 
     private String testDescriptorName;
-    //private Scanner scanner;
 
     @Parameterized.Parameters(name
             = "{index}: Test with File={0}")

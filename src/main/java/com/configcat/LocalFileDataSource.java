@@ -87,7 +87,7 @@ class LocalFileDataSource extends OverrideDataSource {
         SettingsValue settingsValue = new SettingsValue();
         SettingType settingType;
         if(!jsonElement.isJsonPrimitive()){
-            // TODO throw something?
+            throw new IllegalArgumentException("Invalid Config Json content: " + jsonElement);
         }
         JsonPrimitive primitive = jsonElement.getAsJsonPrimitive();
         if(primitive.isBoolean()){
@@ -104,7 +104,6 @@ class LocalFileDataSource extends OverrideDataSource {
                 settingType = SettingType.INT;
             }catch (NumberFormatException e){
                 // if int parse failed try double parse
-                //TODO handle the possible exception as well?
                 settingsValue.setDoubleValue(Double.parseDouble(numberAsSting));
                 settingType = SettingType.DOUBLE;
             }
