@@ -18,7 +18,6 @@ class RolloutEvaluator {
     }
 
     public EvaluationResult evaluate(Setting setting, String key, User user, Map<String, Setting> settings, EvaluateLogger evaluateLogger) {
-        //TODO logger trick implement? in case info? check it
         try {
             evaluateLogger.logEvaluation(key);
             if (user != null) {
@@ -196,7 +195,7 @@ class RolloutEvaluator {
                 for (String comparisonValueHashedStartsEnds : withValues) {
                     int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
                     if (indexOf <= 0) {
-                        return false;
+                        throw new IllegalArgumentException("Comparison value is missing or invalid.");
                     }
                     String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
                     try {
@@ -206,7 +205,7 @@ class RolloutEvaluator {
                         }
                         String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
                         if (comparisonHashValue.isEmpty()) {
-                            return false;
+                            throw new IllegalArgumentException("Comparison value is missing or invalid.");
                         }
                         String userValueSubString;
                         if (Comparator.HASHED_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {

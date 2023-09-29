@@ -15,7 +15,7 @@ final class Utils {
             throw new IllegalArgumentException("Config JSON salt is missing.");
         }
         for (Setting setting : config.getEntries().values()) {
-            setting.setConfigSalt(config.getPreferences().getSalt());
+            setting.setConfigSalt(salt);
             setting.setSegments(config.getSegments());
         }
         return config;
