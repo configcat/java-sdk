@@ -1,7 +1,8 @@
 {
   "p": {
     "u": "https://cdn-global.configcat.com",
-    "r": 0
+    "r": 0,
+    "s": "test-salt"
   },
   "f": {
     "key1": {

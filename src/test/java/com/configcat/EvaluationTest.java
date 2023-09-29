@@ -224,9 +224,7 @@ public class EvaluationTest {
             }
             return new String(outputStream.toByteArray(), Charset.defaultCharset());
         }
-
     }
-
 }
 
 class TestSet {

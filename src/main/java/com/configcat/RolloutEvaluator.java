@@ -35,7 +35,9 @@ class RolloutEvaluator {
             evaluateLogger.decreaseIndentLevel();
             return evaluationResult;
         } finally {
-            this.logger.info(5000, evaluateLogger.toPrint());
+            if (evaluateLogger.isLoggable()) {
+                this.logger.info(5000, evaluateLogger.toPrint());
+            }
         }
     }
 

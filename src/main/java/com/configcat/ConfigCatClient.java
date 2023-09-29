@@ -25,10 +25,12 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private User defaultUser;
     private ConfigService configService;
     private final ConfigCatHooks configCatHooks;
+    private final LogLevel clientLogLevel;
 
 
     private ConfigCatClient(String sdkKey, Options options) {
         this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.configCatHooks);
+        this.clientLogLevel = options.logLevel;
 
         this.sdkKey = sdkKey;
         this.overrideDataSource = options.localDataSourceBuilder != null
@@ -209,7 +211,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         for (String key : keys) {
                             Setting setting = settings.get(key);
 
-                            SettingsValue evaluated = this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user), settings, new EvaluateLogger()).value;
+                            SettingsValue evaluated = this.rolloutEvaluator.evaluate(setting, key, getEvaluateUser(user), settings, new EvaluateLogger(this.clientLogLevel)).value;
                             Object value = this.parseObject(this.classBySettingType(setting.getType()), evaluated, setting.getType());
                             result.put(key, value);
                         }
@@ -654,7 +656,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private EvaluationDetails<Object> evaluateObject(Class classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
-        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, settings, new EvaluateLogger());
+        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, settings, new EvaluateLogger(this.clientLogLevel));
         EvaluationDetails<Object> details = new EvaluationDetails<>(
                 this.parseObject(classOfT, evaluationResult.value, setting.getType()),
                 key,
