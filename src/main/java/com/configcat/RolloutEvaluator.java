@@ -280,7 +280,6 @@ class RolloutEvaluator {
         String segmentName = segment.getName();
         if (segmentName == null || segmentName.isEmpty()) {
             throw new IllegalArgumentException("Segment name is missing.");
-
         }
         evaluateLogger.logSegmentEvaluationStart(segmentName);
         boolean segmentRulesResult;

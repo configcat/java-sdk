@@ -14,9 +14,13 @@ final class Utils {
         if (salt == null || salt.isEmpty()) {
             throw new IllegalArgumentException("Config JSON salt is missing.");
         }
+        Segment[] segments = config.getSegments();
+        if(segments == null){
+            segments = new Segment[]{};
+        }
         for (Setting setting : config.getEntries().values()) {
             setting.setConfigSalt(salt);
-            setting.setSegments(config.getSegments());
+            setting.setSegments(segments);
         }
         return config;
     }

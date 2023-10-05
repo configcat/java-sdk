@@ -233,7 +233,6 @@ public class ConfigCatClientIntegrationTest {
         User user = new User.Builder()
                 .email("test@configcat.com")
                 .build("test@configcat.com");
-        //TODO is this test case changed?
         EvaluationDetails<String> details = cl.getValueDetails(String.class, "stringContainsDogDefaultCat", user, "");
         assertEquals("stringContainsDogDefaultCat", details.getKey());
         assertEquals("Dog", details.getValue());
