@@ -1,9 +1,7 @@
 package com.configcat;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.text.DecimalFormat;
+import java.util.*;
 
 /**
  * An object containing attributes to properly identify a given user for variation evaluation.
@@ -77,6 +75,31 @@ public class User {
         }
         userStringBuilder.append('}');
         return userStringBuilder.toString();
+    }
+
+    public static String attributeValueFrom(Date date) {
+        if (date == null) {
+            throw new IllegalArgumentException("Invalid 'date' parameter.");
+        }
+        double unixSeconds = DateTimeUtils.getUnixSeconds(date);
+        DecimalFormat decimalFormat = Utils.getDecimalFormat();
+
+        return decimalFormat.format(unixSeconds);
+    }
+
+    public static String attributeValueFrom(double number) {
+        return String.valueOf(number);
+    }
+
+    public static String attributeValueFrom(int number) {
+        return String.valueOf(number);
+    }
+
+    public static String attributeValueFrom(String[] items) {
+        if (items == null) {
+            throw new IllegalArgumentException("Invalid 'items' parameter.");
+        }
+        return Utils.gson.toJson(items);
     }
 
     /**

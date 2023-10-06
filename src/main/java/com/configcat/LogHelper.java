@@ -1,11 +1,9 @@
 package com.configcat;
 
 import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 final class LogHelper {
 
@@ -61,8 +59,7 @@ final class LogHelper {
         if (comparisonValue == null) {
             return INVALID_VALUE;
         }
-        DecimalFormat decimalFormat = new DecimalFormat("0.#####");
-        decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.UK));
+        DecimalFormat decimalFormat = Utils.getDecimalFormat();
         if (isDate) {
             return "'" + decimalFormat.format(comparisonValue) + "' (" + DateTimeUtils.doubleToFormattedUTC(comparisonValue) + " UTC)";
         }

@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.google.gson.JsonSyntaxException;
 import de.skuzzle.semantic.Version;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -227,7 +228,14 @@ class RolloutEvaluator {
                 return foundEqual;
             case HASHED_ARRAY_CONTAINS:
                 List<String> containsHashedValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-                String[] userCSVContainsHashSplit = userValue.split(",");
+                String[] userCSVContainsHashSplit;
+                try {
+                    userCSVContainsHashSplit = Utils.gson.fromJson(userValue, String[].class);
+                } catch (JsonSyntaxException exception) {
+                    String reason = "'" + userValue + "' is not a valid JSON string array";
+                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+                }
                 for (String userValueSlice : userCSVContainsHashSplit) {
                     String userValueSliceHash = getSaltedUserValue(userValueSlice.trim(), configSalt, contextSalt);
                     if (containsHashedValues.contains(userValueSliceHash)) {
@@ -237,7 +245,14 @@ class RolloutEvaluator {
                 return false;
             case HASHED_ARRAY_NOT_CONTAINS:
                 List<String> notContainsHashedValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-                String[] userCSVNotContainsHashSplit = userValue.split(",");
+                String[] userCSVNotContainsHashSplit;
+                try {
+                    userCSVNotContainsHashSplit = Utils.gson.fromJson(userValue, String[].class);
+                } catch (JsonSyntaxException exception) {
+                    String reason = "'" + userValue + "' is not a valid JSON string array";
+                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+                }
                 if (userCSVNotContainsHashSplit.length == 0) {
                     return false;
                 }
