@@ -4,11 +4,11 @@
   "tests": [
     {
       "key": "booleanKey1",
-      "defaultValue": "false",
+      "defaultValue": false,
       "user": {
         "Identifier": "12"
       },
-      "returnValue": "true",
+      "returnValue": true,
       "expectedLog": "list_truncation.txt"
     }
   ]
