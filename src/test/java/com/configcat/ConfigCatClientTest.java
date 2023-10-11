@@ -295,7 +295,29 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_MULTIPLE));
         cl.forceRefresh();
 
-        Map<String, Object> allValues = cl.getAllValues(null);
+        Map<String, Object> allValues = cl.getAllValues();
+
+        assertEquals(true, allValues.get("key1"));
+        assertEquals(false, allValues.get("key2"));
+
+        server.shutdown();
+        cl.close();
+    }
+
+    @Test
+    public void getAllValuesAsync() throws IOException, ExecutionException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.baseUrl(server.url("/").toString());
+        });
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_MULTIPLE));
+        cl.forceRefresh();
+
+        Map<String, Object> allValues = cl.getAllValuesAsync().get();
 
         assertEquals(true, allValues.get("key1"));
         assertEquals(false, allValues.get("key2"));
@@ -317,7 +339,44 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_MULTIPLE));
         cl.forceRefresh();
 
-        List<EvaluationDetails<Object>> allValuesDetails = cl.getAllValueDetails(null);
+        List<EvaluationDetails<Object>> allValuesDetails = cl.getAllValueDetails();
+
+        //assert result list
+        assertEquals(2, allValuesDetails.size());
+
+        //assert result 1
+        EvaluationDetails<Object> element = allValuesDetails.get(0);
+        assertEquals("key1", element.getKey());
+        assertTrue((boolean) element.getValue());
+        assertFalse(element.isDefaultValue());
+        assertNull(element.getError());
+        assertEquals("fakeId1", element.getVariationId());
+
+        //assert result 2
+        element = allValuesDetails.get(1);
+        assertEquals("key2", element.getKey());
+        assertFalse((boolean) element.getValue());
+        assertFalse(element.isDefaultValue());
+        assertNull(element.getError());
+        assertEquals("fakeId2", element.getVariationId());
+        server.shutdown();
+        cl.close();
+    }
+
+    @Test
+    public void getAllValueDetailsAsync() throws IOException, ExecutionException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.baseUrl(server.url("/").toString());
+        });
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_MULTIPLE));
+        cl.forceRefresh();
+
+        List<EvaluationDetails<Object>> allValuesDetails = cl.getAllValueDetailsAsync().get();
 
         //assert result list
         assertEquals(2, allValuesDetails.size());
