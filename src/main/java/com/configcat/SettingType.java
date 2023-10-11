@@ -3,7 +3,7 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Describes the type of ConfigCat Feature Flag / Setting
+ * Describes the type of ConfigCat Feature Flag / Setting.
  */
 public enum SettingType {
     /**

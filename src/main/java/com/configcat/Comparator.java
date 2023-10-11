@@ -1,7 +1,7 @@
 package com.configcat;
 
 /**
- * Describes the Rollout Evaluator Comparators.
+ * Describes the Rollout Evaluator User Condition Comparators.
  */
 public enum Comparator {
     CONTAINS_ANY_OF(2, "CONTAINS ANY OF"),

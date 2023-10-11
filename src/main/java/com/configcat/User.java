@@ -77,6 +77,12 @@ public class User {
         return userStringBuilder.toString();
     }
 
+    /**
+     * Converts the {@link Date} value to the format expected by datetime comparison operators (BEFORE/AFTER).
+     *
+     * @param date The date value to convert.
+     * @return The User Object attribute value in the expected format.
+     */
     public static String attributeValueFrom(Date date) {
         if (date == null) {
             throw new IllegalArgumentException("Invalid 'date' parameter.");
@@ -87,14 +93,32 @@ public class User {
         return decimalFormat.format(unixSeconds);
     }
 
+    /**
+     * Converts the specified double value to the format expected by number comparison operators.
+     *
+     * @param number The double value to convert.
+     * @return The User Object attribute value in the expected format.
+     */
     public static String attributeValueFrom(double number) {
         return String.valueOf(number);
     }
 
+    /**
+     * Converts the specified int value to the format expected by number comparison operators.
+     *
+     * @param number The int value to convert.
+     * @return The User Object attribute value in the expected format.
+     */
     public static String attributeValueFrom(int number) {
         return String.valueOf(number);
     }
 
+    /**
+     * Converts the specified String Array value to the format expected by number comparison operators.
+     *
+     * @param items The String array to convert.
+     * @return The User Object attribute value in the expected format.
+     */
     public static String attributeValueFrom(String[] items) {
         if (items == null) {
             throw new IllegalArgumentException("Invalid 'items' parameter.");

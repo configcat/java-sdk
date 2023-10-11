@@ -5,13 +5,25 @@ import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * ConfigCat config.
+ */
 public class Config {
 
+    /**
+     * The config preferences.
+     */
     @SerializedName(value = "p")
     private Preferences preferences;
+    /**
+     * Map of flags / settings.
+     */
     @SerializedName(value = "f")
     private Map<String, Setting> entries = new HashMap<>();
 
+    /**
+     * List of segments.
+     */
     @SerializedName(value = "s")
     private Segment[] segments;
 

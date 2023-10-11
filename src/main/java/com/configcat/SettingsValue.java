@@ -4,6 +4,9 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.Objects;
 
+/**
+ * Setting Value contains the proper value based on type.
+ */
 public class SettingsValue {
     @SerializedName("b")
     private Boolean booleanValue;

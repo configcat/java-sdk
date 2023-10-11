@@ -2,18 +2,39 @@ package com.configcat;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * ConfigCat Feature Flag / Setting.
+ */
 public class Setting {
 
+    /**
+     * Setting type.
+     */
     @SerializedName(value = "t")
     private SettingType type = SettingType.BOOLEAN;
+    /**
+     * The User Object attribute which serves as the basis of percentage options evaluation.
+     */
     @SerializedName(value = "a")
     private String percentageAttribute;
+    /**
+     * The list of percentage options.
+     */
     @SerializedName(value = "p")
     private PercentageOption[] percentageOptions;
+    /**
+     * The list of targeting rules (where there is a logical OR relation between the items).
+     */
     @SerializedName(value = "r")
     private TargetingRule[] targetingRules;
+    /**
+     * The value of the setting.
+     */
     @SerializedName(value = "v")
     private SettingsValue settingsValue;
+    /**
+     * The variation ID of the setting.
+     */
     @SerializedName(value = "i")
     private String variationId;
 

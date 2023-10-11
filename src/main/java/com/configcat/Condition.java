@@ -2,8 +2,10 @@ package com.configcat;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Container class for different condition types.
+ */
 public class Condition {
-
     @SerializedName(value = "t")
     private UserCondition userCondition;
     @SerializedName(value = "s")
