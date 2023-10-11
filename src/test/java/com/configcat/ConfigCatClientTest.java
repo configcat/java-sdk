@@ -309,7 +309,7 @@ public class ConfigCatClientTest {
         MockWebServer server = new MockWebServer();
         server.start();
 
-        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
@@ -368,7 +368,7 @@ public class ConfigCatClientTest {
         MockWebServer server = new MockWebServer();
         server.start();
 
-        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
