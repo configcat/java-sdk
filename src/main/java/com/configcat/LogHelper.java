@@ -33,7 +33,7 @@ final class LogHelper {
             if (comparisonValues.size() > MAX_LIST_ELEMENT) {
                 int count = comparisonValues.size() - MAX_LIST_ELEMENT;
                 String countPostFix = count == 1 ? "value" : "values";
-                listPostFix = " ... <" + count + " more " + countPostFix + ">";
+                listPostFix = ", ... <" + count + " more " + countPostFix + ">";
             }
             List<String> subList = comparisonValues.subList(0, Math.min(MAX_LIST_ELEMENT, comparisonValues.size()));
             StringBuilder formatListBuilder = new StringBuilder();
