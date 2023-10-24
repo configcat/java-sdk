@@ -8,7 +8,7 @@ import java.util.*;
  * Its only mandatory attribute is the {@code identifier}.
  */
 public class User {
-    private static final String IDENTIFIER = "Identifier";
+    private static final String IDENTIFIER_KEY = "Identifier";
     private static final String EMAIL = "Email";
     private static final String COUNTRY = "Country";
     private final String identifier;
@@ -17,7 +17,7 @@ public class User {
     private User(String identifier, String email, String country, Map<String, String> custom) {
         this.identifier = identifier == null ? "" : identifier;
         this.attributes = new TreeMap<>();
-        this.attributes.put(IDENTIFIER, identifier);
+        this.attributes.put(IDENTIFIER_KEY, identifier);
 
         if (country != null && !country.isEmpty())
             this.attributes.put(COUNTRY, country);
@@ -53,8 +53,8 @@ public class User {
     public String toString() {
 
         LinkedHashMap<String, String> tmp = new LinkedHashMap<>();
-        if (attributes.containsKey(IDENTIFIER)) {
-            tmp.put(IDENTIFIER, attributes.get(IDENTIFIER));
+        if (attributes.containsKey(IDENTIFIER_KEY)) {
+            tmp.put(IDENTIFIER_KEY, attributes.get(IDENTIFIER_KEY));
         }
         if (attributes.containsKey(EMAIL)) {
             tmp.put(EMAIL, attributes.get(EMAIL));
@@ -65,9 +65,9 @@ public class User {
         tmp.putAll(attributes);
         StringBuilder userStringBuilder = new StringBuilder();
         userStringBuilder.append('{');
-        Iterator it = tmp.entrySet().iterator();
+        Iterator<Map.Entry<String, String>> it = tmp.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry me = (Map.Entry) it.next();
+            Map.Entry<String, String> me = it.next();
             userStringBuilder.append('"').append(me.getKey()).append("\":\"").append(me.getValue()).append('"');
             if (it.hasNext()) {
                 userStringBuilder.append(',');

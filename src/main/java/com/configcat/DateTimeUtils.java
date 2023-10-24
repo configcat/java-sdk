@@ -25,6 +25,6 @@ public class DateTimeUtils {
     }
 
     public static double getUnixSeconds(Date date) {
-        return Long.valueOf(date.getTime()).doubleValue() / 1000;
+        return date.getTime() / 1000d;
     }
 }

@@ -141,7 +141,7 @@ class RolloutEvaluator {
             case NUMBER_GREATER:
             case NUMBER_GREATER_EQUALS:
                 try {
-                    Double userDoubleValue = Double.parseDouble(userValue.trim().replaceAll(",", "."));
+                    Double userDoubleValue = Double.parseDouble(userValue.trim().replace(",", "."));
                     Double comparisonDoubleValue = userCondition.getDoubleValue();
 
                     return (Comparator.NUMBER_EQUALS.equals(comparator) && userDoubleValue.equals(comparisonDoubleValue)) ||
@@ -170,7 +170,7 @@ class RolloutEvaluator {
             case DATE_BEFORE:
             case DATE_AFTER:
                 try {
-                    double userDoubleValue = Double.parseDouble(userValue.trim().replaceAll(",", "."));
+                    double userDoubleValue = Double.parseDouble(userValue.trim().replace(",", "."));
                     Double comparisonDoubleValue = userCondition.getDoubleValue();
                     return (Comparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
                             (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
@@ -395,7 +395,6 @@ class RolloutEvaluator {
                 return new EvaluationResult(rule.getServedValue().getValue(), rule.getServedValue().getVariationId(), rule, null);
             }
 
-            //if (PO.length <= 0) error case no SV and no PO
             if (rule.getPercentageOptions() == null || rule.getPercentageOptions().length == 0) {
                 throw new IllegalArgumentException("Targeting rule THEN part is missing or invalid.");
             }

@@ -149,7 +149,7 @@ final class LogHelper {
 
     public static String formatCircularDependencyList(List<String> visitedKeys, String key) {
         StringBuilder builder = new StringBuilder();
-        visitedKeys.forEach((visitedKey) -> builder.append("'").append(visitedKey).append("' -> "));
+        visitedKeys.forEach(visitedKey -> builder.append("'").append(visitedKey).append("' -> "));
         builder.append("'").append(key).append("'");
         return builder.toString();
     }

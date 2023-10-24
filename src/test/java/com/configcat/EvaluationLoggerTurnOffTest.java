@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 // Test cases based on EvaluationTest 1_rule_no_user test case.
 public class EvaluationLoggerTurnOffTest {
@@ -39,8 +38,8 @@ public class EvaluationLoggerTurnOffTest {
 
             List<ILoggingEvent> logsList = listAppender.list;
             assertEquals("Logged event size not match.", 2, logsList.size());
-            assertTrue( "LogLevel mismatch.", Level.WARN.equals(logsList.get(0).getLevel()));
-            assertTrue( "LogLevel mismatch.", Level.INFO.equals(logsList.get(1).getLevel()));
+            assertEquals( "LogLevel mismatch.", Level.WARN, logsList.get(0).getLevel());
+            assertEquals( "LogLevel mismatch.", Level.INFO, logsList.get(1).getLevel());
 
             client.close();
         }
@@ -69,7 +68,7 @@ public class EvaluationLoggerTurnOffTest {
 
             List<ILoggingEvent> logsList = listAppender.list;
             assertEquals("Logged event size not match.", 1, logsList.size());
-            assertTrue( "LogLevel mismatch.", Level.WARN.equals(logsList.get(0).getLevel()));
+            assertEquals( "LogLevel mismatch.", Level.WARN, logsList.get(0).getLevel());
 
             client.close();
         }

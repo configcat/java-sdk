@@ -22,7 +22,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
 public class EvaluationTest {
@@ -102,7 +102,7 @@ public class EvaluationTest {
             Logger clientLogger = (Logger) LoggerFactory.getLogger(ConfigCatClient.class);
             // create and start a ListAppender
             clientLogger.setLevel(Level.INFO);
-            ListAppender<ILoggingEvent> listAppender = new ListAppender<ILoggingEvent>();
+            ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
             listAppender.start();
 
             clientLogger.addAppender(listAppender);
@@ -143,7 +143,7 @@ public class EvaluationTest {
                 System.out.println(error);
             });
         }
-        assertTrue("Errors found: " + errors.size(), errors.size() == 0);
+        assertEquals("Errors found: " + errors.size(), 0, errors.size() );
 
     }
 
