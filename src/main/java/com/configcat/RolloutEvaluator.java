@@ -142,7 +142,7 @@ class RolloutEvaluator {
         }
     }
 
-    private static boolean evaluateHashedStartOrEndsWith(UserCondition userCondition, String configSalt, String contextSalt, Comparator comparator, String userAttributeValue) {
+    private boolean evaluateHashedStartOrEndsWith(UserCondition userCondition, String configSalt, String contextSalt, Comparator comparator, String userAttributeValue) {
         List<String> withValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
         withValues.replaceAll(String::trim);
         withValues.removeAll(Arrays.asList(null, ""));
@@ -249,7 +249,7 @@ class RolloutEvaluator {
         return containsFlag;
     }
 
-    private static boolean evaluateEquals(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateEquals, boolean hashedEquals) {
+    private boolean evaluateEquals(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateEquals, boolean hashedEquals) {
         String valueEquals;
         if (hashedEquals) {
             valueEquals = getSaltedUserValue(userValue, configSalt, contextSalt);

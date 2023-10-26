@@ -112,7 +112,7 @@ public class RolloutIntegrationTests {
                     typeOfExpectedResult = Integer.class;
                 } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal") || settingKey.startsWith("mainDouble")) {
                     typeOfExpectedResult = Double.class;
-                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment")) {
+                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.startsWith("developer") || settingKey.startsWith("notDeveloper")) {
                     typeOfExpectedResult = Boolean.class;
                 } else {
                     //handle as String in any other case
