@@ -22,8 +22,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ConfigCatClientTest {
     private static final String TEST_JSON = "{ p: { s: 'test-salt' }, f: { fakeKey: {  t: 1, v: {s: 'fakeValue'}, s: 0, p: [] ,r: [] } } }";
     private static final String TEST_JSON_MULTIPLE = "{ p: { s: 'test-salt' }, f: { key1: { t: 0, v: {b: true}, i: 'fakeId1', p: [] ,r: [] }, key2: { t: 0, v: {b: false}, i: 'fakeId2', p: [] ,r: [] } } }";
-    public static final String TEST_JSON_DEFAULT_USER = "{ p: { s: 'test-salt' }, 'f':{'fakeKey':{  t: 1, 'v': {s: 'defaultValue'},'i':'defaultId', r: [ {c: [ {t: { a: 'Identifier', c: 2, l: ['test1']}}],s: { v: {s: 'fakeValue1'},i: 'test1Id'}},{c: [{t: {a: 'Identifier', c: 2,l: ['test2']}}],s: { v: {s: 'fakeValue2'},i: 'test2Id'}}] } } }";
-    public static final String RULES_JSON = "{ p: { s: 'test-salt' }, f: { key: {  t: 1, v: {s: 'def'}, t: 1, i: 'defVar', p: [] , r: [ {c: [ {t: { a: 'Identifier', c: 2, l: ['@test1.com']}}],s: { v: {s: 'fake1'},i: 'id1'}},{c: [{t: {a: 'Identifier', c: 2,l: ['@test2.com']}}],s: { v: {s: 'fake2'},i: 'id2'}}] } } }";
+    public static final String TEST_JSON_DEFAULT_USER = "{ p: { s: 'test-salt' }, 'f':{'fakeKey':{  t: 1, 'v': {s: 'defaultValue'},'i':'defaultId', r: [ {c: [ {u: { a: 'Identifier', c: 2, l: ['test1']}}],s: { v: {s: 'fakeValue1'},i: 'test1Id'}},{c: [{u: {a: 'Identifier', c: 2,l: ['test2']}}],s: { v: {s: 'fakeValue2'},i: 'test2Id'}}] } } }";
+    public static final String RULES_JSON = "{ p: { s: 'test-salt' }, f: { key: {  t: 1, v: {s: 'def'}, t: 1, i: 'defVar', p: [] , r: [ {c: [ {u: { a: 'Identifier', c: 2, l: ['@test1.com']}}],s: { v: {s: 'fake1'},i: 'id1'}},{c: [{u: {a: 'Identifier', c: 2,l: ['@test2.com']}}],s: { v: {s: 'fake2'},i: 'id2'}}] } } }";
 
     @Test
     void ensuresSDKKeyIsNotNull() {

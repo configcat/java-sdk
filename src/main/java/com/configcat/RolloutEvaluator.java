@@ -69,204 +69,296 @@ class RolloutEvaluator {
 
         String comparisonAttribute = userCondition.getComparisonAttribute();
         Comparator comparator = Comparator.fromId(userCondition.getComparator());
-        String userValue = context.getUser().getAttribute(comparisonAttribute);
+        String userAttributeValue = context.getUser().getAttribute(comparisonAttribute);
 
-        if (userValue == null || userValue.isEmpty()) {
+        if (userAttributeValue == null || userAttributeValue.isEmpty()) {
             logger.warn(3003, ConfigCatLogMessages.getUserAttributeMissing(context.getKey(), userCondition, comparisonAttribute));
             throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is missing");
         }
-
 
         if (comparator == null) {
             throw new IllegalArgumentException("Comparison operator is invalid.");
         }
         switch (comparator) {
             case CONTAINS_ANY_OF:
-                List<String> containsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-                containsValues.replaceAll(String::trim);
-                containsValues.removeAll(Arrays.asList(null, ""));
-                for (String containsValue : containsValues) {
-                    if (userValue.contains(containsValue))
-                        return true;
-                }
-                return false;
             case NOT_CONTAINS_ANY_OF:
-                List<String> notContainsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-                notContainsValues.replaceAll(String::trim);
-                notContainsValues.removeAll(Arrays.asList(null, ""));
-                for (String notContainsValue : notContainsValues) {
-                    if (userValue.contains(notContainsValue))
-                        return false;
-                }
-                return true;
+                boolean negateContainsAnyOf = Comparator.NOT_CONTAINS_ANY_OF.equals(comparator);
+                return evaluateContainsAnyOf(userCondition, userAttributeValue, negateContainsAnyOf);
             case SEMVER_IS_ONE_OF:
             case SEMVER_IS_NOT_ONE_OF:
-                List<String> inSemVerValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-                inSemVerValues.replaceAll(String::trim);
-                inSemVerValues.removeAll(Arrays.asList(null, ""));
-                try {
-                    Version userVersion = Version.parseVersion(userValue.trim(), true);
-                    boolean matched = false;
-                    for (String semVer : inSemVerValues) {
-                        matched = userVersion.compareTo(Version.parseVersion(semVer, true)) == 0 || matched;
-                    }
-
-                    return (matched && Comparator.SEMVER_IS_ONE_OF.equals(comparator)) || (!matched && Comparator.SEMVER_IS_NOT_ONE_OF.equals(comparator));
-                } catch (Exception e) {
-                    String reason = "'" + userValue + "' is not a valid semantic version";
-                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
-                }
+                boolean negateSemverIsOneOf = Comparator.SEMVER_IS_NOT_ONE_OF.equals(comparator);
+                return evaluateSemverIsOneOf(userCondition, context, comparisonAttribute, userAttributeValue, negateSemverIsOneOf);
             case SEMVER_LESS:
             case SEMVER_LESS_EQULAS:
             case SEMVER_GREATER:
             case SEMVER_GREATER_EQUALS:
-                try {
-                    Version cmpUserVersion = Version.parseVersion(userValue.trim(), true);
-                    String comparisonValue = userCondition.getStringValue();
-                    Version matchValue = Version.parseVersion(comparisonValue.trim(), true);
-                    return (Comparator.SEMVER_LESS.equals(comparator) && cmpUserVersion.isLowerThan(matchValue)) ||
-                            (Comparator.SEMVER_LESS_EQULAS.equals(comparator) && cmpUserVersion.compareTo(matchValue) <= 0) ||
-                            (Comparator.SEMVER_GREATER.equals(comparator) && cmpUserVersion.isGreaterThan(matchValue)) ||
-                            (Comparator.SEMVER_GREATER_EQUALS.equals(comparator) && cmpUserVersion.compareTo(matchValue) >= 0);
-                } catch (Exception e) {
-                    String reason = "'" + userValue + "' is not a valid semantic version";
-                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
-                }
+                return evaluateSemver(userCondition, context, comparisonAttribute, comparator, userAttributeValue);
             case NUMBER_EQUALS:
             case NUMBER_NOT_EQUALS:
             case NUMBER_LESS:
             case NUMBER_LESS_EQUALS:
             case NUMBER_GREATER:
             case NUMBER_GREATER_EQUALS:
-                try {
-                    Double userDoubleValue = Double.parseDouble(userValue.trim().replace(",", "."));
-                    Double comparisonDoubleValue = userCondition.getDoubleValue();
-
-                    return (Comparator.NUMBER_EQUALS.equals(comparator) && userDoubleValue.equals(comparisonDoubleValue)) ||
-                            (Comparator.NUMBER_NOT_EQUALS.equals(comparator) && !userDoubleValue.equals(comparisonDoubleValue)) ||
-                            (Comparator.NUMBER_LESS.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
-                            (Comparator.NUMBER_LESS_EQUALS.equals(comparator) && userDoubleValue <= comparisonDoubleValue) ||
-                            (Comparator.NUMBER_GREATER.equals(comparator) && userDoubleValue > comparisonDoubleValue) ||
-                            (Comparator.NUMBER_GREATER_EQUALS.equals(comparator) && userDoubleValue >= comparisonDoubleValue);
-                } catch (NumberFormatException e) {
-                    String reason = "'" + userValue + "' is not a valid decimal number";
-                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
-                }
+                return evaluateNumbers(userCondition, context, comparisonAttribute, comparator, userAttributeValue);
+            case IS_ONE_OF:
+            case IS_NOT_ONE_OF:
             case SENSITIVE_IS_ONE_OF:
-                List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-                inValuesSensitive.replaceAll(String::trim);
-                inValuesSensitive.removeAll(Arrays.asList(null, ""));
-                String hashValueOne = getSaltedUserValue(userValue, configSalt, contextSalt);
-                return inValuesSensitive.contains(hashValueOne);
             case SENSITIVE_IS_NOT_ONE_OF:
-                List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-                notInValuesSensitive.replaceAll(String::trim);
-                notInValuesSensitive.removeAll(Arrays.asList(null, ""));
-                String hashValueNotOne = getSaltedUserValue(userValue, configSalt, contextSalt);
-                return !notInValuesSensitive.contains(hashValueNotOne);
+                boolean negateIsOneOf = Comparator.SENSITIVE_IS_NOT_ONE_OF.equals(comparator) || Comparator.IS_NOT_ONE_OF.equals(comparator);
+                boolean sensitiveIsOneOf = Comparator.SENSITIVE_IS_ONE_OF.equals(comparator) || Comparator.SENSITIVE_IS_NOT_ONE_OF.equals(comparator);
+                return evaluateIsOneOf(userCondition, configSalt, contextSalt, userAttributeValue, negateIsOneOf, sensitiveIsOneOf);
             case DATE_BEFORE:
             case DATE_AFTER:
-                try {
-                    double userDoubleValue = Double.parseDouble(userValue.trim().replace(",", "."));
-                    Double comparisonDoubleValue = userCondition.getDoubleValue();
-                    return (Comparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
-                            (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
-                } catch (NumberFormatException e) {
-                    String reason = "'" + userValue + "' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)";
-                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
-                }
+                return evaluateDate(userCondition, context, comparisonAttribute, comparator, userAttributeValue);
+            case TEXT_EQUALS:
+            case TEXT_NOT_EQUALS:
             case HASHED_EQUALS:
-                String hashEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
-                return hashEquals.equals(userCondition.getStringValue());
             case HASHED_NOT_EQUALS:
-                String hashNotEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
-                return !hashNotEquals.equals(userCondition.getStringValue());
+                boolean negateEquals = Comparator.HASHED_NOT_EQUALS.equals(comparator) || Comparator.TEXT_NOT_EQUALS.equals(comparator);
+                boolean hashedEquals = Comparator.HASHED_EQUALS.equals(comparator) || Comparator.HASHED_NOT_EQUALS.equals(comparator);
+                return evaluateEquals(userCondition, configSalt, contextSalt, userAttributeValue, negateEquals, hashedEquals);
             case HASHED_STARTS_WITH:
             case HASHED_ENDS_WITH:
             case HASHED_NOT_STARTS_WITH:
             case HASHED_NOT_ENDS_WITH:
-                List<String> withValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-                withValues.replaceAll(String::trim);
-                withValues.removeAll(Arrays.asList(null, ""));
-                boolean foundEqual = false;
-                for (String comparisonValueHashedStartsEnds : withValues) {
-                    int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
-                    if (indexOf <= 0) {
-                        throw new IllegalArgumentException("Comparison value is missing or invalid.");
-                    }
-                    String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
-                    try {
-                        int comparedTextLengthInt = Integer.parseInt(comparedTextLength);
-                        if (userValue.length() < comparedTextLengthInt) {
-                            continue;
-                        }
-                        String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
-                        if (comparisonHashValue.isEmpty()) {
-                            throw new IllegalArgumentException("Comparison value is missing or invalid.");
-                        }
-                        String userValueSubString;
-                        if (Comparator.HASHED_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
-                            userValueSubString = userValue.substring(0, comparedTextLengthInt);
-                        } else { //HASHED_ENDS_WITH
-                            userValueSubString = userValue.substring(userValue.length() - comparedTextLengthInt);
-                        }
-                        String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, contextSalt);
-                        if (hashUserValueSub.equals(comparisonHashValue)) {
-                            foundEqual = true;
-                        }
-                    } catch (NumberFormatException e) {
-                        throw new IllegalArgumentException("Comparison value is missing or invalid.");
-                    }
-                }
-                if (Comparator.HASHED_NOT_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_ENDS_WITH.equals(comparator)) {
-                    return !foundEqual;
-                }
-                return foundEqual;
+                return evaluateHashedStartOrEndsWith(userCondition, configSalt, contextSalt, comparator, userAttributeValue);
+            case TEXT_STARTS_WITH:
+            case TEXT_NOT_STARTS_WITH:
+                boolean negateTextStartWith = Comparator.TEXT_NOT_STARTS_WITH.equals(comparator);
+                return evaluateTextStartsWith(userCondition, userAttributeValue, negateTextStartWith);
+            case TEXT_ENDS_WITH:
+            case TEXT_NOT_ENDS_WITH:
+                boolean negateTextEndsWith = Comparator.TEXT_NOT_ENDS_WITH.equals(comparator);
+                return evaluateTextEndsWith(userCondition, userAttributeValue, negateTextEndsWith);
+            case TEXT_ARRAY_CONTAINS:
+            case TEXT_ARRAY_NOT_CONTAINS:
             case HASHED_ARRAY_CONTAINS:
-                List<String> containsHashedValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-                String[] userCSVContainsHashSplit;
-                try {
-                    userCSVContainsHashSplit = Utils.gson.fromJson(userValue, String[].class);
-                } catch (JsonSyntaxException exception) {
-                    String reason = "'" + userValue + "' is not a valid JSON string array";
-                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
-                }
-                for (String userValueSlice : userCSVContainsHashSplit) {
-                    String userValueSliceHash = getSaltedUserValue(userValueSlice.trim(), configSalt, contextSalt);
-                    if (containsHashedValues.contains(userValueSliceHash)) {
-                        return true;
-                    }
-                }
-                return false;
             case HASHED_ARRAY_NOT_CONTAINS:
-                List<String> notContainsHashedValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-                String[] userCSVNotContainsHashSplit;
-                try {
-                    userCSVNotContainsHashSplit = Utils.gson.fromJson(userValue, String[].class);
-                } catch (JsonSyntaxException exception) {
-                    String reason = "'" + userValue + "' is not a valid JSON string array";
-                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
-                }
-                if (userCSVNotContainsHashSplit.length == 0) {
-                    return false;
-                }
-                boolean containsFlag = false;
-                for (String userValueSlice : userCSVNotContainsHashSplit) {
-                    String userValueSliceHash = getSaltedUserValue(userValueSlice.trim(), configSalt, contextSalt);
-                    if (notContainsHashedValues.contains(userValueSliceHash)) {
-                        containsFlag = true;
-                    }
-                }
-                return !containsFlag;
+                boolean negateArrayContains = Comparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator) || Comparator.TEXT_ARRAY_NOT_CONTAINS.equals(comparator);
+                boolean hashedArrayContains = Comparator.HASHED_ARRAY_CONTAINS.equals(comparator) || Comparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator);
+                return evaluateArrayContains(userCondition, context, configSalt, contextSalt, comparisonAttribute, userAttributeValue, negateArrayContains, hashedArrayContains);
             default:
                 throw new IllegalArgumentException("Comparison operator is invalid.");
         }
+    }
+
+    private static boolean evaluateHashedStartOrEndsWith(UserCondition userCondition, String configSalt, String contextSalt, Comparator comparator, String userAttributeValue) {
+        List<String> withValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
+        withValues.replaceAll(String::trim);
+        withValues.removeAll(Arrays.asList(null, ""));
+        boolean foundEqual = false;
+        for (String comparisonValueHashedStartsEnds : withValues) {
+            int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
+            if (indexOf <= 0) {
+                throw new IllegalArgumentException("Comparison value is missing or invalid.");
+            }
+            String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
+            try {
+                int comparedTextLengthInt = Integer.parseInt(comparedTextLength);
+                if (userAttributeValue.length() < comparedTextLengthInt) {
+                    continue;
+                }
+                String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
+                if (comparisonHashValue.isEmpty()) {
+                    throw new IllegalArgumentException("Comparison value is missing or invalid.");
+                }
+                String userValueSubString;
+                if (Comparator.HASHED_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
+                    userValueSubString = userAttributeValue.substring(0, comparedTextLengthInt);
+                } else { //HASHED_ENDS_WITH
+                    userValueSubString = userAttributeValue.substring(userAttributeValue.length() - comparedTextLengthInt);
+                }
+                String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, contextSalt);
+                if (hashUserValueSub.equals(comparisonHashValue)) {
+                    foundEqual = true;
+                    break;
+                }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Comparison value is missing or invalid.");
+            }
+        }
+        if (Comparator.HASHED_NOT_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_ENDS_WITH.equals(comparator)) {
+            return !foundEqual;
+        }
+        return foundEqual;
+    }
+
+    private boolean evaluateTextStartsWith(UserCondition userCondition, String userAttributeValue, boolean negateTextStartWith) {
+        List<String> withTextValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
+        withTextValues.replaceAll(String::trim);
+        withTextValues.removeAll(Arrays.asList(null, ""));
+        boolean textStartWith = false;
+        for (String textValue : withTextValues) {
+            if (userAttributeValue.startsWith(textValue)) {
+                textStartWith = true;
+                break;
+            }
+        }
+        if (negateTextStartWith) {
+            return !textStartWith;
+        }
+        return textStartWith;
+    }
+
+    private boolean evaluateTextEndsWith(UserCondition userCondition, String userAttributeValue, boolean negateTextEndsWith) {
+        List<String> withTextValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
+        withTextValues.replaceAll(String::trim);
+        withTextValues.removeAll(Arrays.asList(null, ""));
+        boolean textEndsWith = false;
+        for (String textValue : withTextValues) {
+            if (userAttributeValue.endsWith(textValue)) {
+                textEndsWith = true;
+                break;
+            }
+        }
+        if (negateTextEndsWith) {
+            return !textEndsWith;
+        }
+        return textEndsWith;
+    }
+
+    private boolean evaluateArrayContains(UserCondition userCondition, EvaluationContext context, String configSalt, String contextSalt, String comparisonAttribute, String userAttributeValue, boolean negateArrayContains, boolean hashedArrayContains) {
+        List<String> conditionContainsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
+        String[] userContainsValues;
+        try {
+            userContainsValues = Utils.gson.fromJson(userAttributeValue, String[].class);
+        } catch (JsonSyntaxException exception) {
+            String reason = "'" + userAttributeValue + "' is not a valid JSON string array";
+            this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+        }
+        if (userContainsValues.length == 0) {
+            return false;
+        }
+        boolean containsFlag = false;
+        for (String userContainsValue : userContainsValues) {
+            String userContainsValueConverted;
+            if (hashedArrayContains) {
+                userContainsValueConverted = getSaltedUserValue(userContainsValue.trim(), configSalt, contextSalt);
+            } else {
+                userContainsValueConverted = userContainsValue;
+            }
+            if (conditionContainsValues.contains(userContainsValueConverted)) {
+                containsFlag = true;
+                break;
+            }
+        }
+        if (negateArrayContains) {
+            containsFlag = !containsFlag;
+        }
+        return containsFlag;
+    }
+
+    private static boolean evaluateEquals(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateEquals, boolean hashedEquals) {
+        String valueEquals;
+        if (hashedEquals) {
+            valueEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
+        } else {
+            valueEquals = userValue;
+        }
+        boolean equalsResult = valueEquals.equals(userCondition.getStringValue());
+        if (negateEquals) {
+            equalsResult = !equalsResult;
+        }
+        return equalsResult;
+    }
+
+    private boolean evaluateDate(UserCondition userCondition, EvaluationContext context, String comparisonAttribute, Comparator comparator, String userValue) {
+        try {
+            double userDoubleValue = Double.parseDouble(userValue.trim().replace(",", "."));
+            Double comparisonDoubleValue = userCondition.getDoubleValue();
+            return (Comparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
+                    (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
+        } catch (NumberFormatException e) {
+            String reason = "'" + userValue + "' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)";
+            this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+        }
+    }
+
+    private boolean evaluateIsOneOf(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateIsOneOf, boolean sensitiveIsOneOf) {
+        List<String> inValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
+        inValues.replaceAll(String::trim);
+        inValues.removeAll(Arrays.asList(null, ""));
+        String userIsOneOfValue;
+        if (sensitiveIsOneOf) {
+            userIsOneOfValue = getSaltedUserValue(userValue, configSalt, contextSalt);
+        } else {
+            userIsOneOfValue = userValue;
+        }
+        boolean isOneOf = inValues.contains(userIsOneOfValue);
+        if (negateIsOneOf) {
+            isOneOf = !isOneOf;
+        }
+        return isOneOf;
+    }
+
+    private boolean evaluateNumbers(UserCondition userCondition, EvaluationContext context, String comparisonAttribute, Comparator comparator, String userValue) {
+        try {
+            Double userDoubleValue = Double.parseDouble(userValue.trim().replace(",", "."));
+            Double comparisonDoubleValue = userCondition.getDoubleValue();
+
+            return (Comparator.NUMBER_EQUALS.equals(comparator) && userDoubleValue.equals(comparisonDoubleValue)) ||
+                    (Comparator.NUMBER_NOT_EQUALS.equals(comparator) && !userDoubleValue.equals(comparisonDoubleValue)) ||
+                    (Comparator.NUMBER_LESS.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
+                    (Comparator.NUMBER_LESS_EQUALS.equals(comparator) && userDoubleValue <= comparisonDoubleValue) ||
+                    (Comparator.NUMBER_GREATER.equals(comparator) && userDoubleValue > comparisonDoubleValue) ||
+                    (Comparator.NUMBER_GREATER_EQUALS.equals(comparator) && userDoubleValue >= comparisonDoubleValue);
+        } catch (NumberFormatException e) {
+            String reason = "'" + userValue + "' is not a valid decimal number";
+            this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+        }
+    }
+
+    private boolean evaluateSemver(UserCondition userCondition, EvaluationContext context, String comparisonAttribute, Comparator comparator, String userValue) {
+        try {
+            Version cmpUserVersion = Version.parseVersion(userValue.trim(), true);
+            String comparisonValue = userCondition.getStringValue();
+            Version matchValue = Version.parseVersion(comparisonValue.trim(), true);
+            return (Comparator.SEMVER_LESS.equals(comparator) && cmpUserVersion.isLowerThan(matchValue)) ||
+                    (Comparator.SEMVER_LESS_EQULAS.equals(comparator) && cmpUserVersion.compareTo(matchValue) <= 0) ||
+                    (Comparator.SEMVER_GREATER.equals(comparator) && cmpUserVersion.isGreaterThan(matchValue)) ||
+                    (Comparator.SEMVER_GREATER_EQUALS.equals(comparator) && cmpUserVersion.compareTo(matchValue) >= 0);
+        } catch (Exception e) {
+            String reason = "'" + userValue + "' is not a valid semantic version";
+            this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+        }
+    }
+
+    private boolean evaluateSemverIsOneOf(UserCondition userCondition, EvaluationContext context, String comparisonAttribute, String userValue, boolean negate) {
+        List<String> inSemVerValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
+        inSemVerValues.replaceAll(String::trim);
+        inSemVerValues.removeAll(Arrays.asList(null, ""));
+        try {
+            Version userVersion = Version.parseVersion(userValue.trim(), true);
+            boolean matched = false;
+            for (String semVer : inSemVerValues) {
+                matched = userVersion.compareTo(Version.parseVersion(semVer, true)) == 0 || matched;
+            }
+
+            if (negate) {
+                matched = !matched;
+            }
+            return matched;
+        } catch (Exception e) {
+            String reason = "'" + userValue + "' is not a valid semantic version";
+            this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+        }
+    }
+
+    private boolean evaluateContainsAnyOf(UserCondition userCondition, String userValue, boolean negate) {
+        boolean containsResult = negate ? false : true;
+        List<String> containsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
+        containsValues.replaceAll(String::trim);
+        containsValues.removeAll(Arrays.asList(null, ""));
+        for (String containsValue : containsValues) {
+            if (userValue.contains(containsValue))
+                return containsResult;
+        }
+        return !containsResult;
     }
 
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String contextSalt) {

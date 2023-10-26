@@ -6,11 +6,11 @@ import com.google.gson.annotations.SerializedName;
  * Container class for different condition types.
  */
 public class Condition {
-    @SerializedName(value = "t")
+    @SerializedName(value = "u")
     private UserCondition userCondition;
     @SerializedName(value = "s")
     private SegmentCondition segmentCondition;
-    @SerializedName(value = "d")
+    @SerializedName(value = "p")
     private PrerequisiteFlagCondition prerequisiteFlagCondition;
 
     public UserCondition getComparisonCondition() {

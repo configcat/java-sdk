@@ -73,16 +73,26 @@ final class LogHelper {
         }
         String comparisonValue;
         switch (userComparator) {
+            case IS_ONE_OF:
+            case IS_NOT_ONE_OF:
             case CONTAINS_ANY_OF:
             case NOT_CONTAINS_ANY_OF:
             case SEMVER_IS_ONE_OF:
             case SEMVER_IS_NOT_ONE_OF:
+            case TEXT_STARTS_WITH:
+            case TEXT_NOT_STARTS_WITH:
+            case TEXT_ENDS_WITH:
+            case TEXT_NOT_ENDS_WITH:
+            case TEXT_ARRAY_CONTAINS:
+            case TEXT_ARRAY_NOT_CONTAINS:
                 comparisonValue = formatStringListComparisonValue(userCondition.getStringArrayValue(), false);
                 break;
             case SEMVER_LESS:
             case SEMVER_LESS_EQULAS:
             case SEMVER_GREATER:
             case SEMVER_GREATER_EQUALS:
+            case TEXT_EQUALS:
+            case TEXT_NOT_EQUALS:
                 comparisonValue = formatStringComparisonValue(userCondition.getStringValue(), false);
                 break;
             case NUMBER_EQUALS:
