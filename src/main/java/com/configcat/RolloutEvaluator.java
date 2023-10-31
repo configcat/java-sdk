@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 class RolloutEvaluator {
+    public static final String USER_OBJECT_IS_MISSING = "cannot evaluate, User Object is missing";
     private final ConfigCatLogger logger;
 
     public RolloutEvaluator(ConfigCatLogger logger) {
@@ -64,7 +65,7 @@ class RolloutEvaluator {
                 context.setUserMissing(true);
                 this.logger.warn(3001, ConfigCatLogMessages.getUserObjectMissing(context.getKey()));
             }
-            throw new RolloutEvaluatorException("cannot evaluate, User Object is missing");
+            throw new RolloutEvaluatorException(USER_OBJECT_IS_MISSING);
         }
 
         String comparisonAttribute = userCondition.getComparisonAttribute();
@@ -378,7 +379,7 @@ class RolloutEvaluator {
                 context.setUserMissing(true);
                 logger.warn(3001, ConfigCatLogMessages.getUserObjectMissing(context.getKey()));
             }
-            throw new RolloutEvaluatorException("cannot evaluate, User Object is missing");
+            throw new RolloutEvaluatorException(USER_OBJECT_IS_MISSING);
         }
 
         if (segment == null) {
@@ -389,30 +390,30 @@ class RolloutEvaluator {
             throw new IllegalArgumentException("Segment name is missing.");
         }
         evaluateLogger.logSegmentEvaluationStart(segmentName);
-        boolean segmentRulesResult;
-        try {
-            segmentRulesResult = evaluateConditions(segment.getSegmentRules(), null, context, configSalt, segmentName, segments, evaluateLogger);
-        } catch (RolloutEvaluatorException evaluatorException) {
-            segmentRulesResult = false;
-        }
         boolean result;
+        try {
+            boolean segmentRulesResult = evaluateConditions(segment.getSegmentRules(), null, context, configSalt, segmentName, segments, evaluateLogger);
 
-        SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
-        if (segmentComparator == null) {
-            throw new IllegalArgumentException("Segment comparison operator is invalid.");
-        }
-        switch (segmentComparator) {
-            case IS_IN_SEGMENT:
-                result = segmentRulesResult;
-                break;
-            case IS_NOT_IN_SEGMENT:
-                result = !segmentRulesResult;
-                break;
-            default:
+            SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
+            if (segmentComparator == null) {
                 throw new IllegalArgumentException("Segment comparison operator is invalid.");
-        }
+            }
+            switch (segmentComparator) {
+                case IS_IN_SEGMENT:
+                    result = segmentRulesResult;
+                    break;
+                case IS_NOT_IN_SEGMENT:
+                    result = !segmentRulesResult;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Segment comparison operator is invalid.");
+            }
+            evaluateLogger.logSegmentEvaluationResult(segmentCondition, segment, result, segmentRulesResult);
 
-        evaluateLogger.logSegmentEvaluationResult(segmentCondition, segment, result, segmentRulesResult);
+        } catch (RolloutEvaluatorException evaluatorException) {
+            evaluateLogger.logSegmentEvaluationError(segmentCondition, segment, evaluatorException.getMessage());
+            throw evaluatorException;
+        }
 
         return result;
     }
@@ -477,10 +478,18 @@ class RolloutEvaluator {
             if (rule.getServedValue() != null) {
                 servedValue = rule.getServedValue().getValue();
             }
-
-            evaluateConditionsResult = evaluateConditions(rule.getConditions(), rule, context, setting.getConfigSalt(), context.getKey(), setting.getSegments(), evaluateLogger);
+            String error = null;
+            try {
+                evaluateConditionsResult = evaluateConditions(rule.getConditions(), rule, context, setting.getConfigSalt(), context.getKey(), setting.getSegments(), evaluateLogger);
+            } catch (RolloutEvaluatorException rolloutEvaluatorException) {
+                error = rolloutEvaluatorException.getMessage();
+                evaluateConditionsResult = false;
+            }
 
             if (!evaluateConditionsResult) {
+                if (error != null) {
+                    evaluateLogger.logTargetingRuleIgnored();
+                }
                 continue;
             }
             if (servedValue != null) {
@@ -550,7 +559,7 @@ class RolloutEvaluator {
                         error = evaluatorException.getMessage();
                         conditionsEvaluationResult = false;
                     }
-                    newLine = error == null || conditions.length > 1;
+                    newLine = !USER_OBJECT_IS_MISSING.equals(error) || conditions.length > 1;
                 } else if (condition.getPrerequisiteFlagCondition() != null) {
                     try {
                         conditionsEvaluationResult = evaluatePrerequisiteFlagCondition(condition.getPrerequisiteFlagCondition(), context, evaluateLogger);
@@ -575,7 +584,8 @@ class RolloutEvaluator {
             evaluateLogger.logTargetingRuleConsequence(targetingRule, error, conditionsEvaluationResult, newLine);
         }
         if (error != null) {
-            evaluateLogger.logTargetingRuleIgnored();
+            throw new RolloutEvaluatorException(error);
+            //evaluateLogger.logTargetingRuleIgnored();
         }
         return conditionsEvaluationResult;
     }

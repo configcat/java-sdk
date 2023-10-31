@@ -200,6 +200,20 @@ public class EvaluateLogger {
         append(")");
     }
 
+    public void logSegmentEvaluationError(SegmentCondition segmentCondition, Segment segment, String error) {
+        if (!isLoggable) {
+            return;
+        }
+        newLine();
+
+        append("Segment evaluation result: " + error + ".");
+        newLine();
+        append("Condition (" + LogHelper.formatSegmentFlagCondition(segmentCondition, segment) + ") failed to evaluate.");
+        decreaseIndentLevel();
+        newLine();
+        append(")");
+    }
+
     public void logPrerequisiteFlagEvaluationStart(String prerequisiteFlagKey) {
         if (!isLoggable) {
             return;
