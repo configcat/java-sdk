@@ -47,6 +47,7 @@ public class RolloutIntegrationTests {
                 {"testmatrix_prerequisite_flag.csv", "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/JoGwdqJZQ0K2xDy7LnbyOg", VALUE_TEST_KIND, null},
                 {"testmatrix_segment.csv", "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/h99HYXWWNE2bH8eWyLAVMA", VALUE_TEST_KIND, null},
                 {"testmatrix_segments_old.csv", "configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/y_ZB7o-Xb0Swxth-ZlMSeA", VALUE_TEST_KIND, null},
+                {"testmatrix_unicode.csv", "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/Da6w8dBbmUeMUBhh0iEeQQ", VALUE_TEST_KIND, null},
         });
     }
 
@@ -57,7 +58,8 @@ public class RolloutIntegrationTests {
         });
 
         ClassLoader classLoader = getClass().getClassLoader();
-        this.csvScanner = new Scanner(new File(classLoader.getResource(fileName).getFile()));
+
+        this.csvScanner = new Scanner(new File(classLoader.getResource(fileName).getFile()), "UTF-8");
         this.kind = kind;
     }
 
