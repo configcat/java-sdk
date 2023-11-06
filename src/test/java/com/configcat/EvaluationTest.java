@@ -32,11 +32,11 @@ public class EvaluationTest {
     private static final String JSON_EXTENSION = ".json";
     private static final Gson GSON = new Gson();
 
-    private ConfigCatClient client;
+    private final ConfigCatClient client;
 
-    private TestCase[] tests;
+    private final TestCase[] tests;
 
-    private String testDescriptorName;
+    private final String testDescriptorName;
 
     @Parameterized.Parameters(name
             = "{index}: Test with File={0}")

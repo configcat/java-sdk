@@ -14,63 +14,63 @@ import static org.junit.Assert.assertEquals;
 
 // Test cases based on EvaluationTest 1_rule_no_user test case.
 public class EvaluationLoggerTurnOffTest {
-        @Test
-        public void testEvaluationLogLevelInfo() throws IOException {
+    @Test
+    public void testEvaluationLogLevelInfo() throws IOException {
 
-            ConfigCatClient client = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
-                options.pollingMode(PollingModes.manualPoll());
-                options.logLevel(LogLevel.INFO);
-            });
+        ConfigCatClient client = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.logLevel(LogLevel.INFO);
+        });
 
-            client.forceRefresh();
+        client.forceRefresh();
 
-            Logger clientLogger = (Logger) LoggerFactory.getLogger(ConfigCatClient.class);
-            // create and start a ListAppender
-            clientLogger.setLevel(Level.INFO);
-            ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
-            listAppender.start();
+        Logger clientLogger = (Logger) LoggerFactory.getLogger(ConfigCatClient.class);
+        // create and start a ListAppender
+        clientLogger.setLevel(Level.INFO);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
 
-            clientLogger.addAppender(listAppender);
+        clientLogger.addAppender(listAppender);
 
-            String returnValue = client.getValue(String.class, "stringContainsDogDefaultCat", null, "default");
+        String returnValue = client.getValue(String.class, "stringContainsDogDefaultCat", null, "default");
 
-            assertEquals("Return value not match.", "Cat", returnValue);
+        assertEquals("Return value not match.", "Cat", returnValue);
 
-            List<ILoggingEvent> logsList = listAppender.list;
-            assertEquals("Logged event size not match.", 2, logsList.size());
-            assertEquals( "LogLevel mismatch.", Level.WARN, logsList.get(0).getLevel());
-            assertEquals( "LogLevel mismatch.", Level.INFO, logsList.get(1).getLevel());
+        List<ILoggingEvent> logsList = listAppender.list;
+        assertEquals("Logged event size not match.", 2, logsList.size());
+        assertEquals("LogLevel mismatch.", Level.WARN, logsList.get(0).getLevel());
+        assertEquals("LogLevel mismatch.", Level.INFO, logsList.get(1).getLevel());
 
-            client.close();
-        }
+        client.close();
+    }
 
-        @Test
-        public void testEvaluationLogLevelWarning() throws IOException {
-            //based on 1_rule_no_user test case.
-            ConfigCatClient client = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
-                options.pollingMode(PollingModes.manualPoll());
-                options.logLevel(LogLevel.WARNING);
-            });
+    @Test
+    public void testEvaluationLogLevelWarning() throws IOException {
+        //based on 1_rule_no_user test case.
+        ConfigCatClient client = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.logLevel(LogLevel.WARNING);
+        });
 
-            client.forceRefresh();
+        client.forceRefresh();
 
-            Logger clientLogger = (Logger) LoggerFactory.getLogger(ConfigCatClient.class);
-            // create and start a ListAppender
-            clientLogger.setLevel(Level.INFO);
-            ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
-            listAppender.start();
+        Logger clientLogger = (Logger) LoggerFactory.getLogger(ConfigCatClient.class);
+        // create and start a ListAppender
+        clientLogger.setLevel(Level.INFO);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
 
-            clientLogger.addAppender(listAppender);
+        clientLogger.addAppender(listAppender);
 
-            String returnValue = client.getValue(String.class, "stringContainsDogDefaultCat", null, "default");
+        String returnValue = client.getValue(String.class, "stringContainsDogDefaultCat", null, "default");
 
-            assertEquals("Return value not match.", "Cat", returnValue);
+        assertEquals("Return value not match.", "Cat", returnValue);
 
-            List<ILoggingEvent> logsList = listAppender.list;
-            assertEquals("Logged event size not match.", 1, logsList.size());
-            assertEquals( "LogLevel mismatch.", Level.WARN, logsList.get(0).getLevel());
+        List<ILoggingEvent> logsList = listAppender.list;
+        assertEquals("Logged event size not match.", 1, logsList.size());
+        assertEquals("LogLevel mismatch.", Level.WARN, logsList.get(0).getLevel());
 
-            client.close();
-        }
+        client.close();
+    }
 
 }

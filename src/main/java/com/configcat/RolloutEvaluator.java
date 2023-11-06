@@ -169,7 +169,7 @@ class RolloutEvaluator {
                 if (Comparator.HASHED_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
                     userValueSubString = new String(Arrays.copyOfRange(userAttributeValueUTF8, 0, comparedTextLengthInt), StandardCharsets.UTF_8);
                 } else { //HASHED_ENDS_WITH
-                    userValueSubString = new String(Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length- comparedTextLengthInt, userAttributeValueUTF8.length), StandardCharsets.UTF_8);
+                    userValueSubString = new String(Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length - comparedTextLengthInt, userAttributeValueUTF8.length), StandardCharsets.UTF_8);
                 }
                 String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, contextSalt);
                 if (hashUserValueSub.equals(comparisonHashValue)) {

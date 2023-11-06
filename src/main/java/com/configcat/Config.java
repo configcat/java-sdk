@@ -19,7 +19,7 @@ public class Config {
      * Map of flags / settings.
      */
     @SerializedName(value = "f")
-    private Map<String, Setting> entries = new HashMap<>();
+    private final Map<String, Setting> entries = new HashMap<>();
 
     /**
      * List of segments.
