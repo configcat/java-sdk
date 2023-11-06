@@ -365,17 +365,7 @@ class RolloutEvaluator {
     }
 
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String contextSalt) {
-        //userValue + configJsonSalt + contextSalt
-        byte[] toHashBytes;
-        byte[] userValueBytes = userValue.getBytes(StandardCharsets.UTF_8);
-        byte[] configJsonSaltBytes = configJsonSalt.getBytes(StandardCharsets.UTF_8);
-        byte[] contextSaltBytes = contextSalt.getBytes(StandardCharsets.UTF_8);
-        toHashBytes = new byte[userValueBytes.length + configJsonSaltBytes.length + contextSaltBytes.length];
-        System.arraycopy(userValueBytes, 0, toHashBytes, 0, userValueBytes.length);
-        System.arraycopy(configJsonSaltBytes, 0, toHashBytes, userValueBytes.length, configJsonSaltBytes.length);
-        System.arraycopy(contextSaltBytes, 0, toHashBytes, userValueBytes.length + configJsonSaltBytes.length, contextSaltBytes.length);
-
-        return new String(Hex.encodeHex(DigestUtils.sha256(toHashBytes)));
+        return new String(Hex.encodeHex(DigestUtils.sha256(userValue + configJsonSalt + contextSalt)));
     }
 
     private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
