@@ -19,9 +19,9 @@ import static org.junit.Assert.fail;
 public class RolloutIntegrationTests {
     private static final String VARIATION_TEST_KIND = "variation";
     private static final String VALUE_TEST_KIND = "value";
-    private ConfigCatClient client;
-    private Scanner csvScanner;
-    private String kind;
+    private final ConfigCatClient client;
+    private final Scanner csvScanner;
+    private final String kind;
 
     @Parameterized.Parameters(name
             = "{index}: Test with File={0}, ApiKey={1}")
@@ -137,7 +137,7 @@ public class RolloutIntegrationTests {
                     }
                 }
 
-                if (!value.toLowerCase().equals(testObject[i + 4].toLowerCase())) {
+                if (!value.equalsIgnoreCase(testObject[i + 4])) {
                     errors.add(String.format("Identifier: %s, Key: %s. UV: %s Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[3], testObject[i + 4], value));
                 }
                 i++;
