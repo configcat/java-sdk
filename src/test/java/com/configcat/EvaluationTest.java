@@ -34,7 +34,7 @@ public class EvaluationTest {
 
     private final ConfigCatClient client;
 
-    private final TestCase[] tests;
+    private final EvaluationData[] tests;
 
     private final String testDescriptorName;
 
@@ -64,7 +64,7 @@ public class EvaluationTest {
     public EvaluationTest(String testDescriptorName) throws IOException {
         this.testDescriptorName = testDescriptorName;
         String testDescriptorContent = readFile(EVALUATION_FOLDER + testDescriptorName + JSON_EXTENSION);
-        TestSet testSet = GSON.fromJson(testDescriptorContent, TestSet.class);
+        EvaluationDataSet testSet = GSON.fromJson(testDescriptorContent, EvaluationDataSet.class);
         String sdkKey = testSet.getSdkKey();
         if (sdkKey == null || sdkKey.isEmpty()) {
             sdkKey = TEST_SDK_KEY;
@@ -95,7 +95,7 @@ public class EvaluationTest {
     @Test
     public void testEvaluation() throws IOException {
         ArrayList<String> errors = new ArrayList<>();
-        for (TestCase test : tests) {
+        for (EvaluationData test : tests) {
 
             String settingKey = test.getKey();
 
@@ -227,7 +227,7 @@ public class EvaluationTest {
     }
 }
 
-class TestSet {
+class EvaluationDataSet {
     @SerializedName(value = "sdkKey")
     private String sdkKey;
     @SerializedName(value = "baseUrl")
@@ -235,7 +235,7 @@ class TestSet {
     @SerializedName(value = "jsonOverride")
     private String jsonOverride;
     @SerializedName(value = "tests")
-    private TestCase[] tests;
+    private EvaluationData[] tests;
 
     public String getSdkKey() {
         return sdkKey;
@@ -249,12 +249,12 @@ class TestSet {
         return jsonOverride;
     }
 
-    public TestCase[] getTests() {
+    public EvaluationData[] getTests() {
         return tests;
     }
 }
 
-class TestCase {
+class EvaluationData {
     @SerializedName(value = "key")
     private String key;
     @SerializedName(value = "defaultValue")

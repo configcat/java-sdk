@@ -675,7 +675,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return splitSDKKey.length == 3 && splitSDKKey[0].equals(Constants.SDK_KEY_PREFIX) && splitSDKKey[1].length() == Constants.SDK_KEY_SECTION_LENGTH && splitSDKKey[2].length() == Constants.SDK_KEY_SECTION_LENGTH;
     }
 
-    private EvaluationDetails<Object> evaluateObject(Class classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
+    private EvaluationDetails<Object> evaluateObject(Class<?> classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
         EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, settings, new EvaluateLogger(this.clientLogLevel));
         EvaluationDetails<Object> details = new EvaluationDetails<>(
                 this.parseObject(classOfT, evaluationResult.value, setting.getType()),
