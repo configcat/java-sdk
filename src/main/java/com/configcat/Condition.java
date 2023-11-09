@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Container class for different condition types.
  */
-public class Condition {
+public class Condition implements ConditionAccessor {
     @SerializedName(value = "u")
     private UserCondition userCondition;
     @SerializedName(value = "s")
@@ -13,15 +13,18 @@ public class Condition {
     @SerializedName(value = "p")
     private PrerequisiteFlagCondition prerequisiteFlagCondition;
 
-    public UserCondition getComparisonCondition() {
+    @Override
+    public UserCondition getUserCondition() {
         return userCondition;
     }
 
-    public PrerequisiteFlagCondition getPrerequisiteFlagCondition() {
-        return prerequisiteFlagCondition;
-    }
-
+    @Override
     public SegmentCondition getSegmentCondition() {
         return segmentCondition;
+    }
+
+    @Override
+    public PrerequisiteFlagCondition getPrerequisiteFlagCondition() {
+        return prerequisiteFlagCondition;
     }
 }

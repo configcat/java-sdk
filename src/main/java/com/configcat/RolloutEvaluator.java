@@ -522,14 +522,12 @@ class RolloutEvaluator {
         return null;
     }
 
-    private boolean evaluateConditions(Object[] conditions, TargetingRule targetingRule, EvaluationContext context, String configSalt, String contextSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
-
-        //Conditions are ANDs so if One is not matching return false, if all matching return true
+    private boolean evaluateConditions(ConditionAccessor[] conditions, TargetingRule targetingRule, EvaluationContext context, String configSalt, String contextSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
         boolean firstConditionFlag = true;
         boolean conditionsEvaluationResult = false;
         String error = null;
         boolean newLine = false;
-        for (Object rawCondition : conditions) {
+        for (ConditionAccessor condition : conditions) {
             if (firstConditionFlag) {
                 firstConditionFlag = false;
                 evaluateLogger.newLine();
@@ -541,43 +539,31 @@ class RolloutEvaluator {
                 evaluateLogger.append("AND ");
             }
 
-            if (targetingRule == null) {
+            if (condition.getUserCondition() != null) {
                 try {
-                    conditionsEvaluationResult = evaluateUserCondition((UserCondition) rawCondition, context, configSalt, contextSalt, evaluateLogger);
+                    conditionsEvaluationResult = evaluateUserCondition(condition.getUserCondition(), context, configSalt, contextSalt, evaluateLogger);
                 } catch (RolloutEvaluatorException evaluatorException) {
                     error = evaluatorException.getMessage();
                     conditionsEvaluationResult = false;
                 }
                 newLine = conditions.length > 1;
-            } else {
-                Condition condition = (Condition) rawCondition;
-                if (condition.getComparisonCondition() != null) {
-                    try {
-                        conditionsEvaluationResult = evaluateUserCondition(condition.getComparisonCondition(), context, configSalt, contextSalt, evaluateLogger);
-                    } catch (RolloutEvaluatorException evaluatorException) {
-                        error = evaluatorException.getMessage();
-                        conditionsEvaluationResult = false;
-                    }
-                    newLine = conditions.length > 1;
-                } else if (condition.getSegmentCondition() != null) {
-                    try {
-                        conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition(), context, configSalt, segments, evaluateLogger);
-                    } catch (RolloutEvaluatorException evaluatorException) {
-                        error = evaluatorException.getMessage();
-                        conditionsEvaluationResult = false;
-                    }
-                    newLine = !USER_OBJECT_IS_MISSING.equals(error) || conditions.length > 1;
-                } else if (condition.getPrerequisiteFlagCondition() != null) {
-                    try {
-                        conditionsEvaluationResult = evaluatePrerequisiteFlagCondition(condition.getPrerequisiteFlagCondition(), context, evaluateLogger);
-                    } catch (RolloutEvaluatorException evaluatorException) {
-                        error = evaluatorException.getMessage();
-                        conditionsEvaluationResult = false;
-                    }
-                    newLine = error == null || conditions.length > 1;
+            } else if (condition.getSegmentCondition() != null) {
+                try {
+                    conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition(), context, configSalt, segments, evaluateLogger);
+                } catch (RolloutEvaluatorException evaluatorException) {
+                    error = evaluatorException.getMessage();
+                    conditionsEvaluationResult = false;
                 }
+                newLine = !USER_OBJECT_IS_MISSING.equals(error) || conditions.length > 1;
+            } else if (condition.getPrerequisiteFlagCondition() != null) {
+                try {
+                    conditionsEvaluationResult = evaluatePrerequisiteFlagCondition(condition.getPrerequisiteFlagCondition(), context, evaluateLogger);
+                } catch (RolloutEvaluatorException evaluatorException) {
+                    error = evaluatorException.getMessage();
+                    conditionsEvaluationResult = false;
+                }
+                newLine = error == null || conditions.length > 1;
             }
-
 
             if (targetingRule == null || conditions.length > 1) {
                 evaluateLogger.logConditionConsequence(conditionsEvaluationResult);

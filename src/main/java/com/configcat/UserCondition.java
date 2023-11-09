@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * User Condition.
  */
-public class UserCondition {
+public class UserCondition implements ConditionAccessor {
 
     /**
      * The User Object attribute that the condition is based on. Can be "User ID", "Email", "Country" or any custom attribute.
@@ -52,5 +52,20 @@ public class UserCondition {
 
     public String[] getStringArrayValue() {
         return stringArrayValue;
+    }
+
+    @Override
+    public UserCondition getUserCondition() {
+        return this;
+    }
+
+    @Override
+    public SegmentCondition getSegmentCondition() {
+        return null;
+    }
+
+    @Override
+    public PrerequisiteFlagCondition getPrerequisiteFlagCondition() {
+        return null;
     }
 }
