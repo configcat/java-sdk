@@ -26,7 +26,7 @@ public class ConfigService implements Closeable {
     private ScheduledExecutorService pollScheduler;
     private ScheduledExecutorService initScheduler;
     private CompletableFuture<Result<Entry>> runningTask;
-    private boolean initialized = false;
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicBoolean offline;
     private final ReentrantLock lock = new ReentrantLock(true);
@@ -57,8 +57,7 @@ public class ConfigService implements Closeable {
             this.initScheduler.schedule(() -> {
                 lock.lock();
                 try {
-                    if (!initialized) {
-                        initialized = true;
+                    if (initialized.compareAndSet(false, true)) {
                         this.configCatHooks.invokeOnClientReady();
                         String message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
                         this.logger.warn(4200, message);
@@ -75,8 +74,7 @@ public class ConfigService implements Closeable {
     }
 
     private void setInitialized() {
-        if (!initialized) {
-            initialized = true;
+        if (initialized.compareAndSet(false, true)) {
             configCatHooks.invokeOnClientReady();
         }
     }
@@ -107,7 +105,7 @@ public class ConfigService implements Closeable {
                             ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
                             : SettingResult.EMPTY);
         } else {
-            return fetchIfOlder(Constants.DISTANT_PAST, true)
+            return fetchIfOlder(Constants.DISTANT_PAST, initialized.get()) // If we are initialized, we prefer the cached results
                     .thenApply(entryResult -> !entryResult.value().isEmpty()
                             ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
                             : SettingResult.EMPTY);
@@ -115,35 +113,26 @@ public class ConfigService implements Closeable {
 
     }
 
-    private CompletableFuture<Result<Entry>> fetchIfOlder(long time, boolean preferCached) {
+    private CompletableFuture<Result<Entry>> fetchIfOlder(long threshold, boolean preferCached) {
         lock.lock();
         try {
             // Sync up with the cache and use it when it's not expired.
-            if (cachedEntry.isEmpty() || cachedEntry.getFetchTime() > time) {
-                Entry fromCache = readCache();
-                if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.getETag())) {
-                    configCatHooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
-                    cachedEntry = fromCache;
-                }
-                // Cache isn't expired
-                if (cachedEntry.getFetchTime() > time) {
-                    setInitialized();
-                    return CompletableFuture.completedFuture(Result.success(cachedEntry));
-                }
+            Entry fromCache = readCache();
+            if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.getETag())) {
+                configCatHooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
+                cachedEntry = fromCache;
             }
-            // Use cache anyway (get calls on auto & manual poll must not initiate fetch).
-            // The initialized check ensures that we subscribe for the ongoing fetch during the
-            // max init wait time window in case of auto poll.
-            if (preferCached && initialized) {
+            // Cache isn't expired
+            if (cachedEntry.getFetchTime() > threshold) {
+                setInitialized();
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
-            // If we are in offline mode we are not allowed to initiate fetch.
-            if (offline.get()) {
+            // If we are in offline mode or the caller prefers cached values, do not initiate fetch.
+            if (offline.get() || preferCached) {
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
 
-            if (runningTask == null) {
-                // No fetch is running, initiate a new one.
+            if (runningTask == null) { // No fetch is running, initiate a new one.
                 runningTask = new CompletableFuture<>();
                 configFetcher.fetchAsync(cachedEntry.getETag())
                         .thenAccept(this::processResponse);

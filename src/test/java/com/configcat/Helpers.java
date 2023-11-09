@@ -10,6 +10,12 @@ final class Helpers {
         return entry.serialize();
     }
 
+    static String cacheValueFromConfigJsonWithEtag(String json, String etag) {
+        Config config = Utils.gson.fromJson(json, Config.class);
+        Entry entry = new Entry(config, etag, json, System.currentTimeMillis());
+        return entry.serialize();
+    }
+
     static void waitFor(Supplier<Boolean> predicate) throws InterruptedException {
         waitFor(3000, predicate);
     }
