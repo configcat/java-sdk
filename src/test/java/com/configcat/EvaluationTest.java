@@ -50,7 +50,6 @@ public class EvaluationTest {
                 {"epoch_date_validation"},
                 {"number_validation"},
                 {"comparators"},
-                {"circular_dependency"},
                 {"prerequisite_flag"},
                 {"segment"},
                 {"options_after_targeting_rule"},
@@ -184,7 +183,7 @@ public class EvaluationTest {
                 keySet.remove("Country");
             }
 
-            Map<String, String> customAttributes = new HashMap<>();
+            Map<String, Object> customAttributes = new HashMap<>();
             keySet.forEach(key -> customAttributes.put(key, jsonObject.get(key).getAsString()));
 
             user = User.newBuilder()

@@ -233,16 +233,18 @@ final class ConfigCatLogMessages {
         return "Cannot evaluate condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' (" + reason + "). Please check the User." + attributeName + " attribute and make sure that its value corresponds to the comparison operator.";
     }
 
+
     /**
-     * Log message for User Attribute is invalid warning. The log eventId 3005.
+     * Log message for User Attribute value is automatically converted warning. The log eventId 3005.
      *
-     * @param key                       The feature flag setting key.
-     * @param prerequisiteFlagCondition The condition where the circularity is detected.
-     * @param dependencyCycle           The dependency cycle.
+     * @param key            The feature flag setting key.
+     * @param userCondition  The condition where the circularity is detected.
+     * @param attributeName  The user attribute name.
+     * @param attributeValue The user attribute value.
      * @return The formatted warn message.
      */
-    public static String getCircularDependencyDetected(final String key, final PrerequisiteFlagCondition prerequisiteFlagCondition, final String dependencyCycle) {
-        return "Cannot evaluate condition (" + LogHelper.formatPrerequisiteFlagCondition(prerequisiteFlagCondition) + ") for setting '" + key + "' (circular dependency detected between the following depending flags: " + dependencyCycle + "). Please check your feature flag definition and eliminate the circular dependency.";
+    public static String getUserObjectAttributeIsAutoConverted( String key,  UserCondition userCondition, String attributeName,String attributeValue){
+        return "Evaluation of condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' may not produce the expected result (the User." + attributeName + " attribute is not a string value, thus it was automatically converted to the string value '" + attributeValue + "'). Please make sure that using a non-string value was intended.";
     }
 
     /**

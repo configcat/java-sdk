@@ -1,6 +1,7 @@
 package com.configcat;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -24,7 +25,12 @@ public class DateTimeUtils {
         return simpleDateFormat.format(new Date(dateInMillisecond));
     }
 
+
     public static double getUnixSeconds(Date date) {
         return date.getTime() / 1000d;
+    }
+
+    public static double getUnixSeconds(Instant date) {
+        return date.toEpochMilli() / 1000d;
     }
 }

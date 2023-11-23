@@ -96,7 +96,7 @@ public class RolloutIntegrationTests {
                 if (!testObject[2].isEmpty() && !testObject[2].equals("##null##"))
                     country = testObject[2];
 
-                Map<String, String> customAttributes = new HashMap<>();
+                Map<String, Object> customAttributes = new HashMap<>();
                 if (!testObject[3].isEmpty() && !testObject[3].equals("##null##"))
                     customAttributes.put(customKey, testObject[3]);
 
