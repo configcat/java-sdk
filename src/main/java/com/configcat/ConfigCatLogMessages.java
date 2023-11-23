@@ -243,7 +243,7 @@ final class ConfigCatLogMessages {
      * @param attributeValue The user attribute value.
      * @return The formatted warn message.
      */
-    public static String getUserObjectAttributeIsAutoConverted( String key,  UserCondition userCondition, String attributeName,String attributeValue){
+    public static String getUserObjectAttributeIsAutoConverted(String key, UserCondition userCondition, String attributeName, String attributeValue) {
         return "Evaluation of condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' may not produce the expected result (the User." + attributeName + " attribute is not a string value, thus it was automatically converted to the string value '" + attributeValue + "'). Please make sure that using a non-string value was intended.";
     }
 

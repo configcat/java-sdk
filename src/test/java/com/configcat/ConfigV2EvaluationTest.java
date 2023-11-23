@@ -20,16 +20,16 @@ import java.util.stream.Stream;
 public class ConfigV2EvaluationTest {
 
     private static Stream<Arguments> testDateForRuleAndPercentageOptionTest() {
-            return Stream.of(
-                    Arguments.of(null, null, null, "Cat", false, false),
-                    Arguments.of("12345", null, null, "Cat", false, false),
-                    Arguments.of("12345", "a@example.com", null, "Dog", true, false),
-                    Arguments.of("12345", "a@configcat.com", null, "Cat", false, false),
-                    Arguments.of("12345", "a@configcat.com", "", "Frog", true, true),
-                    Arguments.of("12345", "a@configcat.com", "US", "Fish", true, true),
-                    Arguments.of("12345", "b@configcat.com", null, "Cat", false, false),
-                    Arguments.of("12345", "b@configcat.com", "", "Falcon", false, true),
-                    Arguments.of("12345", "b@configcat.com", "US", "Spider", false, true));
+        return Stream.of(
+                Arguments.of(null, null, null, "Cat", false, false),
+                Arguments.of("12345", null, null, "Cat", false, false),
+                Arguments.of("12345", "a@example.com", null, "Dog", true, false),
+                Arguments.of("12345", "a@configcat.com", null, "Cat", false, false),
+                Arguments.of("12345", "a@configcat.com", "", "Frog", true, true),
+                Arguments.of("12345", "a@configcat.com", "US", "Fish", true, true),
+                Arguments.of("12345", "b@configcat.com", null, "Cat", false, false),
+                Arguments.of("12345", "b@configcat.com", "", "Falcon", false, true),
+                Arguments.of("12345", "b@configcat.com", "US", "Spider", false, true));
     }
 
     private static Stream<Arguments> testDateForCircularDependencyTest() {
@@ -66,7 +66,7 @@ public class ConfigV2EvaluationTest {
 
     @ParameterizedTest
     @MethodSource("testDateForRuleAndPercentageOptionTest")
-    public void matchedEvaluationRuleAndPercentageOption(String userId,String email, String percentageBaseCustom, String expectedValue,  boolean expectedTargetingRule,boolean expectedPercentageOption ) throws IOException {
+    public void matchedEvaluationRuleAndPercentageOption(String userId, String email, String percentageBaseCustom, String expectedValue, boolean expectedTargetingRule, boolean expectedPercentageOption) throws IOException {
 
         ConfigCatClient client = ConfigCatClient.get("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw");
 
@@ -74,7 +74,7 @@ public class ConfigV2EvaluationTest {
         if (userId != null) {
 
             Map<String, Object> customAttributes = new HashMap<>();
-            if(percentageBaseCustom != null){
+            if (percentageBaseCustom != null) {
                 customAttributes.put("PercentageBase", percentageBaseCustom);
             }
 
@@ -95,7 +95,7 @@ public class ConfigV2EvaluationTest {
 
     @ParameterizedTest
     @MethodSource("testDateForCircularDependencyTest")
-    public void prerequisiteFlagCircularDependencyTest(String key , String dependencyCycle) throws IOException {
+    public void prerequisiteFlagCircularDependencyTest(String key, String dependencyCycle) throws IOException {
 
         ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.flagOverrides(OverrideDataSourceBuilder.classPathResource("test_circulardependency.json"), OverrideBehaviour.LOCAL_ONLY);
@@ -109,7 +109,7 @@ public class ConfigV2EvaluationTest {
 
     @ParameterizedTest
     @MethodSource("testDateForCircularDependencyMismatchTest")
-    public void prerequisiteFlagTypeMismatchTest(String key , String prerequisiteFlagKey, Object prerequisiteFlagValue, String expectedValue) throws IOException {
+    public void prerequisiteFlagTypeMismatchTest(String key, String prerequisiteFlagKey, Object prerequisiteFlagValue, String expectedValue) throws IOException {
 
         Logger clientLogger = (Logger) LoggerFactory.getLogger(ConfigCatClient.class);
         // create and start a ListAppender
@@ -134,7 +134,7 @@ public class ConfigV2EvaluationTest {
 
         Assert.assertEquals(expectedValue, value);
 
-        if(expectedValue ==  null){
+        if (expectedValue == null) {
             List<ILoggingEvent> logsList = listAppender.list;
 
             List<ILoggingEvent> errorLogs = logsList.stream().filter(iLoggingEvent -> iLoggingEvent.getLevel().equals(Level.ERROR)).collect(Collectors.toList());
@@ -142,12 +142,12 @@ public class ConfigV2EvaluationTest {
             String errorMessage = errorLogs.get(0).getFormattedMessage();
             String causeExceptionMessage = errorLogs.get(0).getThrowableProxy().getMessage();
 
-            Assert.assertTrue( errorMessage.contains("[2001]"));
+            Assert.assertTrue(errorMessage.contains("[2001]"));
 
-            if(prerequisiteFlagValue == null){
-                Assert.assertTrue( causeExceptionMessage.contains("Setting value is null"));
+            if (prerequisiteFlagValue == null) {
+                Assert.assertTrue(causeExceptionMessage.contains("Setting value is null"));
             } else {
-                Assert.assertTrue( causeExceptionMessage.contains("Type mismatch between comparison value"));
+                Assert.assertTrue(causeExceptionMessage.contains("Type mismatch between comparison value"));
             }
 
         }
