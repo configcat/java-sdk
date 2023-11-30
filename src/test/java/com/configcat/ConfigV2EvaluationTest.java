@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 public class ConfigV2EvaluationTest {
 
-    private static Stream<Arguments> testDateForRuleAndPercentageOptionTest() {
+    private static Stream<Arguments> testDataForRuleAndPercentageOptionTest() {
         return Stream.of(
                 Arguments.of(null, null, null, "Cat", false, false),
                 Arguments.of("12345", null, null, "Cat", false, false),
@@ -32,14 +32,14 @@ public class ConfigV2EvaluationTest {
                 Arguments.of("12345", "b@configcat.com", "US", "Spider", false, true));
     }
 
-    private static Stream<Arguments> testDateForCircularDependencyTest() {
+    private static Stream<Arguments> testDataForCircularDependencyTest() {
         return Stream.of(
                 Arguments.of("key1", "'key1' -> 'key1'"),
                 Arguments.of("key2", "'key2' -> 'key3' -> 'key2'"),
                 Arguments.of("key4", "'key4' -> 'key3' -> 'key2' -> 'key3'"));
     }
 
-    private static Stream<Arguments> testDateForCircularDependencyMismatchTest() {
+    private static Stream<Arguments> testDataForPrerequisiteFlagTypeMismatchTest() {
         return Stream.of(
                 Arguments.of("stringDependsOnBool", "mainBoolFlag", true, "Dog"),
                 Arguments.of("stringDependsOnBool", "mainBoolFlag", false, "Cat"),
@@ -64,8 +64,42 @@ public class ConfigV2EvaluationTest {
         );
     }
 
+    private static Stream<Arguments> testDataForPrerequisiteFlagOverrideTest() {
+        return Stream.of(
+                Arguments.of("stringDependsOnString", "1", "john@sensitivecompany.com", null, "Dog"),
+                Arguments.of("stringDependsOnString", "1", "john@sensitivecompany.com", OverrideBehaviour.REMOTE_OVER_LOCAL, "Dog"),
+                Arguments.of("stringDependsOnString", "1", "john@sensitivecompany.com", OverrideBehaviour.LOCAL_OVER_REMOTE, "Dog"),
+                Arguments.of("stringDependsOnString", "1", "john@sensitivecompany.com", OverrideBehaviour.LOCAL_ONLY, null),
+                Arguments.of("stringDependsOnString", "2", "john@notsensitivecompany.com", null, "Cat"),
+                Arguments.of("stringDependsOnString", "2", "john@notsensitivecompany.com", OverrideBehaviour.REMOTE_OVER_LOCAL, "Cat"),
+                Arguments.of("stringDependsOnString", "2", "john@notsensitivecompany.com", OverrideBehaviour.LOCAL_OVER_REMOTE, "Dog"),
+                Arguments.of("stringDependsOnString", "2", "john@notsensitivecompany.com", OverrideBehaviour.LOCAL_ONLY, null),
+                Arguments.of("stringDependsOnInt", "1", "john@sensitivecompany.com", null, "Dog"),
+                Arguments.of("stringDependsOnInt", "1", "john@sensitivecompany.com", OverrideBehaviour.REMOTE_OVER_LOCAL, "Dog"),
+                Arguments.of("stringDependsOnInt", "1", "john@sensitivecompany.com", OverrideBehaviour.LOCAL_OVER_REMOTE, "Cat"),
+                Arguments.of("stringDependsOnInt", "1", "john@sensitivecompany.com", OverrideBehaviour.LOCAL_ONLY, null),
+                Arguments.of("stringDependsOnInt", "2", "john@notsensitivecompany.com", null, "Cat"),
+                Arguments.of("stringDependsOnInt", "2", "john@notsensitivecompany.com", OverrideBehaviour.REMOTE_OVER_LOCAL, "Cat"),
+                Arguments.of("stringDependsOnInt", "2", "john@notsensitivecompany.com", OverrideBehaviour.LOCAL_OVER_REMOTE, "Dog"),
+                Arguments.of("stringDependsOnInt", "2", "john@notsensitivecompany.com", OverrideBehaviour.LOCAL_ONLY, null)
+        );
+    }
+
+    private static Stream<Arguments> testDataForConfigSaltAndSegmentsOverrideTest() {
+        return Stream.of(
+                Arguments.of("developerAndBetaUserSegment", "1", "john@example.com", null, false),
+                Arguments.of("developerAndBetaUserSegment", "1", "john@example.com", OverrideBehaviour.REMOTE_OVER_LOCAL, false),
+                Arguments.of("developerAndBetaUserSegment", "1", "john@example.com", OverrideBehaviour.LOCAL_OVER_REMOTE, true),
+                Arguments.of("developerAndBetaUserSegment", "1", "john@example.com", OverrideBehaviour.LOCAL_ONLY, true),
+                Arguments.of("notDeveloperAndNotBetaUserSegment", "2", "kate@example.com", null, true),
+                Arguments.of("notDeveloperAndNotBetaUserSegment", "2", "kate@example.com", OverrideBehaviour.REMOTE_OVER_LOCAL, true),
+                Arguments.of("notDeveloperAndNotBetaUserSegment", "2", "kate@example.com", OverrideBehaviour.LOCAL_OVER_REMOTE, true),
+                Arguments.of("notDeveloperAndNotBetaUserSegment", "2", "kate@example.com", OverrideBehaviour.LOCAL_ONLY, null)
+        );
+    }
+
     @ParameterizedTest
-    @MethodSource("testDateForRuleAndPercentageOptionTest")
+    @MethodSource("testDataForRuleAndPercentageOptionTest")
     public void matchedEvaluationRuleAndPercentageOption(String userId, String email, String percentageBaseCustom, String expectedValue, boolean expectedTargetingRule, boolean expectedPercentageOption) throws IOException {
 
         ConfigCatClient client = ConfigCatClient.get("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw");
@@ -94,7 +128,7 @@ public class ConfigV2EvaluationTest {
     }
 
     @ParameterizedTest
-    @MethodSource("testDateForCircularDependencyTest")
+    @MethodSource("testDataForCircularDependencyTest")
     public void prerequisiteFlagCircularDependencyTest(String key, String dependencyCycle) throws IOException {
 
         ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
@@ -108,7 +142,7 @@ public class ConfigV2EvaluationTest {
     }
 
     @ParameterizedTest
-    @MethodSource("testDateForCircularDependencyMismatchTest")
+    @MethodSource("testDataForPrerequisiteFlagTypeMismatchTest")
     public void prerequisiteFlagTypeMismatchTest(String key, String prerequisiteFlagKey, Object prerequisiteFlagValue, String expectedValue) throws IOException {
 
         Logger clientLogger = (Logger) LoggerFactory.getLogger(ConfigCatClient.class);
@@ -151,6 +185,58 @@ public class ConfigV2EvaluationTest {
             }
 
         }
+
+        ConfigCatClient.closeAll();
+    }
+
+    @ParameterizedTest
+    @MethodSource("testDataForPrerequisiteFlagOverrideTest")
+    public void prerequisiteFlagOverrideTest(String key, String userId, String email, OverrideBehaviour overrideBehaviour, Object expectedValue) throws IOException {
+        User user = null;
+        if (userId != null) {
+            user = User.newBuilder()
+                    .email(email)
+                    .build(userId);
+        }
+
+        ConfigCatClient client = ConfigCatClient.get("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/JoGwdqJZQ0K2xDy7LnbyOg", options -> {
+            if (overrideBehaviour != null) {
+                options.flagOverrides(OverrideDataSourceBuilder.classPathResource("test_override_flagdependency_v6.json"), overrideBehaviour);
+            }
+            options.pollingMode(PollingModes.manualPoll());
+        });
+
+        client.forceRefresh();
+
+        String value = client.getValue(String.class, key, user, null);
+
+        Assert.assertEquals(expectedValue, value);
+
+        ConfigCatClient.closeAll();
+    }
+
+    @ParameterizedTest
+    @MethodSource("testDataForConfigSaltAndSegmentsOverrideTest")
+    public void configSaltAndSegmentsOverrideTest(String key, String userId, String email, OverrideBehaviour overrideBehaviour, Object expectedValue) throws IOException {
+        User user = null;
+        if (userId != null) {
+            user = User.newBuilder()
+                    .email(email)
+                    .build(userId);
+        }
+
+        ConfigCatClient client = ConfigCatClient.get("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/h99HYXWWNE2bH8eWyLAVMA", options -> {
+            if (overrideBehaviour != null) {
+                options.flagOverrides(OverrideDataSourceBuilder.classPathResource("test_override_segments_v6.json"), overrideBehaviour);
+            }
+            options.pollingMode(PollingModes.manualPoll());
+        });
+
+        client.forceRefresh();
+
+        Boolean value = client.getValue(Boolean.class, key, user, null);
+
+        Assert.assertEquals(expectedValue, value);
 
         ConfigCatClient.closeAll();
     }

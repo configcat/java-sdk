@@ -77,7 +77,7 @@ public class UserAttributeConvertTest {
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, Float.POSITIVE_INFINITY, ">5"),
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, Float.NEGATIVE_INFINITY, "<2.1"),
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, Long.MAX_VALUE, ">5"),
-                Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, Float.MIN_VALUE, "<2.1"),
+                Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, Long.MIN_VALUE, "<2.1"),
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, Integer.MAX_VALUE, ">5"),
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, Integer.MIN_VALUE, "<2.1"),
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, "NotANumber", "80%")

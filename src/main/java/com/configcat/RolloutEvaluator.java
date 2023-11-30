@@ -242,7 +242,6 @@ class RolloutEvaluator {
             throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
         }
 
-
     }
 
     private boolean evaluateHashedStartOrEndsWith(UserCondition userCondition, String configSalt, String contextSalt, Comparator comparator, String userAttributeValue) {
