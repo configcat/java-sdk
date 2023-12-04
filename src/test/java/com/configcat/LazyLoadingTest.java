@@ -157,12 +157,12 @@ public class LazyLoadingTest {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false, new ConfigCatHooks());
 
-        assertEquals("test-local", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test-local", service.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
         assertEquals(0, this.server.getRequestCount());
         Thread.sleep(1000);
 
         cache.write("", Helpers.cacheValueFromConfigJsonWithEtag(String.format(TEST_JSON, "test-local2"), "etag2"));
-        assertEquals("test-local2", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test-local2", service.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         assertEquals(0, this.server.getRequestCount());
     }

@@ -19,8 +19,8 @@ import static org.mockito.Mockito.mock;
 
 public class AutoPollingTest {
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(AutoPollingPolicyTest.class), LogLevel.WARNING);
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(AutoPollingTest.class), LogLevel.WARNING);
+    private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { v: {s: %s}, p: [] ,r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {
