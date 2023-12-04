@@ -14,10 +14,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LazyLoadingPolicyTest {
+public class LazyLoadingTest {
     private ConfigService configService;
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicyTest.class));
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingTest.class));
     private static final String TEST_JSON = "{ p: { s: 'test-salt'}, f: { fakeKey: { v: { s: %s }, p: [], r: [] } } }";
 
     @BeforeEach
@@ -144,6 +144,27 @@ public class LazyLoadingPolicyTest {
         assertFalse(service.getSettings().get().settings().isEmpty());
 
         assertEquals(1, this.server.getRequestCount());
+    }
+
+    @Test
+    void testCacheTTLRespectsExternalCache() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test-remote")));
+
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonWithEtag(String.format(TEST_JSON, "test-local"), "etag"));
+
+        PollingMode mode = PollingModes
+                .lazyLoad(1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false, new ConfigCatHooks());
+
+        assertEquals("test-local", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals(0, this.server.getRequestCount());
+        Thread.sleep(1000);
+
+        cache.write("", Helpers.cacheValueFromConfigJsonWithEtag(String.format(TEST_JSON, "test-local2"), "etag2"));
+        assertEquals("test-local2", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+
+        assertEquals(0, this.server.getRequestCount());
     }
 
     @Test
