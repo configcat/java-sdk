@@ -607,7 +607,7 @@ class RolloutEvaluator {
 
     private boolean evaluateConditions(ConditionAccessor[] conditions, TargetingRule targetingRule, EvaluationContext context, String configSalt, String contextSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
         boolean firstConditionFlag = true;
-        boolean conditionsEvaluationResult = false;
+        boolean conditionsEvaluationResult = true;
         String error = null;
         boolean newLine = false;
         for (ConditionAccessor condition : conditions) {
