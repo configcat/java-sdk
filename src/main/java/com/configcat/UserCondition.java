@@ -3,12 +3,12 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * User Condition.
+ * Describes a condition that is based on a User Object attribute.
  */
 public class UserCondition implements ConditionAccessor {
 
     /**
-     * The User Object attribute that the condition is based on. Can be "User ID", "Email", "Country" or any custom attribute.
+     * The User Object attribute that the condition is based on. Can be "Identifier", "Email", "Country" or any custom attribute.
      */
     @SerializedName(value = "a")
     private String comparisonAttribute;
@@ -19,17 +19,17 @@ public class UserCondition implements ConditionAccessor {
     @SerializedName(value = "c")
     private int comparator;
     /**
-     * The String value that the attribute is compared or {@code null} if the comparator use a different type.
+     * The String value that the User Object attribute is compared or {@code null} if the comparator use a different type of value.
      */
     @SerializedName("s")
     private String stringValue;
     /**
-     * The Double value that the attribute is compared or {@code null} if the comparator use a different type.
+     * The Double value that the User Object attribute is compared or {@code null} if the comparator use a different type of value.
      */
     @SerializedName("d")
     private Double doubleValue;
     /**
-     * The String Array value that the attribute is compared or {@code null} if the comparator use a different type.
+     * The String Array value that the User Object attribute is compared or {@code null} if the comparator use a different type of value.
      */
     @SerializedName("l")
     private String[] stringArrayValue;

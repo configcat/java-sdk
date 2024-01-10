@@ -3,7 +3,7 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Container class for different condition types.
+ * Represents a condition.
  */
 public class Condition implements ConditionAccessor {
     @SerializedName(value = "u")

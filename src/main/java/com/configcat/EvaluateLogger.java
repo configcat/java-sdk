@@ -145,8 +145,8 @@ public class EvaluateLogger {
         }
         increaseIndentLevel();
         String valueFormat = "% options";
-        if (targetingRule != null && targetingRule.getServedValue() != null && targetingRule.getServedValue().getValue() != null) {
-            valueFormat = "'" + targetingRule.getServedValue().getValue() + "'";
+        if (targetingRule != null && targetingRule.getSimpleValue() != null && targetingRule.getSimpleValue().getValue() != null) {
+            valueFormat = "'" + targetingRule.getSimpleValue().getValue() + "'";
         }
         if (newLine) {
             newLine();

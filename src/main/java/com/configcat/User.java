@@ -1,6 +1,5 @@
 package com.configcat;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -68,18 +67,7 @@ public class User {
             tmp.put(COUNTRY, attributes.get(COUNTRY));
         }
         tmp.putAll(attributes);
-        StringBuilder userStringBuilder = new StringBuilder();
-        userStringBuilder.append('{');
-        Iterator<Map.Entry<String, Object>> it = tmp.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String, Object> me = it.next();
-            userStringBuilder.append('"').append(me.getKey()).append("\":\"").append(me.getValue()).append('"');
-            if (it.hasNext()) {
-                userStringBuilder.append(',');
-            }
-        }
-        userStringBuilder.append('}');
-        return userStringBuilder.toString();
+        return Utils.gson.toJson(tmp);
     }
 
     /**

@@ -67,7 +67,7 @@ final class LogHelper {
     }
 
     public static String formatUserCondition(UserCondition userCondition) {
-        Comparator userComparator = Comparator.fromId(userCondition.getComparator());
+        UserComparator userComparator = UserComparator.fromId(userCondition.getComparator());
         if (userComparator == null) {
             throw new IllegalArgumentException("Comparison operator is invalid.");
         }
@@ -88,7 +88,7 @@ final class LogHelper {
                 comparisonValue = formatStringListComparisonValue(userCondition.getStringArrayValue(), false);
                 break;
             case SEMVER_LESS:
-            case SEMVER_LESS_EQULAS:
+            case SEMVER_LESS_EQUALS:
             case SEMVER_GREATER:
             case SEMVER_GREATER_EQUALS:
             case TEXT_EQUALS:

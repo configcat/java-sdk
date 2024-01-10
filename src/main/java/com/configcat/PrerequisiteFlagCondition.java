@@ -3,7 +3,7 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Prerequisite Flag Condition.
+ * Describes a condition that is based on a prerequisite flag.
  */
 public class PrerequisiteFlagCondition {
     /**
@@ -18,6 +18,7 @@ public class PrerequisiteFlagCondition {
     private int prerequisiteComparator;
     /**
      * The value that the evaluated value of the prerequisite flag is compared to.
+     * Can be a value of the following types: {@link Boolean}, {@link String}, {@link Integer} or {@link Double}.
      */
     @SerializedName(value = "v")
     private SettingsValue value;

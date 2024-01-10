@@ -1,10 +1,16 @@
 package com.configcat;
 
 /**
- * Describes the Prerequisite Comparators.
+ * Prerequisite flag comparison operator used during the evaluation process.
  */
 public enum PrerequisiteComparator {
+    /**
+     * EQUALS - It matches when the evaluated value of the specified prerequisite flag is equal to the comparison value.
+     */
     EQUALS(0, "EQUALS"),
+    /**
+     * NOT EQUALS - It matches when the evaluated value of the specified prerequisite flag is not equal to the comparison value.
+     */
     NOT_EQUALS(1, "NOT EQUALS");
 
     private final int id;

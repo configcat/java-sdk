@@ -13,7 +13,7 @@ class Preferences {
     @SerializedName(value = "r")
     private int redirect;
     /**
-     * The config salt which was used to hash sensitive data.
+     * The salt that was used to hash sensitive comparison values.
      */
     @SerializedName(value = "s")
     private String salt;

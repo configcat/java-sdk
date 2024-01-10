@@ -71,7 +71,7 @@ class RolloutEvaluator {
         }
 
         String comparisonAttribute = userCondition.getComparisonAttribute();
-        Comparator comparator = Comparator.fromId(userCondition.getComparator());
+        UserComparator userComparator = UserComparator.fromId(userCondition.getComparator());
         Object userAttributeValue = context.getUser().getAttribute(comparisonAttribute);
 
         if (userAttributeValue == null || (userAttributeValue instanceof String && ((String) userAttributeValue).isEmpty())) {
@@ -79,26 +79,26 @@ class RolloutEvaluator {
             throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_MISSING);
         }
 
-        if (comparator == null) {
+        if (userComparator == null) {
             throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
         }
-        switch (comparator) {
+        switch (userComparator) {
             case CONTAINS_ANY_OF:
             case NOT_CONTAINS_ANY_OF:
-                boolean negateContainsAnyOf = Comparator.NOT_CONTAINS_ANY_OF.equals(comparator);
+                boolean negateContainsAnyOf = UserComparator.NOT_CONTAINS_ANY_OF.equals(userComparator);
                 String userAttributeForContains = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
                 return evaluateContainsAnyOf(userCondition, userAttributeForContains, negateContainsAnyOf);
             case SEMVER_IS_ONE_OF:
             case SEMVER_IS_NOT_ONE_OF:
-                boolean negateSemverIsOneOf = Comparator.SEMVER_IS_NOT_ONE_OF.equals(comparator);
+                boolean negateSemverIsOneOf = UserComparator.SEMVER_IS_NOT_ONE_OF.equals(userComparator);
                 Version userAttributeValueForSemverIsOneOf = getUserAttributeAsVersion(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
                 return evaluateSemverIsOneOf(userCondition, userAttributeValueForSemverIsOneOf, negateSemverIsOneOf);
             case SEMVER_LESS:
-            case SEMVER_LESS_EQULAS:
+            case SEMVER_LESS_EQUALS:
             case SEMVER_GREATER:
             case SEMVER_GREATER_EQUALS:
                 Version userAttributeValueForSemverOperators = getUserAttributeAsVersion(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateSemver(userCondition, comparator, userAttributeValueForSemverOperators);
+                return evaluateSemver(userCondition, userComparator, userAttributeValueForSemverOperators);
             case NUMBER_EQUALS:
             case NUMBER_NOT_EQUALS:
             case NUMBER_LESS:
@@ -106,25 +106,25 @@ class RolloutEvaluator {
             case NUMBER_GREATER:
             case NUMBER_GREATER_EQUALS:
                 Double userAttributeAsDouble = getUserAttributeAsDouble(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateNumbers(userCondition, comparator, userAttributeAsDouble);
+                return evaluateNumbers(userCondition, userComparator, userAttributeAsDouble);
             case IS_ONE_OF:
             case IS_NOT_ONE_OF:
             case SENSITIVE_IS_ONE_OF:
             case SENSITIVE_IS_NOT_ONE_OF:
-                boolean negateIsOneOf = Comparator.SENSITIVE_IS_NOT_ONE_OF.equals(comparator) || Comparator.IS_NOT_ONE_OF.equals(comparator);
-                boolean sensitiveIsOneOf = Comparator.SENSITIVE_IS_ONE_OF.equals(comparator) || Comparator.SENSITIVE_IS_NOT_ONE_OF.equals(comparator);
+                boolean negateIsOneOf = UserComparator.SENSITIVE_IS_NOT_ONE_OF.equals(userComparator) || UserComparator.IS_NOT_ONE_OF.equals(userComparator);
+                boolean sensitiveIsOneOf = UserComparator.SENSITIVE_IS_ONE_OF.equals(userComparator) || UserComparator.SENSITIVE_IS_NOT_ONE_OF.equals(userComparator);
                 String userAttributeForIsOneOf = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
                 return evaluateIsOneOf(userCondition, configSalt, contextSalt, userAttributeForIsOneOf, negateIsOneOf, sensitiveIsOneOf);
             case DATE_BEFORE:
             case DATE_AFTER:
                 double userAttributeForDate = getUserAttributeForDate(userCondition, context, comparisonAttribute, userAttributeValue);
-                return evaluateDate(userCondition, comparator, userAttributeForDate);
+                return evaluateDate(userCondition, userComparator, userAttributeForDate);
             case TEXT_EQUALS:
             case TEXT_NOT_EQUALS:
             case HASHED_EQUALS:
             case HASHED_NOT_EQUALS:
-                boolean negateEquals = Comparator.HASHED_NOT_EQUALS.equals(comparator) || Comparator.TEXT_NOT_EQUALS.equals(comparator);
-                boolean hashedEquals = Comparator.HASHED_EQUALS.equals(comparator) || Comparator.HASHED_NOT_EQUALS.equals(comparator);
+                boolean negateEquals = UserComparator.HASHED_NOT_EQUALS.equals(userComparator) || UserComparator.TEXT_NOT_EQUALS.equals(userComparator);
+                boolean hashedEquals = UserComparator.HASHED_EQUALS.equals(userComparator) || UserComparator.HASHED_NOT_EQUALS.equals(userComparator);
                 String userAttributeForEquals = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
                 return evaluateEquals(userCondition, configSalt, contextSalt, userAttributeForEquals, negateEquals, hashedEquals);
             case HASHED_STARTS_WITH:
@@ -132,23 +132,23 @@ class RolloutEvaluator {
             case HASHED_NOT_STARTS_WITH:
             case HASHED_NOT_ENDS_WITH:
                 String userAttributeForHashedStartEnd = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateHashedStartOrEndsWith(userCondition, configSalt, contextSalt, comparator, userAttributeForHashedStartEnd);
+                return evaluateHashedStartOrEndsWith(userCondition, configSalt, contextSalt, userComparator, userAttributeForHashedStartEnd);
             case TEXT_STARTS_WITH:
             case TEXT_NOT_STARTS_WITH:
-                boolean negateTextStartWith = Comparator.TEXT_NOT_STARTS_WITH.equals(comparator);
+                boolean negateTextStartWith = UserComparator.TEXT_NOT_STARTS_WITH.equals(userComparator);
                 String userAttributeForTextStart = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
                 return evaluateTextStartsWith(userCondition, userAttributeForTextStart, negateTextStartWith);
             case TEXT_ENDS_WITH:
             case TEXT_NOT_ENDS_WITH:
-                boolean negateTextEndsWith = Comparator.TEXT_NOT_ENDS_WITH.equals(comparator);
+                boolean negateTextEndsWith = UserComparator.TEXT_NOT_ENDS_WITH.equals(userComparator);
                 String userAttributeForTextEnd = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
                 return evaluateTextEndsWith(userCondition, userAttributeForTextEnd, negateTextEndsWith);
             case TEXT_ARRAY_CONTAINS:
             case TEXT_ARRAY_NOT_CONTAINS:
             case HASHED_ARRAY_CONTAINS:
             case HASHED_ARRAY_NOT_CONTAINS:
-                boolean negateArrayContains = Comparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator) || Comparator.TEXT_ARRAY_NOT_CONTAINS.equals(comparator);
-                boolean hashedArrayContains = Comparator.HASHED_ARRAY_CONTAINS.equals(comparator) || Comparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator);
+                boolean negateArrayContains = UserComparator.HASHED_ARRAY_NOT_CONTAINS.equals(userComparator) || UserComparator.TEXT_ARRAY_NOT_CONTAINS.equals(userComparator);
+                boolean hashedArrayContains = UserComparator.HASHED_ARRAY_CONTAINS.equals(userComparator) || UserComparator.HASHED_ARRAY_NOT_CONTAINS.equals(userComparator);
                 String[] userAttributeAsStringArray = getUserAttributeAsStringArray(userCondition, context, comparisonAttribute, userAttributeValue);
                 return evaluateArrayContains(userCondition, configSalt, contextSalt, userAttributeAsStringArray, negateArrayContains, hashedArrayContains);
             default:
@@ -188,11 +188,7 @@ class RolloutEvaluator {
             if (userAttributeValue instanceof Instant) {
                 return DateTimeUtils.getUnixSeconds((Instant) userAttributeValue);
             }
-            Double attributeToDouble = UserAttributeConverter.userAttributeToDouble(userAttributeValue);
-            if (attributeToDouble.isNaN()) {
-                throw new NumberFormatException();
-            }
-            return attributeToDouble;
+            return UserAttributeConverter.userAttributeToDouble(userAttributeValue);
         } catch (Exception e) {
             String reason = "'" + userAttributeValue + "' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)";
             this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
@@ -224,33 +220,26 @@ class RolloutEvaluator {
     }
 
     private Double getUserAttributeAsDouble(String key, UserCondition userCondition, String comparisonAttribute, Object userAttributeValue) {
-        Double converted;
         try {
             if (userAttributeValue instanceof Double) {
-                converted = (Double) userAttributeValue;
-            } else {
-                converted = UserAttributeConverter.userAttributeToDouble(userAttributeValue);
+                return (Double) userAttributeValue;
             }
-            if (converted.isNaN()) {
-                throw new NumberFormatException();
-            }
-            return converted;
+            return UserAttributeConverter.userAttributeToDouble(userAttributeValue);
         } catch (NumberFormatException e) {
             //If cannot convert to double, continue with the error
             String reason = "'" + userAttributeValue + "' is not a valid decimal number";
             this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(key, userCondition, reason, comparisonAttribute));
             throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
         }
-
     }
 
-    private boolean evaluateHashedStartOrEndsWith(UserCondition userCondition, String configSalt, String contextSalt, Comparator comparator, String userAttributeValue) {
-        List<String> withValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
+    private boolean evaluateHashedStartOrEndsWith(UserCondition userCondition, String configSalt, String contextSalt, UserComparator userComparator, String userAttributeValue) {
         byte[] userAttributeValueUTF8 = userAttributeValue.getBytes(StandardCharsets.UTF_8);
-        withValues.replaceAll(String::trim);
-        withValues.removeAll(Arrays.asList(null, ""));
         boolean foundEqual = false;
-        for (String comparisonValueHashedStartsEnds : withValues) {
+        for (String comparisonValueHashedStartsEnds : userCondition.getStringArrayValue()) {
+            if (comparisonValueHashedStartsEnds == null || comparisonValueHashedStartsEnds.isEmpty()) {
+                continue;
+            }
             int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
             if (indexOf <= 0) {
                 throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
@@ -265,13 +254,21 @@ class RolloutEvaluator {
                 if (comparisonHashValue.isEmpty()) {
                     throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
                 }
-                String userValueSubString;
-                if (Comparator.HASHED_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
-                    userValueSubString = new String(Arrays.copyOfRange(userAttributeValueUTF8, 0, comparedTextLengthInt), StandardCharsets.UTF_8);
+                byte[] userValueSubStringByteArray;
+                if (UserComparator.HASHED_STARTS_WITH.equals(userComparator) || UserComparator.HASHED_NOT_STARTS_WITH.equals(userComparator)) {
+                    userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, 0, comparedTextLengthInt);
                 } else { //HASHED_ENDS_WITH
-                    userValueSubString = new String(Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length - comparedTextLengthInt, userAttributeValueUTF8.length), StandardCharsets.UTF_8);
+                    userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length - comparedTextLengthInt, userAttributeValueUTF8.length);
                 }
-                String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, contextSalt);
+                byte[] configSaltByteArray = configSalt.getBytes(StandardCharsets.UTF_8);
+                byte[] contextSaltByteArray = contextSalt.getBytes(StandardCharsets.UTF_8);
+                byte[] concatByteArrays = new byte[userValueSubStringByteArray.length + configSaltByteArray.length + contextSaltByteArray.length];
+
+                System.arraycopy(userValueSubStringByteArray, 0, concatByteArrays, 0, userValueSubStringByteArray.length);
+                System.arraycopy(configSaltByteArray, 0, concatByteArrays, userValueSubStringByteArray.length, configSaltByteArray.length);
+                System.arraycopy(contextSaltByteArray, 0, concatByteArrays, userValueSubStringByteArray.length + configSaltByteArray.length, contextSaltByteArray.length);
+                String hashUserValueSub = DigestUtils.sha256Hex(concatByteArrays);
+
                 if (hashUserValueSub.equals(comparisonHashValue)) {
                     foundEqual = true;
                     break;
@@ -280,18 +277,18 @@ class RolloutEvaluator {
                 throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
         }
-        if (Comparator.HASHED_NOT_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_ENDS_WITH.equals(comparator)) {
+        if (UserComparator.HASHED_NOT_STARTS_WITH.equals(userComparator) || UserComparator.HASHED_NOT_ENDS_WITH.equals(userComparator)) {
             return !foundEqual;
         }
         return foundEqual;
     }
 
     private boolean evaluateTextStartsWith(UserCondition userCondition, String userAttributeValue, boolean negateTextStartWith) {
-        List<String> withTextValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        withTextValues.replaceAll(String::trim);
-        withTextValues.removeAll(Arrays.asList(null, ""));
         boolean textStartWith = false;
-        for (String textValue : withTextValues) {
+        for (String textValue : userCondition.getStringArrayValue()) {
+            if (textValue == null || textValue.isEmpty()) {
+                continue;
+            }
             if (userAttributeValue.startsWith(textValue)) {
                 textStartWith = true;
                 break;
@@ -304,11 +301,11 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateTextEndsWith(UserCondition userCondition, String userAttributeValue, boolean negateTextEndsWith) {
-        List<String> withTextValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        withTextValues.replaceAll(String::trim);
-        withTextValues.removeAll(Arrays.asList(null, ""));
         boolean textEndsWith = false;
-        for (String textValue : withTextValues) {
+        for (String textValue : userCondition.getStringArrayValue()) {
+            if (textValue == null || textValue.isEmpty()) {
+                continue;
+            }
             if (userAttributeValue.endsWith(textValue)) {
                 textEndsWith = true;
                 break;
@@ -321,16 +318,19 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateArrayContains(UserCondition userCondition, String configSalt, String contextSalt, String[] userContainsValues, boolean negateArrayContains, boolean hashedArrayContains) {
-        List<String> conditionContainsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
+        List<String> conditionContainsValues = Arrays.asList(userCondition.getStringArrayValue());
 
         if (userContainsValues.length == 0) {
             return false;
         }
         boolean containsFlag = false;
         for (String userContainsValue : userContainsValues) {
+            if (userContainsValue == null || userContainsValue.isEmpty()) {
+                continue;
+            }
             String userContainsValueConverted;
             if (hashedArrayContains) {
-                userContainsValueConverted = getSaltedUserValue(userContainsValue.trim(), configSalt, contextSalt);
+                userContainsValueConverted = getSaltedUserValue(userContainsValue, configSalt, contextSalt);
             } else {
                 userContainsValueConverted = userContainsValue;
             }
@@ -359,40 +359,47 @@ class RolloutEvaluator {
         return equalsResult;
     }
 
-    private boolean evaluateDate(UserCondition userCondition, Comparator comparator, double userDoubleValue) {
+    private boolean evaluateDate(UserCondition userCondition, UserComparator userComparator, double userDoubleValue) {
         Double comparisonDoubleValue = userCondition.getDoubleValue();
-        return (Comparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
-                (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
+        return (UserComparator.DATE_BEFORE.equals(userComparator) && userDoubleValue < comparisonDoubleValue) ||
+                (UserComparator.DATE_AFTER.equals(userComparator) && userDoubleValue > comparisonDoubleValue);
     }
 
     private boolean evaluateIsOneOf(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateIsOneOf, boolean sensitiveIsOneOf) {
-        List<String> inValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        inValues.replaceAll(String::trim);
-        inValues.removeAll(Arrays.asList(null, ""));
         String userIsOneOfValue;
         if (sensitiveIsOneOf) {
             userIsOneOfValue = getSaltedUserValue(userValue, configSalt, contextSalt);
         } else {
             userIsOneOfValue = userValue;
         }
-        boolean isOneOf = inValues.contains(userIsOneOfValue);
+
+        boolean isOneOf = false;
+        for (String inValuesElement : userCondition.getStringArrayValue()) {
+            if (inValuesElement == null || inValuesElement.isEmpty()) {
+                continue;
+            }
+            if (inValuesElement.equals(userIsOneOfValue)) {
+                isOneOf = true;
+                break;
+            }
+        }
         if (negateIsOneOf) {
             isOneOf = !isOneOf;
         }
         return isOneOf;
     }
 
-    private boolean evaluateNumbers(UserCondition userCondition, Comparator comparator, Double userValue) {
+    private boolean evaluateNumbers(UserCondition userCondition, UserComparator userComparator, Double userValue) {
         Double comparisonDoubleValue = userCondition.getDoubleValue();
-        return (Comparator.NUMBER_EQUALS.equals(comparator) && userValue.equals(comparisonDoubleValue)) ||
-                (Comparator.NUMBER_NOT_EQUALS.equals(comparator) && !userValue.equals(comparisonDoubleValue)) ||
-                (Comparator.NUMBER_LESS.equals(comparator) && userValue < comparisonDoubleValue) ||
-                (Comparator.NUMBER_LESS_EQUALS.equals(comparator) && userValue <= comparisonDoubleValue) ||
-                (Comparator.NUMBER_GREATER.equals(comparator) && userValue > comparisonDoubleValue) ||
-                (Comparator.NUMBER_GREATER_EQUALS.equals(comparator) && userValue >= comparisonDoubleValue);
+        return (UserComparator.NUMBER_EQUALS.equals(userComparator) && userValue.equals(comparisonDoubleValue)) ||
+                (UserComparator.NUMBER_NOT_EQUALS.equals(userComparator) && !userValue.equals(comparisonDoubleValue)) ||
+                (UserComparator.NUMBER_LESS.equals(userComparator) && userValue < comparisonDoubleValue) ||
+                (UserComparator.NUMBER_LESS_EQUALS.equals(userComparator) && userValue <= comparisonDoubleValue) ||
+                (UserComparator.NUMBER_GREATER.equals(userComparator) && userValue > comparisonDoubleValue) ||
+                (UserComparator.NUMBER_GREATER_EQUALS.equals(userComparator) && userValue >= comparisonDoubleValue);
     }
 
-    private boolean evaluateSemver(UserCondition userCondition, Comparator comparator, Version userValue) {
+    private boolean evaluateSemver(UserCondition userCondition, UserComparator userComparator, Version userValue) {
         String comparisonValue = userCondition.getStringValue();
         Version matchValue;
         try {
@@ -400,21 +407,21 @@ class RolloutEvaluator {
         } catch (Version.VersionFormatException exception) {
             return false;
         }
-        return (Comparator.SEMVER_LESS.equals(comparator) && userValue.isLowerThan(matchValue)) ||
-                (Comparator.SEMVER_LESS_EQULAS.equals(comparator) && userValue.compareTo(matchValue) <= 0) ||
-                (Comparator.SEMVER_GREATER.equals(comparator) && userValue.isGreaterThan(matchValue)) ||
-                (Comparator.SEMVER_GREATER_EQUALS.equals(comparator) && userValue.compareTo(matchValue) >= 0);
+        return (UserComparator.SEMVER_LESS.equals(userComparator) && userValue.isLowerThan(matchValue)) ||
+                (UserComparator.SEMVER_LESS_EQUALS.equals(userComparator) && userValue.compareTo(matchValue) <= 0) ||
+                (UserComparator.SEMVER_GREATER.equals(userComparator) && userValue.isGreaterThan(matchValue)) ||
+                (UserComparator.SEMVER_GREATER_EQUALS.equals(userComparator) && userValue.compareTo(matchValue) >= 0);
     }
 
     private boolean evaluateSemverIsOneOf(UserCondition userCondition, Version userVersion, boolean negate) {
-        List<String> inSemVerValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        inSemVerValues.replaceAll(String::trim);
-        inSemVerValues.removeAll(Arrays.asList(null, ""));
 
         boolean matched = false;
-        for (String semVer : inSemVerValues) {
+        for (String semVer : userCondition.getStringArrayValue()) {
+            if (semVer == null || semVer.isEmpty()) {
+                continue;
+            }
             try {
-                matched = userVersion.compareTo(Version.parseVersion(semVer, true)) == 0 || matched;
+                matched = userVersion.compareTo(Version.parseVersion(semVer.trim(), true)) == 0 || matched;
             } catch (Version.VersionFormatException exception) {
                 return false;
             }
@@ -428,10 +435,10 @@ class RolloutEvaluator {
 
     private boolean evaluateContainsAnyOf(UserCondition userCondition, String userValue, boolean negate) {
         boolean containsResult = !negate;
-        List<String> containsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        containsValues.replaceAll(String::trim);
-        containsValues.removeAll(Arrays.asList(null, ""));
-        for (String containsValue : containsValues) {
+        for (String containsValue : userCondition.getStringArrayValue()) {
+            if (containsValue == null || containsValue.isEmpty()) {
+                continue;
+            }
             if (userValue.contains(containsValue))
                 return containsResult;
         }
@@ -526,6 +533,9 @@ class RolloutEvaluator {
         EvaluationContext prerequisiteFlagContext = new EvaluationContext(prerequisiteFlagKey, context.getUser(), visitedKeys, context.getSettings());
 
         EvaluationResult evaluateResult = evaluateSetting(prerequsiteFlagSetting, evaluateLogger, prerequisiteFlagContext);
+
+        visitedKeys.remove(context.getKey());
+
         if (evaluateResult.value == null) {
             return false;
         }
@@ -572,8 +582,8 @@ class RolloutEvaluator {
                 }
                 continue;
             }
-            if (rule.getServedValue() != null) {
-                return new EvaluationResult(rule.getServedValue().getValue(), rule.getServedValue().getVariationId(), rule, null);
+            if (rule.getSimpleValue() != null) {
+                return new EvaluationResult(rule.getSimpleValue().getValue(), rule.getSimpleValue().getVariationId(), rule, null);
             }
 
             if (rule.getPercentageOptions() == null || rule.getPercentageOptions().length == 0) {
@@ -699,7 +709,7 @@ class RolloutEvaluator {
                 return new EvaluationResult(rule.getValue(), rule.getVariationId(), parentTargetingRule, rule);
             }
         }
-        return null;
+        throw new IllegalArgumentException("Sum of percentage option percentages are less than 100.");
     }
 
 }

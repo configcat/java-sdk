@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * ConfigCat config.
+ * Details of a ConfigCat config.
  */
 public class Config {
 
@@ -16,13 +16,13 @@ public class Config {
     @SerializedName(value = "p")
     private Preferences preferences;
     /**
-     * Map of flags / settings.
+     * The map of settings.
      */
     @SerializedName(value = "f")
     private final Map<String, Setting> entries = new HashMap<>();
 
     /**
-     * List of segments.
+     * The list of segments.
      */
     @SerializedName(value = "s")
     private Segment[] segments;

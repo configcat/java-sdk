@@ -3,7 +3,7 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Segment Condition.
+ * Describes a condition that is based on a segment.
  */
 public class SegmentCondition {
     /**

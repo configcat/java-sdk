@@ -3,7 +3,7 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Percentage option.
+ * Represents a percentage option.
  */
 public class PercentageOption {
 
@@ -13,12 +13,13 @@ public class PercentageOption {
     @SerializedName(value = "p")
     private int percentage;
     /**
-     * The server value of the percentage option.
+     * The value associated with the percentage option.
+     * Can be a value of the following types: {@link Boolean}, {@link String}, {@link Integer} or {@link Double}.
      */
     @SerializedName(value = "v")
     private SettingsValue value;
     /**
-     * The variation ID of the percentage option.
+     * Variation ID.
      */
     @SerializedName(value = "i")
     private String variationId;

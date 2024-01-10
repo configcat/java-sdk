@@ -1,6 +1,7 @@
 package com.configcat;
 
 import java.util.Date;
+import java.util.List;
 
 final class UserAttributeConverter {
 
@@ -10,6 +11,12 @@ final class UserAttributeConverter {
         }
         if (userAttribute instanceof String) {
             return (String) userAttribute;
+        }
+        if (userAttribute instanceof String[]) {
+            return Utils.gson.toJson(userAttribute);
+        }
+        if (userAttribute instanceof List) {
+            return Utils.gson.toJson(userAttribute);
         }
         if (userAttribute instanceof Date) {
             Date userAttributeDate = (Date) userAttribute;
@@ -36,6 +43,12 @@ final class UserAttributeConverter {
         }
         if (userAttribute instanceof Long) {
             return ((Long) userAttribute).doubleValue();
+        }
+        if (userAttribute instanceof Byte) {
+            return ((Byte) userAttribute).doubleValue();
+        }
+        if (userAttribute instanceof Short) {
+            return ((Short) userAttribute).doubleValue();
         }
 
         throw new NumberFormatException();

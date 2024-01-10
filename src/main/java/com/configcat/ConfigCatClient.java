@@ -27,7 +27,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private final ConfigCatHooks configCatHooks;
     private final LogLevel clientLogLevel;
 
-
     private ConfigCatClient(String sdkKey, Options options) {
         this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.configCatHooks);
         this.clientLogLevel = options.logLevel;
@@ -548,8 +547,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 }
 
                 for (TargetingRule targetingRule : setting.getTargetingRules()) {
-                    if (targetingRule.getServedValue() != null && variationId.equals(targetingRule.getServedValue().getVariationId())) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getServedValue().getValue(), setting.getType()));
+                    if (targetingRule.getSimpleValue() != null && variationId.equals(targetingRule.getSimpleValue().getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getSimpleValue().getValue(), setting.getType()));
                     }
                 }
 
@@ -751,7 +750,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         /**
          * Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard:
-         * https://app.configcat.com/organization/data-governance (Only Organization Admins have access)
+         * <a href="https://app.configcat.com/organization/data-governance">Link</a> (Only Organization Admins have access)
          *
          * @param dataGovernance the {@link DataGovernance} parameter.
          */

@@ -3,7 +3,7 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * ConfigCat Feature Flag / Setting.
+ * Feature flag or setting.
  */
 public class Setting {
 
@@ -28,12 +28,13 @@ public class Setting {
     @SerializedName(value = "r")
     private TargetingRule[] targetingRules;
     /**
-     * The value of the setting.
+     * Setting value.
+     * Can be a value of the following types: {@link Boolean}, {@link String}, {@link Integer} or {@link Double}.
      */
     @SerializedName(value = "v")
     private SettingsValue settingsValue;
     /**
-     * The variation ID of the setting.
+     * Variation ID.
      */
     @SerializedName(value = "i")
     private String variationId;
