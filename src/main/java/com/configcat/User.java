@@ -23,14 +23,21 @@ public class User {
         this.attributes = new TreeMap<>();
         this.attributes.put(IDENTIFIER_KEY, identifier);
 
-        if (country != null && !country.isEmpty())
+        if (country != null && !country.isEmpty()) {
             this.attributes.put(COUNTRY, country);
+        }
 
-        if (email != null && !email.isEmpty())
+        if (email != null && !email.isEmpty()) {
             this.attributes.put(EMAIL, email);
+        }
 
-        if (custom != null)
-            this.attributes.putAll(custom);
+        if (custom != null) {
+            for (Map.Entry<String, Object> entry :custom.entrySet()) {
+                if(!entry.getKey().equals(IDENTIFIER_KEY) && !entry.getKey().equals(COUNTRY) && !entry.getKey().equals(EMAIL)){
+                    this.attributes.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
     }
 
     String getIdentifier() {
@@ -66,7 +73,11 @@ public class User {
         if (attributes.containsKey(COUNTRY)) {
             tmp.put(COUNTRY, attributes.get(COUNTRY));
         }
-        tmp.putAll(attributes);
+        for (Map.Entry<String, Object> entry :attributes.entrySet()) {
+            if(!entry.getKey().equals(IDENTIFIER_KEY) && !entry.getKey().equals(COUNTRY) && !entry.getKey().equals(EMAIL)){
+                tmp.put(entry.getKey(), entry.getValue());
+            }
+        }
         return Utils.gson.toJson(tmp);
     }
 
