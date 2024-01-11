@@ -235,47 +235,48 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateHashedStartOrEndsWith(UserCondition userCondition, String configSalt, String contextSalt, UserComparator userComparator, String userAttributeValue) {
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
+
         byte[] userAttributeValueUTF8 = userAttributeValue.getBytes(StandardCharsets.UTF_8);
         boolean foundEqual = false;
-        for (String comparisonValueHashedStartsEnds : userCondition.getStringArrayValue()) {
-            if (comparisonValueHashedStartsEnds == null || comparisonValueHashedStartsEnds.isEmpty()) {
-                continue;
-            }
-            int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
+        for (String comparisonValueHashedStartsEnds : comparisonValues) {
+            int indexOf = ensureComparisonValue(comparisonValueHashedStartsEnds).indexOf("_");
             if (indexOf <= 0) {
                 throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
             String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
+            int comparedTextLengthInt;
             try {
-                int comparedTextLengthInt = Integer.parseInt(comparedTextLength);
-                if (userAttributeValueUTF8.length < comparedTextLengthInt) {
-                    continue;
-                }
-                String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
-                if (comparisonHashValue.isEmpty()) {
-                    throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
-                }
-                byte[] userValueSubStringByteArray;
-                if (UserComparator.HASHED_STARTS_WITH.equals(userComparator) || UserComparator.HASHED_NOT_STARTS_WITH.equals(userComparator)) {
-                    userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, 0, comparedTextLengthInt);
-                } else { //HASHED_ENDS_WITH
-                    userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length - comparedTextLengthInt, userAttributeValueUTF8.length);
-                }
-                byte[] configSaltByteArray = configSalt.getBytes(StandardCharsets.UTF_8);
-                byte[] contextSaltByteArray = contextSalt.getBytes(StandardCharsets.UTF_8);
-                byte[] concatByteArrays = new byte[userValueSubStringByteArray.length + configSaltByteArray.length + contextSaltByteArray.length];
-
-                System.arraycopy(userValueSubStringByteArray, 0, concatByteArrays, 0, userValueSubStringByteArray.length);
-                System.arraycopy(configSaltByteArray, 0, concatByteArrays, userValueSubStringByteArray.length, configSaltByteArray.length);
-                System.arraycopy(contextSaltByteArray, 0, concatByteArrays, userValueSubStringByteArray.length + configSaltByteArray.length, contextSaltByteArray.length);
-                String hashUserValueSub = DigestUtils.sha256Hex(concatByteArrays);
-
-                if (hashUserValueSub.equals(comparisonHashValue)) {
-                    foundEqual = true;
-                    break;
-                }
+                comparedTextLengthInt = Integer.parseInt(comparedTextLength);
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
+            }
+
+            if (userAttributeValueUTF8.length < comparedTextLengthInt) {
+                continue;
+            }
+            String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
+            if (comparisonHashValue.isEmpty()) {
+                throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
+            }
+            byte[] userValueSubStringByteArray;
+            if (UserComparator.HASHED_STARTS_WITH.equals(userComparator) || UserComparator.HASHED_NOT_STARTS_WITH.equals(userComparator)) {
+                userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, 0, comparedTextLengthInt);
+            } else { //HASHED_ENDS_WITH
+                userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length - comparedTextLengthInt, userAttributeValueUTF8.length);
+            }
+            byte[] configSaltByteArray = configSalt.getBytes(StandardCharsets.UTF_8);
+            byte[] contextSaltByteArray = contextSalt.getBytes(StandardCharsets.UTF_8);
+            byte[] concatByteArrays = new byte[userValueSubStringByteArray.length + configSaltByteArray.length + contextSaltByteArray.length];
+
+            System.arraycopy(userValueSubStringByteArray, 0, concatByteArrays, 0, userValueSubStringByteArray.length);
+            System.arraycopy(configSaltByteArray, 0, concatByteArrays, userValueSubStringByteArray.length, configSaltByteArray.length);
+            System.arraycopy(contextSaltByteArray, 0, concatByteArrays, userValueSubStringByteArray.length + configSaltByteArray.length, contextSaltByteArray.length);
+            String hashUserValueSub = DigestUtils.sha256Hex(concatByteArrays);
+
+            if (hashUserValueSub.equals(comparisonHashValue)) {
+                foundEqual = true;
+                break;
             }
         }
         if (UserComparator.HASHED_NOT_STARTS_WITH.equals(userComparator) || UserComparator.HASHED_NOT_ENDS_WITH.equals(userComparator)) {
@@ -285,12 +286,11 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateTextStartsWith(UserCondition userCondition, String userAttributeValue, boolean negateTextStartWith) {
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
+
         boolean textStartWith = false;
-        for (String textValue : userCondition.getStringArrayValue()) {
-            if (textValue == null || textValue.isEmpty()) {
-                continue;
-            }
-            if (userAttributeValue.startsWith(textValue)) {
+        for (String textValue : comparisonValues) {
+            if (userAttributeValue.startsWith(ensureComparisonValue(textValue))) {
                 textStartWith = true;
                 break;
             }
@@ -302,12 +302,11 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateTextEndsWith(UserCondition userCondition, String userAttributeValue, boolean negateTextEndsWith) {
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
+
         boolean textEndsWith = false;
-        for (String textValue : userCondition.getStringArrayValue()) {
-            if (textValue == null || textValue.isEmpty()) {
-                continue;
-            }
-            if (userAttributeValue.endsWith(textValue)) {
+        for (String textValue : comparisonValues) {
+            if (userAttributeValue.endsWith(ensureComparisonValue(textValue))) {
                 textEndsWith = true;
                 break;
             }
@@ -319,12 +318,13 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateArrayContains(UserCondition userCondition, String configSalt, String contextSalt, String[] userContainsValues, boolean negateArrayContains, boolean hashedArrayContains) {
-        List<String> conditionContainsValues = Arrays.asList(userCondition.getStringArrayValue());
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
         if (userContainsValues.length == 0) {
             return false;
         }
         boolean containsFlag = false;
+        outerLoop:
         for (String userContainsValue : userContainsValues) {
             String userContainsValueConverted;
             if (hashedArrayContains) {
@@ -332,9 +332,11 @@ class RolloutEvaluator {
             } else {
                 userContainsValueConverted = userContainsValue;
             }
-            if (conditionContainsValues.contains(userContainsValueConverted)) {
-                containsFlag = true;
-                break;
+            for (String inValuesElement : comparisonValues) {
+                if (ensureComparisonValue(inValuesElement).equals(userContainsValueConverted)) {
+                    containsFlag = true;
+                    break outerLoop;
+                }
             }
         }
         if (negateArrayContains) {
@@ -344,13 +346,15 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateEquals(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateEquals, boolean hashedEquals) {
+        String comparisonValue = ensureComparisonValue(userCondition.getStringValue());
+
         String valueEquals;
         if (hashedEquals) {
             valueEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
         } else {
             valueEquals = userValue;
         }
-        boolean equalsResult = valueEquals.equals(userCondition.getStringValue());
+        boolean equalsResult = valueEquals.equals(comparisonValue);
         if (negateEquals) {
             equalsResult = !equalsResult;
         }
@@ -358,12 +362,14 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateDate(UserCondition userCondition, UserComparator userComparator, double userDoubleValue) {
-        Double comparisonDoubleValue = userCondition.getDoubleValue();
+        Double comparisonDoubleValue = ensureComparisonValue(userCondition.getDoubleValue());
         return (UserComparator.DATE_BEFORE.equals(userComparator) && userDoubleValue < comparisonDoubleValue) ||
                 (UserComparator.DATE_AFTER.equals(userComparator) && userDoubleValue > comparisonDoubleValue);
     }
 
     private boolean evaluateIsOneOf(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateIsOneOf, boolean sensitiveIsOneOf) {
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
+
         String userIsOneOfValue;
         if (sensitiveIsOneOf) {
             userIsOneOfValue = getSaltedUserValue(userValue, configSalt, contextSalt);
@@ -372,11 +378,8 @@ class RolloutEvaluator {
         }
 
         boolean isOneOf = false;
-        for (String inValuesElement : userCondition.getStringArrayValue()) {
-            if (inValuesElement == null || inValuesElement.isEmpty()) {
-                continue;
-            }
-            if (inValuesElement.equals(userIsOneOfValue)) {
+        for (String inValuesElement : comparisonValues) {
+            if (ensureComparisonValue(inValuesElement).equals(userIsOneOfValue)) {
                 isOneOf = true;
                 break;
             }
@@ -388,7 +391,7 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateNumbers(UserCondition userCondition, UserComparator userComparator, Double userValue) {
-        Double comparisonDoubleValue = userCondition.getDoubleValue();
+        Double comparisonDoubleValue = ensureComparisonValue(userCondition.getDoubleValue());
         return (UserComparator.NUMBER_EQUALS.equals(userComparator) && userValue.equals(comparisonDoubleValue)) ||
                 (UserComparator.NUMBER_NOT_EQUALS.equals(userComparator) && !userValue.equals(comparisonDoubleValue)) ||
                 (UserComparator.NUMBER_LESS.equals(userComparator) && userValue < comparisonDoubleValue) ||
@@ -398,7 +401,7 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateSemver(UserCondition userCondition, UserComparator userComparator, Version userValue) {
-        String comparisonValue = userCondition.getStringValue();
+        String comparisonValue = ensureComparisonValue(userCondition.getStringValue());
         Version matchValue;
         try {
             matchValue = Version.parseVersion(comparisonValue.trim(), true);
@@ -412,15 +415,20 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateSemverIsOneOf(UserCondition userCondition, Version userVersion, boolean negate) {
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
         boolean matched = false;
-        for (String semVer : userCondition.getStringArrayValue()) {
-            if (semVer == null || semVer.isEmpty()) {
+        for (String semVer : comparisonValues) {
+            // Previous versions of the evaluation algorithm ignore empty comparison values.
+            // We keep this behavior for backward compatibility.
+            if (ensureComparisonValue(semVer).isEmpty()) {
                 continue;
             }
             try {
                 matched = userVersion.compareTo(Version.parseVersion(semVer.trim(), true)) == 0 || matched;
             } catch (Version.VersionFormatException exception) {
+                // Previous versions of the evaluation algorithm ignored invalid comparison values.
+                // We keep this behavior for backward compatibility.
                 return false;
             }
         }
@@ -432,12 +440,11 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateContainsAnyOf(UserCondition userCondition, String userValue, boolean negate) {
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
+
         boolean containsResult = !negate;
-        for (String containsValue : userCondition.getStringArrayValue()) {
-            if (containsValue == null || containsValue.isEmpty()) {
-                continue;
-            }
-            if (userValue.contains(containsValue))
+        for (String containsValue : comparisonValues) {
+            if (userValue.contains(ensureComparisonValue(containsValue)))
                 return containsResult;
         }
         return !containsResult;
@@ -710,6 +717,12 @@ class RolloutEvaluator {
         throw new IllegalArgumentException("Sum of percentage option percentages are less than 100.");
     }
 
+    private static <T> T ensureComparisonValue(T value) {
+        if (value == null) {
+            throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
+        }
+        return value;
+    }
 }
 
 class RolloutEvaluatorException extends RuntimeException {
