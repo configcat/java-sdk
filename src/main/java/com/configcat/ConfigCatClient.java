@@ -71,14 +71,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
-        if (classOfT != String.class &&
-                classOfT != Integer.class &&
-                classOfT != int.class &&
-                classOfT != Double.class &&
-                classOfT != double.class &&
-                classOfT != Boolean.class &&
-                classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+        validateReturnType(classOfT);
 
         try {
             return this.getValueAsync(classOfT, key, user, defaultValue).get();
@@ -102,14 +95,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
-        if (classOfT != String.class &&
-                classOfT != Integer.class &&
-                classOfT != int.class &&
-                classOfT != Double.class &&
-                classOfT != double.class &&
-                classOfT != Boolean.class &&
-                classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+        validateReturnType(classOfT);
 
         return this.getSettingsAsync()
                 .thenApply(settingResult -> this.getValueFromSettingsMap(classOfT, settingResult, key, user, defaultValue));
@@ -125,14 +111,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
-        if (classOfT != String.class &&
-                classOfT != Integer.class &&
-                classOfT != int.class &&
-                classOfT != Double.class &&
-                classOfT != double.class &&
-                classOfT != Boolean.class &&
-                classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+        validateReturnType(classOfT);
 
         try {
             return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
@@ -157,14 +136,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
-        if (classOfT != String.class &&
-                classOfT != Integer.class &&
-                classOfT != int.class &&
-                classOfT != Double.class &&
-                classOfT != double.class &&
-                classOfT != Boolean.class &&
-                classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+        validateReturnType(classOfT);
 
         return this.getSettingsAsync()
                 .thenApply(settingsResult -> {
@@ -568,16 +540,15 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private Object parseObject(Class<?> classOfT, SettingsValue settingsValue, SettingType settingType) {
-        if (!validateParseType(classOfT)) {
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
-        }
-        if (classOfT == String.class && settingsValue.getStringValue() != null && SettingType.STRING.equals(settingType)) {
+        validateReturnType(classOfT);
+        boolean isObject = classOfT == Object.class;
+        if ((classOfT == String.class || isObject) && settingsValue.getStringValue() != null && SettingType.STRING.equals(settingType)) {
             return settingsValue.getStringValue();
-        } else if ((classOfT == Integer.class || classOfT == int.class) && settingsValue.getIntegerValue() != null && SettingType.INT.equals(settingType)) {
+        } else if ((classOfT == Integer.class || classOfT == int.class || isObject) && settingsValue.getIntegerValue() != null && SettingType.INT.equals(settingType)) {
             return settingsValue.getIntegerValue();
-        } else if ((classOfT == Double.class || classOfT == double.class) && settingsValue.getDoubleValue() != null && SettingType.DOUBLE.equals(settingType)) {
+        } else if ((classOfT == Double.class || classOfT == double.class || isObject) && settingsValue.getDoubleValue() != null && SettingType.DOUBLE.equals(settingType)) {
             return settingsValue.getDoubleValue();
-        } else if ((classOfT == Boolean.class || classOfT == boolean.class) && settingsValue.getBooleanValue() != null && SettingType.BOOLEAN.equals(settingType)) {
+        } else if ((classOfT == Boolean.class || classOfT == boolean.class || isObject) && settingsValue.getBooleanValue() != null && SettingType.BOOLEAN.equals(settingType)) {
             return settingsValue.getBooleanValue();
         }
         throw new IllegalArgumentException("The type of a setting must match the type of the setting's default value. "
@@ -586,8 +557,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 + "Learn more: https://configcat.com/docs/sdk-reference/dotnet/#setting-type-mapping");
     }
 
-    private boolean validateParseType(Class<?> classOfT) {
-        return classOfT == String.class || classOfT == Integer.class || classOfT == int.class || classOfT == Double.class || classOfT == double.class || classOfT == Boolean.class || classOfT == boolean.class;
+    private void validateReturnType(Class<?> classOfT) throws IllegalArgumentException {
+        if(!(classOfT == Object.class || classOfT == String.class || classOfT == Integer.class || classOfT == int.class || classOfT == Double.class || classOfT == double.class || classOfT == Boolean.class || classOfT == boolean.class)){
+            throw new IllegalArgumentException("Only String, Integer, Double, Boolean or Object types are supported.");
+        }
     }
 
     private Class<?> classBySettingType(SettingType settingType) {
