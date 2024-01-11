@@ -522,6 +522,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     if (targetingRule.getSimpleValue() != null && variationId.equals(targetingRule.getSimpleValue().getVariationId())) {
                         return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getSimpleValue().getValue(), setting.getType()));
                     }
+                    if (targetingRule.getPercentageOptions() != null) {
+                        for (PercentageOption percentageRule : targetingRule.getPercentageOptions()) {
+                            if (variationId.equals(percentageRule.getVariationId())) {
+                                return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.getValue(), setting.getType()));
+                            }
+                        }
+                    }
                 }
 
                 for (PercentageOption percentageRule : setting.getPercentageOptions()) {
@@ -558,7 +565,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private void validateReturnType(Class<?> classOfT) throws IllegalArgumentException {
-        if(!(classOfT == Object.class || classOfT == String.class || classOfT == Integer.class || classOfT == int.class || classOfT == Double.class || classOfT == double.class || classOfT == Boolean.class || classOfT == boolean.class)){
+        if (!(classOfT == Object.class || classOfT == String.class || classOfT == Integer.class || classOfT == int.class || classOfT == Double.class || classOfT == double.class || classOfT == Boolean.class || classOfT == boolean.class)) {
             throw new IllegalArgumentException("Only String, Integer, Double, Boolean or Object types are supported.");
         }
     }

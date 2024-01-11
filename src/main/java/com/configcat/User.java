@@ -32,8 +32,8 @@ public class User {
         }
 
         if (custom != null) {
-            for (Map.Entry<String, Object> entry :custom.entrySet()) {
-                if(!entry.getKey().equals(IDENTIFIER_KEY) && !entry.getKey().equals(COUNTRY) && !entry.getKey().equals(EMAIL)){
+            for (Map.Entry<String, Object> entry : custom.entrySet()) {
+                if (!entry.getKey().equals(IDENTIFIER_KEY) && !entry.getKey().equals(COUNTRY) && !entry.getKey().equals(EMAIL)) {
                     this.attributes.put(entry.getKey(), entry.getValue());
                 }
             }
@@ -73,8 +73,8 @@ public class User {
         if (attributes.containsKey(COUNTRY)) {
             tmp.put(COUNTRY, attributes.get(COUNTRY));
         }
-        for (Map.Entry<String, Object> entry :attributes.entrySet()) {
-            if(!entry.getKey().equals(IDENTIFIER_KEY) && !entry.getKey().equals(COUNTRY) && !entry.getKey().equals(EMAIL)){
+        for (Map.Entry<String, Object> entry : attributes.entrySet()) {
+            if (!entry.getKey().equals(IDENTIFIER_KEY) && !entry.getKey().equals(COUNTRY) && !entry.getKey().equals(EMAIL)) {
                 tmp.put(entry.getKey(), entry.getValue());
             }
         }
