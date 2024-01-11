@@ -158,20 +158,21 @@ class RolloutEvaluator {
 
     @SuppressWarnings("unchecked")
     private String[] getUserAttributeAsStringArray(UserCondition userCondition, EvaluationContext context, String comparisonAttribute, Object userAttributeValue) {
+        String[] result = null;
         try {
             if (userAttributeValue instanceof String[]) {
-                return (String[]) userAttributeValue;
-            }
-            if (userAttributeValue instanceof List) {
+                result = (String[]) userAttributeValue;
+            } else if (userAttributeValue instanceof List) {
                 List<String> list = (List<String>) userAttributeValue;
                 String[] userValueArray = new String[list.size()];
                 list.toArray(userValueArray);
-                return userValueArray;
+                result = userValueArray;
+            } else if (userAttributeValue instanceof String) {
+                result = Utils.gson.fromJson((String) userAttributeValue, String[].class);
             }
-            if (userAttributeValue instanceof String) {
-                return Utils.gson.fromJson((String) userAttributeValue, String[].class);
+            if(result != null && Arrays.stream(result).noneMatch(Objects::isNull)){
+                return result;
             }
-
         } catch (Exception exception) {
             // String array parse failed continue with the RolloutEvaluatorException
         }
@@ -325,9 +326,6 @@ class RolloutEvaluator {
         }
         boolean containsFlag = false;
         for (String userContainsValue : userContainsValues) {
-            if (userContainsValue == null || userContainsValue.isEmpty()) {
-                continue;
-            }
             String userContainsValueConverted;
             if (hashedArrayContains) {
                 userContainsValueConverted = getSaltedUserValue(userContainsValue, configSalt, contextSalt);
