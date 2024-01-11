@@ -265,14 +265,7 @@ class RolloutEvaluator {
             } else { //HASHED_ENDS_WITH
                 userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length - comparedTextLengthInt, userAttributeValueUTF8.length);
             }
-            byte[] configSaltByteArray = configSalt.getBytes(StandardCharsets.UTF_8);
-            byte[] contextSaltByteArray = contextSalt.getBytes(StandardCharsets.UTF_8);
-            byte[] concatByteArrays = new byte[userValueSubStringByteArray.length + configSaltByteArray.length + contextSaltByteArray.length];
-
-            System.arraycopy(userValueSubStringByteArray, 0, concatByteArrays, 0, userValueSubStringByteArray.length);
-            System.arraycopy(configSaltByteArray, 0, concatByteArrays, userValueSubStringByteArray.length, configSaltByteArray.length);
-            System.arraycopy(contextSaltByteArray, 0, concatByteArrays, userValueSubStringByteArray.length + configSaltByteArray.length, contextSaltByteArray.length);
-            String hashUserValueSub = DigestUtils.sha256Hex(concatByteArrays);
+            String hashUserValueSub = getSaltedUserValueSlice(userValueSubStringByteArray, configSalt, contextSalt);
 
             if (hashUserValueSub.equals(comparisonHashValue)) {
                 foundEqual = true;
@@ -451,7 +444,18 @@ class RolloutEvaluator {
     }
 
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String contextSalt) {
-        return new String(Hex.encodeHex(DigestUtils.sha256(userValue + configJsonSalt + contextSalt)));
+        return DigestUtils.sha256Hex(userValue + configJsonSalt + contextSalt);
+    }
+
+    private static String getSaltedUserValueSlice(byte[] userValueSliceUTF8, String configJsonSalt, String contextSalt) {
+        byte[] configSaltByteArray = configJsonSalt.getBytes(StandardCharsets.UTF_8);
+        byte[] contextSaltByteArray = contextSalt.getBytes(StandardCharsets.UTF_8);
+        byte[] concatByteArrays = new byte[userValueSliceUTF8.length + configSaltByteArray.length + contextSaltByteArray.length];
+
+        System.arraycopy(userValueSliceUTF8, 0, concatByteArrays, 0, userValueSliceUTF8.length);
+        System.arraycopy(configSaltByteArray, 0, concatByteArrays, userValueSliceUTF8.length, configSaltByteArray.length);
+        System.arraycopy(contextSaltByteArray, 0, concatByteArrays, userValueSliceUTF8.length + configSaltByteArray.length, contextSaltByteArray.length);
+        return DigestUtils.sha256Hex(concatByteArrays);
     }
 
     private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
