@@ -111,24 +111,24 @@ public class RolloutIntegrationTests {
             for (String settingKey : settingKeys) {
                 String value;
 
-//                Class typeOfExpectedResult;
-//                if (settingKey.startsWith("int") || settingKey.startsWith("whole") || settingKey.startsWith("mainInt")) {
-//                    typeOfExpectedResult = Integer.class;
-//                } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal") || settingKey.startsWith("mainDouble")) {
-//                    typeOfExpectedResult = Double.class;
-//                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.startsWith("developer") || settingKey.startsWith("notDeveloper") || settingKey.startsWith("feature")) {
-//                    typeOfExpectedResult = Boolean.class;
-//                } else {
-//                    //handle as String in any other case
-//                    typeOfExpectedResult = String.class;
-//                }
+                Class typeOfExpectedResult;
+                if (settingKey.startsWith("int") || settingKey.startsWith("whole") || settingKey.startsWith("mainInt")) {
+                    typeOfExpectedResult = Integer.class;
+                } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal") || settingKey.startsWith("mainDouble")) {
+                    typeOfExpectedResult = Double.class;
+                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.startsWith("developer") || settingKey.startsWith("notDeveloper") || settingKey.startsWith("feature")) {
+                    typeOfExpectedResult = Boolean.class;
+                } else {
+                    //handle as String in any other case
+                    typeOfExpectedResult = String.class;
+                }
+
                 if (kind.equals(VARIATION_TEST_KIND)) {
-                    EvaluationDetails<?> valueDetails = client.getValueDetails(Object.class, settingKey, user, null);
+                    EvaluationDetails<?> valueDetails = client.getValueDetails(typeOfExpectedResult, settingKey, user, null);
                     value = valueDetails.getVariationId();
                 } else {
-                    Object rawResult = client.getValue(Object.class, settingKey, user, null);
-                    //if (typeOfExpectedResult.equals(Double.class)) {
-                    if (settingKey.startsWith("double") || settingKey.startsWith("decimal") || settingKey.startsWith("mainDouble")){
+                    Object rawResult = client.getValue(typeOfExpectedResult, settingKey, user, null);
+                    if (typeOfExpectedResult.equals(Double.class)) {
                         DecimalFormat decimalFormat = new DecimalFormat("0.#####");
                         decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.UK));
                         value = decimalFormat.format(rawResult);

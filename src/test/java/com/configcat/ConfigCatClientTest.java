@@ -4,18 +4,21 @@ import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,6 +27,8 @@ public class ConfigCatClientTest {
     private static final String TEST_JSON_MULTIPLE = "{ p: { s: 'test-salt' }, f: { key1: { t: 0, v: {b: true}, i: 'fakeId1', p: [] ,r: [] }, key2: { t: 0, v: {b: false}, i: 'fakeId2', p: [] ,r: [] } } }";
     public static final String TEST_JSON_DEFAULT_USER = "{ p: { s: 'test-salt' }, 'f':{'fakeKey':{  t: 1, 'v': {s: 'defaultValue'},'i':'defaultId', r: [ {c: [ {u: { a: 'Identifier', c: 2, l: ['test1']}}],s: { v: {s: 'fakeValue1'},i: 'test1Id'}},{c: [{u: {a: 'Identifier', c: 2,l: ['test2']}}],s: { v: {s: 'fakeValue2'},i: 'test2Id'}}] } } }";
     public static final String RULES_JSON = "{ p: { s: 'test-salt' }, f: { key: {  t: 1, v: {s: 'def'}, t: 1, i: 'defVar', p: [] , r: [ {c: [ {u: { a: 'Identifier', c: 2, l: ['@test1.com']}}],s: { v: {s: 'fake1'},i: 'id1'}},{c: [{u: {a: 'Identifier', c: 2,l: ['@test2.com']}}],s: { v: {s: 'fake2'},i: 'id2'}}] } } }";
+
+    private static final String TEST_JSON_TYPES = "{ p: { s: 'test-salt' }, f: { fakeKeyString: {  t: 1, v: {s: 'fakeValueString'}, s: 0, p: [] ,r: [] }, fakeKeyInt: {  t: 2, v: {i: 1}, s: 0, p: [] ,r: [] }, fakeKeyDouble: {  t: 3, v: {d: 2.1}, s: 0, p: [] ,r: [] }, fakeKeyBoolean: {  t: 0, v: {b: true}, s: 0, p: [] ,r: [] } } }";
 
     @Test
     void ensuresSDKKeyIsNotNull() {
@@ -878,4 +883,95 @@ public class ConfigCatClientTest {
 
         return (String) cacheKeyField.get(configService);
     }
+
+    @Test
+    void tesSpecialCharactersWorks() throws IOException {
+
+        ClassLoader classLoader = getClass().getClassLoader();
+
+        Scanner scanner = new Scanner(new File(Objects.requireNonNull(classLoader.getResource("specialCharacters.txt")).getFile()), "UTF-8");
+        if(!scanner.hasNext()){
+            fail();
+        }
+        String specialCharacters = scanner.nextLine();
+
+        // https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08dc016a-675e-4aa2-8492-6f572ad98037/244cf8b0-f604-11e8-b543-f23c917f9d8d
+        ConfigCatClient client = ConfigCatClient.get("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/u28_1qNyZ0Wz-ldYHIU7-g", options -> {
+            options.pollingMode(PollingModes.lazyLoad());
+        });
+
+        User user = User.newBuilder().build(specialCharacters);
+
+        String resultSpecialCharacters = client.getValue(String.class, "specialCharacters", user, "NOT_CAT");
+
+        assertEquals(specialCharacters, resultSpecialCharacters);
+
+        String resultSpecialCharactersHashed = client.getValue(String.class, "specialCharactersHashed", user, "NOT_CAT");
+
+        assertEquals(specialCharacters, resultSpecialCharactersHashed);
+
+        ConfigCatClient.closeAll();
+        scanner.close();
+    }
+
+    private static Stream<Arguments> testGetValueValidTypesData() {
+        return Stream.of(
+                //basic
+                Arguments.of("fakeKeyString", String.class, "fakeValueString", "default"),
+                Arguments.of("fakeKeyInt", Integer.class, 1, 0),
+                Arguments.of("fakeKeyDouble", Double.class, 2.1, 1.1),
+                Arguments.of("fakeKeyBoolean", Boolean.class, true, false)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("testGetValueValidTypesData")
+    void testGetValueValidTypes(String settingKey, Class callType, Object expectedValue, Object defaultValue) throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_TYPES));
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.lazyLoad());
+            options.baseUrl(server.url("/").toString());
+        });
+
+        Object result = cl.getValue(callType, settingKey, callType.cast(defaultValue));
+        assertEquals(callType.cast(expectedValue), result);
+
+        server.shutdown();
+        cl.close();
+    }
+
+    private static Stream<Arguments> testGetValueInvalidTypesData() {
+        return Stream.of(
+                Arguments.of("fakeKeyString", Float.class, 3.14f),
+                Arguments.of("fakeKeyString", short.class, (short) 1),
+                Arguments.of("fakeKeyString", byte.class, (byte) 1),
+                Arguments.of("fakeKeyString", User.class, User.newBuilder().build("test"))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("testGetValueInvalidTypesData")
+    void testGetValueInvalidTypes(String settingKey, Class callType, Object defaultValue) throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_TYPES));
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.lazyLoad());
+            options.baseUrl(server.url("/").toString());
+        });
+
+        IllegalArgumentException expectedException = assertThrows(IllegalArgumentException.class, () -> cl.getValue(callType, settingKey, defaultValue));
+
+        assertEquals("Only String, Integer, Double or Boolean types are supported.", expectedException.getMessage());
+
+        server.shutdown();
+        cl.close();
+    }
+
 }
