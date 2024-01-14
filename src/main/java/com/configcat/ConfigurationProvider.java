@@ -13,7 +13,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
-     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double}, {@link Boolean} or {@link Object} types are supported.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
@@ -24,7 +24,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
-     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double}, {@link Boolean} or {@link Object} types are supported.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
@@ -36,7 +36,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
-     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double}, {@link Boolean} or {@link Object} types are supported.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
@@ -47,7 +47,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
-     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double}, {@link Boolean} or {@link Object} types are supported.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
@@ -59,7 +59,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
-     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double}, {@link Boolean} or {@link Object} types are supported.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
@@ -70,7 +70,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
-     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double}, {@link Boolean} or {@link Object} types are supported.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
@@ -82,7 +82,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
-     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double}, {@link Boolean} or {@link Object} types are supported.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
@@ -93,7 +93,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
-     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double}, {@link Boolean} or {@link Object} types are supported.
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
@@ -165,7 +165,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the key of a setting and its value identified by the given Variation ID (analytics).
      *
-     * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double}, {@link Boolean} or {@link Object} types are supported.
+     * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean}  types are supported.
      * @param variationId the Variation ID.
      * @param <T>         the type of the desired feature flag or setting.
      * @return the key of a setting and its value.
@@ -175,7 +175,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the key of a setting and its value identified by the given Variation ID (analytics).
      *
-     * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double}, {@link Boolean} or {@link Object} types are supported.
+     * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param variationId the Variation ID.
      * @param <T>         the type of the desired feature flag or setting.
      * @return a future which computes the key of a setting and its value.
