@@ -281,33 +281,23 @@ class RolloutEvaluator {
     private boolean evaluateTextStartsWith(UserCondition userCondition, String userAttributeValue, boolean negateTextStartWith) {
         String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
-        boolean textStartWith = false;
         for (String textValue : comparisonValues) {
             if (userAttributeValue.startsWith(ensureComparisonValue(textValue))) {
-                textStartWith = true;
-                break;
+                return !negateTextStartWith;
             }
         }
-        if (negateTextStartWith) {
-            return !textStartWith;
-        }
-        return textStartWith;
+        return negateTextStartWith;
     }
 
     private boolean evaluateTextEndsWith(UserCondition userCondition, String userAttributeValue, boolean negateTextEndsWith) {
         String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
-        boolean textEndsWith = false;
         for (String textValue : comparisonValues) {
             if (userAttributeValue.endsWith(ensureComparisonValue(textValue))) {
-                textEndsWith = true;
-                break;
+                return !negateTextEndsWith;
             }
         }
-        if (negateTextEndsWith) {
-            return !textEndsWith;
-        }
-        return textEndsWith;
+        return negateTextEndsWith;
     }
 
     private boolean evaluateArrayContains(UserCondition userCondition, String configSalt, String contextSalt, String[] userContainsValues, boolean negateArrayContains, boolean hashedArrayContains) {
@@ -316,46 +306,26 @@ class RolloutEvaluator {
         if (userContainsValues.length == 0) {
             return false;
         }
-        boolean containsFlag = false;
-        outerLoop:
         for (String userContainsValue : userContainsValues) {
-            String userContainsValueConverted;
-            if (hashedArrayContains) {
-                userContainsValueConverted = getSaltedUserValue(userContainsValue, configSalt, contextSalt);
-            } else {
-                userContainsValueConverted = userContainsValue;
-            }
+            String userContainsValueConverted = hashedArrayContains ? getSaltedUserValue(userContainsValue, configSalt, contextSalt) : userContainsValue;
             for (String inValuesElement : comparisonValues) {
                 if (ensureComparisonValue(inValuesElement).equals(userContainsValueConverted)) {
-                    containsFlag = true;
-                    break outerLoop;
+                    return !negateArrayContains;
                 }
             }
         }
-        if (negateArrayContains) {
-            containsFlag = !containsFlag;
-        }
-        return containsFlag;
+        return negateArrayContains;
     }
 
     private boolean evaluateEquals(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateEquals, boolean hashedEquals) {
         String comparisonValue = ensureComparisonValue(userCondition.getStringValue());
 
-        String valueEquals;
-        if (hashedEquals) {
-            valueEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
-        } else {
-            valueEquals = userValue;
-        }
-        boolean equalsResult = valueEquals.equals(comparisonValue);
-        if (negateEquals) {
-            equalsResult = !equalsResult;
-        }
-        return equalsResult;
+        String valueEquals = hashedEquals ? getSaltedUserValue(userValue, configSalt, contextSalt) : userValue;
+        return negateEquals != valueEquals.equals(comparisonValue);
     }
 
     private boolean evaluateDate(UserCondition userCondition, UserComparator userComparator, double userDoubleValue) {
-        Double comparisonDoubleValue = ensureComparisonValue(userCondition.getDoubleValue());
+        double comparisonDoubleValue = ensureComparisonValue(userCondition.getDoubleValue());
         return (UserComparator.DATE_BEFORE.equals(userComparator) && userDoubleValue < comparisonDoubleValue) ||
                 (UserComparator.DATE_AFTER.equals(userComparator) && userDoubleValue > comparisonDoubleValue);
     }
@@ -363,24 +333,14 @@ class RolloutEvaluator {
     private boolean evaluateIsOneOf(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateIsOneOf, boolean sensitiveIsOneOf) {
         String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
-        String userIsOneOfValue;
-        if (sensitiveIsOneOf) {
-            userIsOneOfValue = getSaltedUserValue(userValue, configSalt, contextSalt);
-        } else {
-            userIsOneOfValue = userValue;
-        }
+        String userIsOneOfValue = sensitiveIsOneOf ? getSaltedUserValue(userValue, configSalt, contextSalt) : userValue;
 
-        boolean isOneOf = false;
         for (String inValuesElement : comparisonValues) {
             if (ensureComparisonValue(inValuesElement).equals(userIsOneOfValue)) {
-                isOneOf = true;
-                break;
+                return !negateIsOneOf;
             }
         }
-        if (negateIsOneOf) {
-            isOneOf = !isOneOf;
-        }
-        return isOneOf;
+        return negateIsOneOf;
     }
 
     private boolean evaluateNumbers(UserCondition userCondition, UserComparator userComparator, Double userValue) {
@@ -426,21 +386,18 @@ class RolloutEvaluator {
             }
         }
 
-        if (negate) {
-            matched = !matched;
-        }
-        return matched;
+        return negate != matched;
     }
 
     private boolean evaluateContainsAnyOf(UserCondition userCondition, String userValue, boolean negate) {
         String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
-        boolean containsResult = !negate;
         for (String containsValue : comparisonValues) {
-            if (userValue.contains(ensureComparisonValue(containsValue)))
-                return containsResult;
+            if (userValue.contains(ensureComparisonValue(containsValue))) {
+                return !negate;
+            }
         }
-        return !containsResult;
+        return negate;
     }
 
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String contextSalt) {
