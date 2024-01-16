@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Objects;
 
 /**
- * Setting Value contains the proper value based on type.
+ * Describes the setting type-specific value of a setting or feature flag.
  */
 public class SettingsValue {
     @SerializedName("b")

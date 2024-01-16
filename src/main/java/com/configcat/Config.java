@@ -10,31 +10,28 @@ import java.util.Map;
  */
 public class Config {
 
-    /**
-     * The config preferences.
-     */
     @SerializedName(value = "p")
     private Preferences preferences;
-    /**
-     * The map of settings.
-     */
     @SerializedName(value = "f")
     private final Map<String, Setting> entries = new HashMap<>();
-
-    /**
-     * The list of segments.
-     */
     @SerializedName(value = "s")
     private Segment[] segments;
 
+    /**
+     * The config preferences.
+     */
     public Preferences getPreferences() {
         return preferences;
     }
-
+    /**
+     * The list of segments.
+     */
     public Segment[] getSegments() {
         return segments;
     }
-
+    /**
+     * The map of settings.
+     */
     public Map<String, Setting> getEntries() {
         return entries;
     }

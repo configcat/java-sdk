@@ -7,22 +7,21 @@ import com.google.gson.annotations.SerializedName;
  */
 public class Segment {
 
-    /**
-     * The name of the segment.
-     */
     @SerializedName(value = "n")
     private String name;
-
-    /**
-     * The list of segment rule conditions (where there is a logical AND relation between the items).
-     */
     @SerializedName(value = "r")
     private UserCondition[] segmentRules;
 
+    /**
+     * The name of the segment.
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * The list of segment rule conditions (where there is a logical AND relation between the items).
+     */
     public UserCondition[] getSegmentRules() {
         return segmentRules;
     }
