@@ -34,7 +34,7 @@ final class ConfigCatLogMessages {
     /**
      * Log message for Fetch Failed Due To Unexpected error. The log eventId is 1103.
      */
-    public static final String FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR = "Unexpected error occurred while trying to fetch config JSON.";
+    public static final String FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR = "Unexpected error occurred while trying to fetch config JSON. It is most likely due to a local network issue. Please make sure your application can reach the ConfigCat CDN servers (or your proxy server) over HTTP.";
 
     /**
      * Log message for Fetch Failed Due To Invalid Sdk Key error. The log eventId is 1100.
@@ -46,7 +46,7 @@ final class ConfigCatLogMessages {
     /**
      * Log message for Config Json Is Not Presented errors when the method returns with default value. The log eventId is 1000.
      *
-     * @param key The feature flag key.
+     * @param key               The feature flag key.
      * @param defaultParamName  The default parameter name.
      * @param defaultParamValue The default parameter value.
      * @return The formatted error message.
@@ -188,13 +188,63 @@ final class ConfigCatLogMessages {
     }
 
     /**
-     * Log message for Targeting Is Not Possible warning. The log eventId 3001.
+     * Log message for User Object is missing warning. The log eventId 3001.
      *
      * @param key The feature flag setting key.
      * @return The formatted warn message.
      */
-    public static String getTargetingIsNotPossible(final String key) {
+    public static String getUserObjectMissing(final String key) {
         return "Cannot evaluate targeting rules and % options for setting '" + key + "' (User Object is missing). You should pass a User Object to the evaluation methods like `getValue()`/`getValueAsync()` in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/";
+    }
+
+    /**
+     * Log message for User Attribute is missing warning. The log eventId 3003.
+     *
+     * @param key           The feature flag setting key.
+     * @param userCondition The user condition where the attribute is checked.
+     * @param attributeName The user attribute name.
+     * @return The formatted warn message.
+     */
+    public static String getUserAttributeMissing(final String key, final UserCondition userCondition, final String attributeName) {
+        return "Cannot evaluate condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' (the User." + attributeName + " attribute is missing). You should set the User." + attributeName + " attribute in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/";
+    }
+
+    /**
+     * Log message for User Attribute is missing warning. The log eventId 3003.
+     *
+     * @param key           The feature flag setting key.
+     * @param attributeName The user attribute name.
+     * @return The formatted warn message.
+     */
+    public static String getUserAttributeMissing(final String key, final String attributeName) {
+        return "Cannot evaluate % options for setting '" + key + "' (the User." + attributeName + " attribute is missing). You should set the User." + attributeName + " attribute in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/";
+    }
+
+    /**
+     * Log message for User Attribute is invalid warning. The log eventId 3004.
+     *
+     * @param key           The feature flag setting key.
+     * @param userCondition The user condition where the attribute is checked.
+     * @param reason        Why the attribute is invalid.
+     * @param attributeName The user attribute name.
+     * @return The formatted warn message.
+     */
+    public static String getUserAttributeInvalid(final String key, final UserCondition userCondition, final String reason, final String attributeName) {
+        return "Cannot evaluate condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' (" + reason + "). Please check the User." + attributeName + " attribute and make sure that its value corresponds to the comparison operator.";
+    }
+
+
+    /**
+     * Log message for User Attribute value is automatically converted warning. The log eventId 3005.
+     *
+     * @param key            The feature flag setting key.
+     * @param userCondition  The condition where the circularity is detected.
+     * @param attributeName  The user attribute name.
+     * @param attributeValue The user attribute value.
+     * @return The formatted warn message.
+     */
+    public static String getUserObjectAttributeIsAutoConverted(String key, UserCondition userCondition, String attributeName, String attributeValue) {
+        return "Evaluation of condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' may not produce the expected result (the User." + attributeName + " attribute is not a string value, thus it was automatically converted to the string value '" + attributeValue + "'). Please make sure that using a non-string value was intended.";
     }
 
     /**

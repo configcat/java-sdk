@@ -165,7 +165,7 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Gets the key of a setting and its value identified by the given Variation ID (analytics).
      *
-     * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param classOfT    the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean}  types are supported.
      * @param variationId the Variation ID.
      * @param <T>         the type of the desired feature flag or setting.
      * @return the key of a setting and its value.

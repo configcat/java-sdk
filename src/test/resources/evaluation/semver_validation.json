@@ -1,0 +1,25 @@
+{
+  "sdkKey": "PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA",
+  "tests": [
+    {
+      "key": "isNotOneOf",
+      "defaultValue": "default",
+      "returnValue": "Default",
+      "expectedLog": "semver_error.txt",
+      "user": {
+        "Identifier": "12345",
+        "Custom1": "wrong_semver"
+      }
+    },
+    {
+      "key": "relations",
+      "defaultValue": "default",
+      "returnValue": "Default",
+      "expectedLog": "semver_relations_error.txt",
+      "user": {
+        "Identifier": "12345",
+        "Custom1": "wrong_semver"
+      }
+    }
+  ]
+}

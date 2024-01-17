@@ -8,38 +8,58 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class RolloutIntegrationTests {
     private static final String VARIATION_TEST_KIND = "variation";
     private static final String VALUE_TEST_KIND = "value";
-
-    private ConfigCatClient client;
-    private Scanner csvScanner;
-    private String kind;
+    private final ConfigCatClient client;
+    private final Scanner csvScanner;
+    private final String kind;
 
     @Parameterized.Parameters(name
             = "{index}: Test with File={0}, ApiKey={1}")
     public static Iterable<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {"testmatrix.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", VALUE_TEST_KIND},
-                {"testmatrix_semantic.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA", VALUE_TEST_KIND},
-                {"testmatrix_number.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw", VALUE_TEST_KIND},
-                {"testmatrix_semantic_2.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w", VALUE_TEST_KIND},
-                {"testmatrix_sensitive.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA", VALUE_TEST_KIND},
-                {"testmatrix_variationId.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA", VARIATION_TEST_KIND},
+                //V1 tests
+                {"matirx/testmatrix.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_semantic.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_number.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_semantic_2.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_sensitive.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_variationId.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA", VARIATION_TEST_KIND, null},
+                {"matirx/testmatrix_segments_old.csv", "PKDVCLf-Hq-h-kCzMp-L7Q/LcYz135LE0qbcacz2mgXnA", VALUE_TEST_KIND, null},
+                //V2 tests
+                {"matirx/testmatrix.csv", "configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/AG6C1ngVb0CvM07un6JisQ", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_semantic.csv", "configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/iV8vH2MBakKxkFZylxHmTg", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_number.csv", "configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_semantic_2.csv", "configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/U8nt3zEhDEO5S2ulubCopA", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_sensitive.csv", "configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/-0YmVOUNgEGKkgRF-rU65g", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_variationId.csv", "configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/spQnkRTIPEWVivZkWM84lQ", VARIATION_TEST_KIND, null},
+                {"matirx/testmatrix_and_or.csv", "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/ByMO9yZNn02kXcm72lnY1A", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_comparators_v6.csv", "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_prerequisite_flag.csv", "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/JoGwdqJZQ0K2xDy7LnbyOg", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_segment.csv", "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/h99HYXWWNE2bH8eWyLAVMA", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_segments_old.csv", "configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/y_ZB7o-Xb0Swxth-ZlMSeA", VALUE_TEST_KIND, null},
+                {"matirx/testmatrix_unicode.csv", "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/Da6w8dBbmUeMUBhh0iEeQQ", VALUE_TEST_KIND, null},
         });
     }
 
-    public RolloutIntegrationTests(String fileName, String apiKey, String kind) throws FileNotFoundException {
-        this.client = ConfigCatClient.get(apiKey);
+    public RolloutIntegrationTests(String fileName, String apiKey, String kind, String baseUrl) throws FileNotFoundException {
+
+        this.client = ConfigCatClient.get(apiKey, options -> {
+            options.baseUrl(baseUrl);
+        });
 
         ClassLoader classLoader = getClass().getClassLoader();
-        this.csvScanner = new Scanner(new File(classLoader.getResource(fileName).getFile()));
+
+        this.csvScanner = new Scanner(new File(classLoader.getResource(fileName).getFile()), "UTF-8");
         this.kind = kind;
     }
 
@@ -76,7 +96,7 @@ public class RolloutIntegrationTests {
                 if (!testObject[2].isEmpty() && !testObject[2].equals("##null##"))
                     country = testObject[2];
 
-                Map<String, String> customAttributes = new HashMap<>();
+                Map<String, Object> customAttributes = new HashMap<>();
                 if (!testObject[3].isEmpty() && !testObject[3].equals("##null##"))
                     customAttributes.put(customKey, testObject[3]);
 
@@ -90,13 +110,35 @@ public class RolloutIntegrationTests {
             int i = 0;
             for (String settingKey : settingKeys) {
                 String value;
-                if (this.kind.equals(VARIATION_TEST_KIND)) {
-                    EvaluationDetails<String> valueDetails = client.getValueDetails(String.class, settingKey, user, null);
+
+                Class typeOfExpectedResult;
+                if (settingKey.startsWith("int") || settingKey.startsWith("whole") || settingKey.startsWith("mainInt")) {
+                    typeOfExpectedResult = Integer.class;
+                } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal") || settingKey.startsWith("mainDouble")) {
+                    typeOfExpectedResult = Double.class;
+                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.startsWith("developer") || settingKey.startsWith("notDeveloper") || settingKey.startsWith("feature")) {
+                    typeOfExpectedResult = Boolean.class;
+                } else {
+                    //handle as String in any other case
+                    typeOfExpectedResult = String.class;
+                }
+
+                if (kind.equals(VARIATION_TEST_KIND)) {
+                    EvaluationDetails<?> valueDetails = client.getValueDetails(typeOfExpectedResult, settingKey, user, null);
                     value = valueDetails.getVariationId();
                 } else {
-                    value = client.getValue(String.class, settingKey, user, null);
+                    Object rawResult = client.getValue(typeOfExpectedResult, settingKey, user, null);
+                    if (typeOfExpectedResult.equals(Double.class)) {
+                        DecimalFormat decimalFormat = new DecimalFormat("0.#####");
+                        decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.UK));
+                        value = decimalFormat.format(rawResult);
+                    } else {
+                        //handle as String in any other case
+                        value = String.valueOf(rawResult);
+                    }
                 }
-                if (!value.toLowerCase().equals(testObject[i + 4].toLowerCase())) {
+
+                if (!value.equalsIgnoreCase(testObject[i + 4])) {
                     errors.add(String.format("Identifier: %s, Key: %s. UV: %s Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[3], testObject[i + 4], value));
                 }
                 i++;
@@ -108,6 +150,7 @@ public class RolloutIntegrationTests {
                 System.out.println(error);
             });
         }
-        assertTrue("Errors found: " + errors.size(), errors.size() == 0);
+        assertEquals("Errors found: " + errors.size(), 0, errors.size());
     }
+
 }

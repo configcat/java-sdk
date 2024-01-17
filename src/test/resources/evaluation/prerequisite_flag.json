@@ -1,0 +1,34 @@
+{
+  "sdkKey": "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/ByMO9yZNn02kXcm72lnY1A",
+  "tests": [
+    {
+      "key": "dependentFeatureWithUserCondition",
+      "defaultValue": "default",
+      "returnValue": "Chicken",
+      "expectedLog": "prerequisite_flag_no_user_needed_by_dep.txt"
+    },
+    {
+      "key": "dependentFeature",
+      "defaultValue": "default",
+      "returnValue": "Chicken",
+      "expectedLog": "prerequisite_flag_no_user_needed_by_prereq.txt"
+    },
+    {
+      "key": "dependentFeatureWithUserCondition2",
+      "defaultValue": "default",
+      "returnValue": "Frog",
+      "expectedLog": "prerequisite_flag_no_user_needed_by_both.txt"
+    },
+    {
+      "key": "dependentFeature",
+      "defaultValue": "default",
+      "user": {
+        "Identifier": "12345",
+        "Email": "kate@configcat.com",
+        "Country": "USA"
+      },
+      "returnValue": "Horse",
+      "expectedLog": "prerequisite_flag.txt"
+    }
+  ]
+}

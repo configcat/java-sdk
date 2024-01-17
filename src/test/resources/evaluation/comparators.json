@@ -1,0 +1,19 @@
+{
+  "sdkKey": "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ",
+  "tests": [
+    {
+      "key": "allinone",
+      "defaultValue": "",
+      "user": {
+        "Identifier": "12345",
+        "Email": "joe@example.com",
+        "Country": "[\"USA\"]",
+        "Version": "1.0.0",
+        "Number": "1.0",
+        "Date": "1693497500"
+      },
+      "returnValue": "default",
+      "expectedLog": "allinone.txt"
+    }
+  ]
+}

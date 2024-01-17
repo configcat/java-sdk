@@ -1,0 +1,30 @@
+{
+  "sdkKey": "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw",
+  "tests": [
+    {
+      "key": "string75Cat0Dog25Falcon0HorseCustomAttr",
+      "defaultValue": "default",
+      "returnValue": "Chicken",
+      "expectedLog": "options_custom_attribute_no_user.txt"
+    },
+    {
+      "key": "string75Cat0Dog25Falcon0HorseCustomAttr",
+      "defaultValue": "default",
+      "user": {
+        "Identifier": "12345"
+      },
+      "returnValue": "Chicken",
+      "expectedLog": "no_options_custom_attribute.txt"
+    },
+    {
+      "key": "string75Cat0Dog25Falcon0HorseCustomAttr",
+      "defaultValue": "default",
+      "user": {
+        "Identifier": "12345",
+        "Country": "US"
+      },
+      "returnValue": "Cat",
+      "expectedLog": "matching_options_custom_attribute.txt"
+    }
+  ]
+}

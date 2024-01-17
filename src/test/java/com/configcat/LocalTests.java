@@ -13,11 +13,11 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LocalTests {
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { t: 1, v: { s: %s }, p: [], r: [] } } }";
 
     @Test
     public void withClient() throws IOException {
-        ConfigCatClient client = ConfigCatClient.get("localhost", options ->
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options ->
                 options.flagOverrides(OverrideDataSourceBuilder.classPathResource("test.json"), OverrideBehaviour.LOCAL_ONLY));
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
@@ -32,7 +32,7 @@ public class LocalTests {
     @Test
     public void withClient_Simple() throws IOException {
 
-        ConfigCatClient client = ConfigCatClient.get("localhost", options ->
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options ->
                 options.flagOverrides(OverrideDataSourceBuilder.classPathResource("test-simple.json"), OverrideBehaviour.LOCAL_ONLY));
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
@@ -53,7 +53,7 @@ public class LocalTests {
         map.put("doubleSetting", 3.14);
         map.put("stringSetting", "test");
 
-        ConfigCatClient client = ConfigCatClient.get("localhost", options -> options.flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.LOCAL_ONLY));
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> options.flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.LOCAL_ONLY));
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
         assertFalse(client.getValue(Boolean.class, "disabledFeature", User.newBuilder().build("test"), true));
@@ -71,7 +71,7 @@ public class LocalTests {
             try {
                 this.writeContent(newFile, String.format(TEST_JSON, "test"));
 
-                ConfigCatClient client = ConfigCatClient.get("localhost", options ->
+                ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options ->
                         options.flagOverrides(OverrideDataSourceBuilder.localFile("src/test/resources/auto_created.txt", true), OverrideBehaviour.LOCAL_ONLY));
 
                 assertEquals("test", client.getValue(String.class, "fakeKey", ""));
@@ -96,7 +96,7 @@ public class LocalTests {
         map.put("fakeKey", true);
         map.put("nonexisting", true);
 
-        ConfigCatClient client = ConfigCatClient.get("localhost", options -> {
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.LOCAL_OVER_REMOTE);
@@ -121,7 +121,7 @@ public class LocalTests {
         map.put("fakeKey", true);
         map.put("nonexisting", true);
 
-        ConfigCatClient client = ConfigCatClient.get("localhost", options -> {
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.flagOverrides(OverrideDataSourceBuilder.map(map), OverrideBehaviour.REMOTE_OVER_LOCAL);

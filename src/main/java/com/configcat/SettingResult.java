@@ -22,7 +22,7 @@ class SettingResult {
     public long fetchTime() {
         return fetchTime;
     }
-   
+
     boolean isEmpty() {
         return EMPTY.equals(this);
     }

@@ -30,26 +30,26 @@ class ConfigCatLogger {
     public void error(int eventId, String message, Exception exception) {
         if (this.configCatHooks != null) this.configCatHooks.invokeOnError(message);
         if (this.logLevel.ordinal() <= LogLevel.ERROR.ordinal()) {
-            this.logger.error("[{}] {}",eventId, message, exception);
+            this.logger.error("[{}] {}", eventId, message, exception);
         }
     }
 
     public void error(int eventId, String message) {
         if (this.configCatHooks != null) this.configCatHooks.invokeOnError(message);
         if (this.logLevel.ordinal() <= LogLevel.ERROR.ordinal()) {
-            this.logger.error("[{}] {}",eventId, message);
+            this.logger.error("[{}] {}", eventId, message);
         }
     }
 
     public void info(int eventId, String message) {
         if (this.logLevel.ordinal() <= LogLevel.INFO.ordinal()) {
-            this.logger.info("[{}] {}",eventId, message);
+            this.logger.info("[{}] {}", eventId, message);
         }
     }
 
     public void debug(String message) {
         if (this.logLevel.ordinal() <= LogLevel.DEBUG.ordinal()) {
-            this.logger.debug("[{}] {}",0, message);
+            this.logger.debug("[{}] {}", 0, message);
         }
     }
 }

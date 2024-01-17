@@ -3,6 +3,7 @@ package com.configcat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.ByteArrayOutputStream;
@@ -70,17 +71,47 @@ class LocalFileDataSource extends OverrideDataSource {
             SimplifiedConfig simplifiedConfig = this.gson.fromJson(content, SimplifiedConfig.class);
             if (simplifiedConfig != null && simplifiedConfig.entries != null && simplifiedConfig.entries.size() > 0) {
                 for (Map.Entry<String, JsonElement> entry : simplifiedConfig.entries.entrySet()) {
-                    Setting setting = new Setting();
-                    setting.setValue(entry.getValue());
+                    Setting setting = convertJsonToSettingsValue(entry.getValue());
                     this.loadedSettings.put(entry.getKey(), setting);
                 }
 
                 return;
             }
-
-            Config config = this.gson.fromJson(content, Config.class);
+            Config config = Utils.deserializeConfig(content);
             this.loadedSettings = config != null ? config.getEntries() : new HashMap<>();
         }
+    }
+
+    private Setting convertJsonToSettingsValue(JsonElement jsonElement) {
+        Setting setting = new Setting();
+        SettingsValue settingsValue = new SettingsValue();
+        SettingType settingType;
+        if (!jsonElement.isJsonPrimitive()) {
+            throw new IllegalArgumentException("Invalid Config Json content: " + jsonElement);
+        }
+        JsonPrimitive primitive = jsonElement.getAsJsonPrimitive();
+        if (primitive.isBoolean()) {
+            settingsValue.setBooleanValue(primitive.getAsBoolean());
+            settingType = SettingType.BOOLEAN;
+        } else if (primitive.isString()) {
+            settingsValue.setStringValue(primitive.getAsString());
+            settingType = SettingType.STRING;
+        } else {
+            // primitive should be a number, try to cast int to see its not a double
+            String numberAsSting = primitive.getAsString();
+            try {
+                settingsValue.setIntegerValue(Integer.parseInt(numberAsSting));
+                settingType = SettingType.INT;
+            } catch (NumberFormatException e) {
+                // if int parse failed try double parse
+                settingsValue.setDoubleValue(Double.parseDouble(numberAsSting));
+                settingType = SettingType.DOUBLE;
+            }
+        }
+
+        setting.setSettingsValue(settingsValue);
+        setting.setType(settingType);
+        return setting;
     }
 
     private String readFile() throws IOException {

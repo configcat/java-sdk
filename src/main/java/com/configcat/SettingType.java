@@ -3,22 +3,30 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Describes the type of ConfigCat Feature Flag / Setting
+ * Setting type.
  */
 public enum SettingType {
-    /** Represents a feature flag. */
+    /**
+     * On/off type (feature flag).
+     */
     @SerializedName("0")
     BOOLEAN,
 
-    /** Represents a string setting. */
+    /**
+     * Text type.
+     */
     @SerializedName("1")
     STRING,
 
-    /** Represents a whole number setting. */
+    /**
+     * Whole number type.
+     */
     @SerializedName("2")
     INT,
 
-    /** Represents a decimal number setting. */
+    /**
+     * Decimal number type.
+     */
     @SerializedName("3")
     DOUBLE,
 }

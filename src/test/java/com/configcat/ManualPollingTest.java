@@ -19,7 +19,7 @@ public class ManualPollingTest {
     private ConfigService configService;
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingTest.class));
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { v: { s: %s }, p: [], r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -49,11 +49,11 @@ public class ManualPollingTest {
 
         //first call
         this.configService.refresh().get();
-        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //next call will get the new value
         this.configService.refresh().get();
-        assertEquals("test2", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test2", this.configService.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test
@@ -72,11 +72,11 @@ public class ManualPollingTest {
 
         //first call
         configService.refresh().get();
-        assertEquals("test", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", configService.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //next call will get the new value
         configService.refresh().get();
-        assertEquals("test2", configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test2", configService.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test
@@ -86,11 +86,11 @@ public class ManualPollingTest {
 
         //first call
         this.configService.refresh().get();
-        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //previous value returned because of the refresh failure
         this.configService.refresh().get();
-        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test
@@ -104,10 +104,10 @@ public class ManualPollingTest {
         ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false, new ConfigCatHooks());
 
         service.refresh().get();
-        assertEquals("test", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", service.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         service.refresh().get();
-        assertEquals("test2", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test2", service.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         assertEquals(1, cache.getMap().size());
 

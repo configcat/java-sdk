@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DataGovernanceTest {
-    private static final String JsonTemplate = "{ p: { u: \"%s\", r: %d }, f: {} }";
+    private static final String JsonTemplate = "{ p: { u: \"%s\", r: %d, s: \"test-salt\" }, f: {} }";
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(DataGovernanceTest.class));
 
     @Test

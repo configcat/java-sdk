@@ -1,8 +1,5 @@
 package com.configcat;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,10 +10,8 @@ class LocalMapDataSource extends OverrideDataSource {
         if (source == null)
             throw new IllegalArgumentException("'source' cannot be null.");
 
-        Gson gson = new GsonBuilder().create();
         for (Map.Entry<String, Object> entry : source.entrySet()) {
-            Setting setting = new Setting();
-            setting.setValue(gson.toJsonTree(entry.getValue()));
+            Setting setting = convertToSetting(entry.getValue());
             this.loadedSettings.put(entry.getKey(), setting);
         }
     }
@@ -24,5 +19,27 @@ class LocalMapDataSource extends OverrideDataSource {
     @Override
     public Map<String, Setting> getLocalConfiguration() {
         return this.loadedSettings;
+    }
+
+    private Setting convertToSetting(Object object) {
+        Setting setting = new Setting();
+        SettingsValue settingsValue = new SettingsValue();
+        if (object instanceof String) {
+            setting.setType(SettingType.STRING);
+            settingsValue.setStringValue((String) object);
+        } else if (object instanceof Boolean) {
+            setting.setType(SettingType.BOOLEAN);
+            settingsValue.setBooleanValue((Boolean) object);
+        } else if (object instanceof Integer) {
+            setting.setType(SettingType.INT);
+            settingsValue.setIntegerValue((Integer) object);
+        } else if (object instanceof Double) {
+            setting.setType(SettingType.DOUBLE);
+            settingsValue.setDoubleValue((Double) object);
+        } else {
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+        }
+        setting.setSettingsValue(settingsValue);
+        return setting;
     }
 }

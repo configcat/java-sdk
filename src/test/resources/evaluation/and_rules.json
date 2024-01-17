@@ -1,0 +1,21 @@
+{
+  "sdkKey": "configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/ByMO9yZNn02kXcm72lnY1A",
+  "tests": [
+    {
+      "key": "emailAnd",
+      "defaultValue": "default",
+      "returnValue": "Cat",
+      "expectedLog": "and_rules_no_user.txt"
+    },
+    {
+      "key": "emailAnd",
+      "defaultValue": "default",
+      "user": {
+        "Identifier": "12345",
+        "Email": "jane@configcat.com"
+      },
+      "returnValue": "Cat",
+      "expectedLog": "and_rules_user.txt"
+    }
+  ]
+}
