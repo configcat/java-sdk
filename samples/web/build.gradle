@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    implementation "com.configcat:configcat-java-client:8.+"
+    implementation "com.configcat:configcat-java-client:9.+"
     implementation "org.springframework.boot:spring-boot-starter-web:2.2+"
     testImplementation "junit:junit:4.12"
 }

@@ -14,7 +14,7 @@ public class Main {
         });
 
         // Get individual config values identified by a key for a user.
-        System.out.println("isAwesomeFeatureEnabled: " + client.getValue(String.class, "isAwesomeFeatureEnabled", ""));
+        System.out.println("isAwesomeFeatureEnabled: " + client.getValue(Boolean.class, "isAwesomeFeatureEnabled", false));
 
 
         // Create a user object to identify the caller.
@@ -22,7 +22,7 @@ public class Main {
                 .email("configcat@example.com")
                 .build("key");
 
-        System.out.println("isPOCFeatureEnabled: " + client.getValue(String.class, "isPOCFeatureEnabled", user, ""));
+        System.out.println("isPOCFeatureEnabled: " + client.getValue(Boolean.class, "isPOCFeatureEnabled", user, false));
 
         client.close();
     }
