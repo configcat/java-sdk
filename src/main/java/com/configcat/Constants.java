@@ -7,7 +7,7 @@ final class Constants {
     static final long DISTANT_PAST = 0;
     static final String CONFIG_JSON_NAME = "config_v6.json";
     static final String SERIALIZATION_FORMAT_VERSION = "v2";
-    static final String VERSION = "9.0.0";
+    static final String VERSION = "9.0.1";
 
     static final String SDK_KEY_PROXY_PREFIX = "configcat-proxy/";
     static final String SDK_KEY_PREFIX = "configcat-sdk-1";
