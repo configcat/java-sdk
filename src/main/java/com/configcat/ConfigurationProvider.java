@@ -22,7 +22,7 @@ public interface ConfigurationProvider extends Closeable {
     <T> T getValue(Class<T> classOfT, String key, T defaultValue);
 
     /**
-     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
+     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the feature flag or setting.
@@ -34,7 +34,7 @@ public interface ConfigurationProvider extends Closeable {
     <T> T getValue(Class<T> classOfT, String key, User user, T defaultValue);
 
     /**
-     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
+     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the feature flag or setting.

@@ -1,5 +1,5 @@
 {
-  "sdkKey": "PKDVCLf-Hq-h-kCzMp-L7Q/LcYz135LE0qbcacz2mgXnA",
+  "sdkKey": "configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/y_ZB7o-Xb0Swxth-ZlMSeA",
   "tests": [
     {
       "key": "featureWithSegmentTargeting",
@@ -35,6 +35,12 @@
       },
       "returnValue": false,
       "expectedLog": "segment_no_matching.txt"
+    },
+    {
+      "key": "featureWithSegmentTargetingMultipleConditions",
+      "defaultValue": false,
+      "returnValue": false,
+      "expectedLog": "segment_no_user_multi_conditions.txt"
     }
   ]
 }

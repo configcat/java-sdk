@@ -885,7 +885,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    void tesSpecialCharactersWorks() throws IOException {
+    void testSpecialCharactersWorks() throws IOException {
 
         ClassLoader classLoader = getClass().getClassLoader();
 

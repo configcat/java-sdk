@@ -10,7 +10,7 @@ import java.util.Locale;
 final class Utils {
     private Utils() { /* prevent from instantiation*/ }
 
-    static final Gson gson = new GsonBuilder().create();
+    static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
     public static DecimalFormat getDecimalFormat() {
         DecimalFormat decimalFormat = new DecimalFormat("0.#####");

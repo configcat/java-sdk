@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -126,11 +126,11 @@ class LocalFileDataSource extends OverrideDataSource {
                 while ((temp = stream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, temp);
                 }
-                return new String(outputStream.toByteArray(), Charset.defaultCharset());
+                return new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
             }
         } else {
             byte[] content = Files.readAllBytes(Paths.get(this.filePath));
-            return new String(content, Charset.defaultCharset());
+            return new String(content, StandardCharsets.UTF_8);
         }
     }
 
