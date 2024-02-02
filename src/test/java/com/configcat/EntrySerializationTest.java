@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class EntrySerializationTest {
 
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: { s: %s }, t: %s, p: [], r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { v: { s: %s }, t: %s, p: [], r: [] } } }";
 
     private static final String SERIALIZED_DATA = "%s\n%s\n%s";
 

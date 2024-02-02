@@ -641,7 +641,7 @@ class RolloutEvaluator {
         }
         String percentageOptionAttributeValue;
         String percentageOptionAttributeName = percentageOptionAttribute;
-        if (percentageOptionAttributeName == null || percentageOptionAttributeName.isEmpty()) {
+        if (percentageOptionAttributeName == null) {
             percentageOptionAttributeName = "Identifier";
             percentageOptionAttributeValue = context.getUser().getIdentifier();
         } else {

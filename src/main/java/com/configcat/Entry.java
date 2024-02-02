@@ -69,7 +69,7 @@ public class Entry {
             throw new IllegalArgumentException("Empty config jsom value.");
         }
         try {
-            Config config = Utils.gson.fromJson(configJson, Config.class);
+            Config config = Utils.deserializeConfig(configJson);
             return new Entry(config, eTag, configJson, fetchTimeUnixMillis);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid config JSON content: " + configJson);
