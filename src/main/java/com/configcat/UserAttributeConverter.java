@@ -48,7 +48,7 @@ final class UserAttributeConverter {
         // ExponentSeparator replaced with "e" and "e+".
         // "." used as decimal separator in all cases.
         double abs = Math.abs(doubleToString);
-        DecimalFormat fmt = 1e-7 < abs && abs < 1e21
+        DecimalFormat fmt = 1e-6 <= abs && abs < 1e21
                 ? new DecimalFormat("#.#################")
                 : new DecimalFormat("#.#################E0");
         DecimalFormatSymbols SYMBOLS = DecimalFormatSymbols.getInstance(Locale.UK);
