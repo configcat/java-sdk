@@ -105,9 +105,6 @@ public class ConfigV2EvaluationTest {
     private static Stream<Arguments> testDataComparisonAttributeConversionToCanonicalStringRepresentationTest() {
         return Stream.of(
                 Arguments.of("numberToStringConversion", .12345, "1"),
-                Arguments.of("numberToStringConversion", 0.12345, "1"),
-                Arguments.of("numberToStringConversion", .12345d, "1"),
-                Arguments.of("numberToStringConversion", 0.12345d, "1"),
                 Arguments.of("numberToStringConversion", .12345f, "1"),
                 Arguments.of("numberToStringConversion", 0.12345f, "1"),
                 Arguments.of("numberToStringConversionInt", (byte) 125, "4"),

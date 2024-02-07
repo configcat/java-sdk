@@ -44,7 +44,7 @@ final class UserAttributeConverter {
         }
 
         // To get similar result between different SDKs the Double value format is modified.
-        // Between 1e-7 and 1e21 we don't use scientific-notation. Over these limits scientific-notation used but the
+        // Between 1e-6 and 1e21 we don't use scientific-notation. Over these limits scientific-notation used but the
         // ExponentSeparator replaced with "e" and "e+".
         // "." used as decimal separator in all cases.
         double abs = Math.abs(doubleToString);
@@ -52,7 +52,7 @@ final class UserAttributeConverter {
                 ? new DecimalFormat("#.#################")
                 : new DecimalFormat("#.#################E0");
         DecimalFormatSymbols SYMBOLS = DecimalFormatSymbols.getInstance(Locale.UK);
-        if (doubleToString > 1 || doubleToString < -1) {
+        if (abs > 1) {
             SYMBOLS.setExponentSeparator("e+");
         } else {
             SYMBOLS.setExponentSeparator("e");

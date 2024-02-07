@@ -560,7 +560,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         throw new IllegalArgumentException("The type of a setting must match the type of the specified default value. "
                 + "Setting's type was {" + settingType + "} but the default value's type was {" + classOfT + "}. "
                 + "Please use a default value which corresponds to the setting type {" + settingType + "}."
-                + "Learn more: https://configcat.com/docs/sdk-reference/dotnet/#setting-type-mapping");
+                + "Learn more: https://configcat.com/docs/sdk-reference/java/#setting-type-mapping");
     }
 
     private void validateReturnType(Class<?> classOfT) throws IllegalArgumentException {

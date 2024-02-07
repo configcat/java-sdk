@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class VariationIdTests {
 
-    private static final String TEST_JSON = "{ p: { s: 'test-slat' },  f: { key1: { v: { b: true }, i: 'fakeId1', p: [] ,r: [] }, key2: { v: { b: false }, i: 'fakeId2', p: [] ,r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-salt' },  f: { key1: { v: { b: true }, i: 'fakeId1', p: [] ,r: [] }, key2: { v: { b: false }, i: 'fakeId2', p: [] ,r: [] } } }";
     private ConfigCatClient client;
     private MockWebServer server;
 
