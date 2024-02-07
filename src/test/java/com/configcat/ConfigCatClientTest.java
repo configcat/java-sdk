@@ -896,7 +896,7 @@ public class ConfigCatClientTest {
         ClassLoader classLoader = getClass().getClassLoader();
 
         Scanner scanner = new Scanner(new File(Objects.requireNonNull(classLoader.getResource("specialCharacters.txt")).getFile()), "UTF-8");
-        if(!scanner.hasNext()){
+        if (!scanner.hasNext()) {
             fail();
         }
         String specialCharacters = scanner.nextLine();

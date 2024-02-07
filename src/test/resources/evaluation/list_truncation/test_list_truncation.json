@@ -75,11 +75,11 @@
             "v": {
               "b": true
             },
-            "i" : "test-variation-id"
+            "i": "test-variation-id"
           }
         }
       ],
-      "i" : "test-variation-id"
+      "i": "test-variation-id"
     }
   }
 }

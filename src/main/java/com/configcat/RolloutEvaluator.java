@@ -169,7 +169,7 @@ class RolloutEvaluator {
             } else if (userAttributeValue instanceof String) {
                 result = Utils.gson.fromJson((String) userAttributeValue, String[].class);
             }
-            if(result != null && Arrays.stream(result).noneMatch(Objects::isNull)){
+            if (result != null && Arrays.stream(result).noneMatch(Objects::isNull)) {
                 return result;
             }
         } catch (Exception exception) {

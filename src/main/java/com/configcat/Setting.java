@@ -73,6 +73,7 @@ public class Setting {
     public SettingsValue getSettingsValue() {
         return settingsValue;
     }
+
     /**
      * Variation ID.
      */

@@ -31,15 +31,15 @@ final class UserAttributeConverter {
             return doubleToString(DateTimeUtils.getUnixSeconds(userAttributeInstant));
         }
         if (userAttribute instanceof Double) {
-            return  doubleToString((Double) userAttribute);
+            return doubleToString((Double) userAttribute);
         }
         return userAttribute.toString();
     }
 
-    private static  String doubleToString(Double doubleToString){
+    private static String doubleToString(Double doubleToString) {
 
         // Handle Double.NaN, Double.POSITIVE_INFINITY and Double.NEGATIVE_INFINITY
-        if(doubleToString.isNaN() || doubleToString.isInfinite()){
+        if (doubleToString.isNaN() || doubleToString.isInfinite()) {
             return doubleToString.toString();
         }
 
