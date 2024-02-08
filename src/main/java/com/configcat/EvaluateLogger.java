@@ -90,7 +90,7 @@ public class EvaluateLogger {
         if (!isLoggable) {
             return;
         }
-        stringBuilder.append("\n");
+        stringBuilder.append(System.lineSeparator());
         for (int i = 0; i < indentLevel; i++) {
             stringBuilder.append("  ");
         }
