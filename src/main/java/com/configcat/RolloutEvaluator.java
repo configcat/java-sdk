@@ -59,7 +59,7 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateUserCondition(UserCondition userCondition, EvaluationContext context, String configSalt, String contextSalt, EvaluateLogger evaluateLogger) throws RolloutEvaluatorException {
-        evaluateLogger.append(LogHelper.formatUserCondition(userCondition));
+        evaluateLogger.append(EvaluateLogger.formatUserCondition(userCondition));
 
         if (context.getUser() == null) {
             if (!context.isUserMissing()) {
@@ -420,7 +420,7 @@ class RolloutEvaluator {
         if (segmentIndex < segments.length) {
             segment = segments[segmentIndex];
         }
-        evaluateLogger.append(LogHelper.formatSegmentFlagCondition(segmentCondition, segment));
+        evaluateLogger.append(EvaluateLogger.formatSegmentFlagCondition(segmentCondition, segment));
 
         if (context.getUser() == null) {
             if (!context.isUserMissing()) {
@@ -467,7 +467,7 @@ class RolloutEvaluator {
     }
 
     private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition, EvaluationContext context, EvaluateLogger evaluateLogger) {
-        evaluateLogger.append(LogHelper.formatPrerequisiteFlagCondition(prerequisiteFlagCondition));
+        evaluateLogger.append(EvaluateLogger.formatPrerequisiteFlagCondition(prerequisiteFlagCondition));
 
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
         Setting prerequsiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
@@ -489,7 +489,7 @@ class RolloutEvaluator {
         }
         visitedKeys.add(context.getKey());
         if (visitedKeys.contains(prerequisiteFlagKey)) {
-            String dependencyCycle = LogHelper.formatCircularDependencyList(visitedKeys, prerequisiteFlagKey);
+            String dependencyCycle = EvaluateLogger.formatCircularDependencyList(visitedKeys, prerequisiteFlagKey);
             throw new IllegalArgumentException("Circular dependency detected between the following depending flags: " + dependencyCycle + ".");
         }
 
