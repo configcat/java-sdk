@@ -113,7 +113,7 @@ class RolloutEvaluator {
                 boolean negateIsOneOf = UserComparator.SENSITIVE_IS_NOT_ONE_OF.equals(userComparator) || UserComparator.IS_NOT_ONE_OF.equals(userComparator);
                 boolean sensitiveIsOneOf = UserComparator.SENSITIVE_IS_ONE_OF.equals(userComparator) || UserComparator.SENSITIVE_IS_NOT_ONE_OF.equals(userComparator);
                 String userAttributeForIsOneOf = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateIsOneOf(userCondition, configSalt, contextSalt, userAttributeForIsOneOf, negateIsOneOf, sensitiveIsOneOf);
+                return evaluateIsOneOf(userCondition, ensureConfigSalt(configSalt), contextSalt, userAttributeForIsOneOf, negateIsOneOf, sensitiveIsOneOf);
             case DATE_BEFORE:
             case DATE_AFTER:
                 double userAttributeForDate = getUserAttributeForDate(userCondition, context, comparisonAttribute, userAttributeValue);
@@ -125,13 +125,13 @@ class RolloutEvaluator {
                 boolean negateEquals = UserComparator.HASHED_NOT_EQUALS.equals(userComparator) || UserComparator.TEXT_NOT_EQUALS.equals(userComparator);
                 boolean hashedEquals = UserComparator.HASHED_EQUALS.equals(userComparator) || UserComparator.HASHED_NOT_EQUALS.equals(userComparator);
                 String userAttributeForEquals = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateEquals(userCondition, configSalt, contextSalt, userAttributeForEquals, negateEquals, hashedEquals);
+                return evaluateEquals(userCondition, ensureConfigSalt(configSalt), contextSalt, userAttributeForEquals, negateEquals, hashedEquals);
             case HASHED_STARTS_WITH:
             case HASHED_ENDS_WITH:
             case HASHED_NOT_STARTS_WITH:
             case HASHED_NOT_ENDS_WITH:
                 String userAttributeForHashedStartEnd = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateHashedStartOrEndsWith(userCondition, configSalt, contextSalt, userComparator, userAttributeForHashedStartEnd);
+                return evaluateHashedStartOrEndsWith(userCondition, ensureConfigSalt(configSalt), contextSalt, userComparator, userAttributeForHashedStartEnd);
             case TEXT_STARTS_WITH:
             case TEXT_NOT_STARTS_WITH:
                 boolean negateTextStartWith = UserComparator.TEXT_NOT_STARTS_WITH.equals(userComparator);
@@ -149,7 +149,7 @@ class RolloutEvaluator {
                 boolean negateArrayContains = UserComparator.HASHED_ARRAY_NOT_CONTAINS.equals(userComparator) || UserComparator.TEXT_ARRAY_NOT_CONTAINS.equals(userComparator);
                 boolean hashedArrayContains = UserComparator.HASHED_ARRAY_CONTAINS.equals(userComparator) || UserComparator.HASHED_ARRAY_NOT_CONTAINS.equals(userComparator);
                 String[] userAttributeAsStringArray = getUserAttributeAsStringArray(userCondition, context, comparisonAttribute, userAttributeValue);
-                return evaluateArrayContains(userCondition, configSalt, contextSalt, userAttributeAsStringArray, negateArrayContains, hashedArrayContains);
+                return evaluateArrayContains(userCondition, ensureConfigSalt(configSalt), contextSalt, userAttributeAsStringArray, negateArrayContains, hashedArrayContains);
             default:
                 throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
         }
@@ -682,6 +682,13 @@ class RolloutEvaluator {
             throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
         }
         return value;
+    }
+
+    private static String ensureConfigSalt(String configSalt){
+        if(configSalt == null){
+            throw new IllegalArgumentException("Config JSON salt is missing.");
+        }
+        return configSalt;
     }
 }
 
