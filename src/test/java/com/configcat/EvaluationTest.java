@@ -127,7 +127,7 @@ public class EvaluationTest {
                 errors.add(String.format("Return value mismatch for test: %s Test Key: %s Expected: %s, Result: %s \n", testDescriptorName, settingKey, returnValue, result));
             }
             String expectedLog = readFile(EVALUATION_FOLDER + testDescriptorName + "/" + test.getExpectedLog());
-            expectedLog.replaceAll("\r\n", "\n");
+            expectedLog = expectedLog.replaceAll("\r\n", "\n");
 
             StringBuilder logResultBuilder = new StringBuilder();
             List<ILoggingEvent> logsList = listAppender.list;
