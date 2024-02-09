@@ -113,7 +113,7 @@ class RolloutEvaluator {
                 boolean negateIsOneOf = UserComparator.SENSITIVE_IS_NOT_ONE_OF.equals(userComparator) || UserComparator.IS_NOT_ONE_OF.equals(userComparator);
                 boolean sensitiveIsOneOf = UserComparator.SENSITIVE_IS_ONE_OF.equals(userComparator) || UserComparator.SENSITIVE_IS_NOT_ONE_OF.equals(userComparator);
                 String userAttributeForIsOneOf = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateIsOneOf(userCondition, ensureConfigSalt(configSalt), contextSalt, userAttributeForIsOneOf, negateIsOneOf, sensitiveIsOneOf);
+                return evaluateIsOneOf(userCondition, configSalt, contextSalt, userAttributeForIsOneOf, negateIsOneOf, sensitiveIsOneOf);
             case DATE_BEFORE:
             case DATE_AFTER:
                 double userAttributeForDate = getUserAttributeForDate(userCondition, context, comparisonAttribute, userAttributeValue);
@@ -125,7 +125,7 @@ class RolloutEvaluator {
                 boolean negateEquals = UserComparator.HASHED_NOT_EQUALS.equals(userComparator) || UserComparator.TEXT_NOT_EQUALS.equals(userComparator);
                 boolean hashedEquals = UserComparator.HASHED_EQUALS.equals(userComparator) || UserComparator.HASHED_NOT_EQUALS.equals(userComparator);
                 String userAttributeForEquals = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateEquals(userCondition, ensureConfigSalt(configSalt), contextSalt, userAttributeForEquals, negateEquals, hashedEquals);
+                return evaluateEquals(userCondition, configSalt, contextSalt, userAttributeForEquals, negateEquals, hashedEquals);
             case HASHED_STARTS_WITH:
             case HASHED_ENDS_WITH:
             case HASHED_NOT_STARTS_WITH:
@@ -149,7 +149,7 @@ class RolloutEvaluator {
                 boolean negateArrayContains = UserComparator.HASHED_ARRAY_NOT_CONTAINS.equals(userComparator) || UserComparator.TEXT_ARRAY_NOT_CONTAINS.equals(userComparator);
                 boolean hashedArrayContains = UserComparator.HASHED_ARRAY_CONTAINS.equals(userComparator) || UserComparator.HASHED_ARRAY_NOT_CONTAINS.equals(userComparator);
                 String[] userAttributeAsStringArray = getUserAttributeAsStringArray(userCondition, context, comparisonAttribute, userAttributeValue);
-                return evaluateArrayContains(userCondition, ensureConfigSalt(configSalt), contextSalt, userAttributeAsStringArray, negateArrayContains, hashedArrayContains);
+                return evaluateArrayContains(userCondition, configSalt, contextSalt, userAttributeAsStringArray, negateArrayContains, hashedArrayContains);
             default:
                 throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
         }
@@ -306,7 +306,7 @@ class RolloutEvaluator {
             return false;
         }
         for (String userContainsValue : userContainsValues) {
-            String userContainsValueConverted = hashedArrayContains ? getSaltedUserValue(userContainsValue, configSalt, contextSalt) : userContainsValue;
+            String userContainsValueConverted = hashedArrayContains ? getSaltedUserValue(userContainsValue, ensureConfigSalt(configSalt), contextSalt) : userContainsValue;
             for (String inValuesElement : comparisonValues) {
                 if (ensureComparisonValue(inValuesElement).equals(userContainsValueConverted)) {
                     return !negateArrayContains;
@@ -319,7 +319,7 @@ class RolloutEvaluator {
     private boolean evaluateEquals(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateEquals, boolean hashedEquals) {
         String comparisonValue = ensureComparisonValue(userCondition.getStringValue());
 
-        String valueEquals = hashedEquals ? getSaltedUserValue(userValue, configSalt, contextSalt) : userValue;
+        String valueEquals = hashedEquals ? getSaltedUserValue(userValue, ensureConfigSalt(configSalt), contextSalt) : userValue;
         return negateEquals != valueEquals.equals(comparisonValue);
     }
 
@@ -332,7 +332,7 @@ class RolloutEvaluator {
     private boolean evaluateIsOneOf(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateIsOneOf, boolean sensitiveIsOneOf) {
         String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
-        String userIsOneOfValue = sensitiveIsOneOf ? getSaltedUserValue(userValue, configSalt, contextSalt) : userValue;
+        String userIsOneOfValue = sensitiveIsOneOf ? getSaltedUserValue(userValue, ensureConfigSalt(configSalt), contextSalt) : userValue;
 
         for (String inValuesElement : comparisonValues) {
             if (ensureComparisonValue(inValuesElement).equals(userIsOneOfValue)) {
