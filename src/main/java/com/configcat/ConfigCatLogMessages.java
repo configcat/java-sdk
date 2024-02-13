@@ -206,7 +206,7 @@ final class ConfigCatLogMessages {
      * @return The formatted warn message.
      */
     public static String getUserAttributeMissing(final String key, final UserCondition userCondition, final String attributeName) {
-        return "Cannot evaluate condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' (the User." + attributeName + " attribute is missing). You should set the User." + attributeName + " attribute in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/";
+        return "Cannot evaluate condition (" + EvaluateLogger.formatUserCondition(userCondition) + ") for setting '" + key + "' (the User." + attributeName + " attribute is missing). You should set the User." + attributeName + " attribute in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/";
     }
 
     /**
@@ -230,7 +230,7 @@ final class ConfigCatLogMessages {
      * @return The formatted warn message.
      */
     public static String getUserAttributeInvalid(final String key, final UserCondition userCondition, final String reason, final String attributeName) {
-        return "Cannot evaluate condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' (" + reason + "). Please check the User." + attributeName + " attribute and make sure that its value corresponds to the comparison operator.";
+        return "Cannot evaluate condition (" + EvaluateLogger.formatUserCondition(userCondition) + ") for setting '" + key + "' (" + reason + "). Please check the User." + attributeName + " attribute and make sure that its value corresponds to the comparison operator.";
     }
 
 
@@ -244,7 +244,7 @@ final class ConfigCatLogMessages {
      * @return The formatted warn message.
      */
     public static String getUserObjectAttributeIsAutoConverted(String key, UserCondition userCondition, String attributeName, String attributeValue) {
-        return "Evaluation of condition (" + LogHelper.formatUserCondition(userCondition) + ") for setting '" + key + "' may not produce the expected result (the User." + attributeName + " attribute is not a string value, thus it was automatically converted to the string value '" + attributeValue + "'). Please make sure that using a non-string value was intended.";
+        return "Evaluation of condition (" + EvaluateLogger.formatUserCondition(userCondition) + ") for setting '" + key + "' may not produce the expected result (the User." + attributeName + " attribute is not a string value, thus it was automatically converted to the string value '" + attributeValue + "'). Please make sure that using a non-string value was intended.";
     }
 
     /**

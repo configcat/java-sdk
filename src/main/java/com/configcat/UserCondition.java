@@ -46,7 +46,7 @@ public class UserCondition implements ConditionAccessor {
     public Double getDoubleValue() {
         return doubleValue;
     }
-    
+
     /**
      * The String Array value that the User Object attribute is compared or {@code null} if the comparator use a different type of value.
      */

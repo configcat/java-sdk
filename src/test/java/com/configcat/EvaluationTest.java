@@ -111,7 +111,7 @@ public class EvaluationTest {
                 typeOfExpectedResult = Integer.class;
             } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal") || settingKey.startsWith("mainDouble")) {
                 typeOfExpectedResult = Double.class;
-            } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment") || settingKey.equals("featureWithSegmentTargeting") || settingKey.equals("featureWithNegatedSegmentTargeting") || settingKey.equals("featureWithNegatedSegmentTargetingCleartext")) {
+            } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment") || settingKey.equals("featureWithSegmentTargeting") || settingKey.equals("featureWithNegatedSegmentTargeting") || settingKey.equals("featureWithNegatedSegmentTargetingCleartext") || settingKey.equals("featureWithSegmentTargetingMultipleConditions")) {
                 typeOfExpectedResult = Boolean.class;
             } else {
                 //handle as String in any other case
@@ -127,6 +127,7 @@ public class EvaluationTest {
                 errors.add(String.format("Return value mismatch for test: %s Test Key: %s Expected: %s, Result: %s \n", testDescriptorName, settingKey, returnValue, result));
             }
             String expectedLog = readFile(EVALUATION_FOLDER + testDescriptorName + "/" + test.getExpectedLog());
+            expectedLog = expectedLog.replaceAll("\r\n", "\n");
 
             StringBuilder logResultBuilder = new StringBuilder();
             List<ILoggingEvent> logsList = listAppender.list;
@@ -149,7 +150,7 @@ public class EvaluationTest {
     @NotNull
     private static Consumer<ILoggingEvent> parseLogEvent(StringBuilder logResultBuilder) {
         return log ->
-                logResultBuilder.append(formatLogLevel(log.getLevel())).append(" ").append(log.getFormattedMessage()).append("\n");
+                logResultBuilder.append(formatLogLevel(log.getLevel())).append(" ").append(log.getFormattedMessage().replaceAll("\r\n", "\n")).append("\n");
     }
 
     private static String formatLogLevel(Level level) {

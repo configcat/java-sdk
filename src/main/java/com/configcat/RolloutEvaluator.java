@@ -1,7 +1,6 @@
 package com.configcat;
 
 import de.skuzzle.semantic.Version;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +59,7 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateUserCondition(UserCondition userCondition, EvaluationContext context, String configSalt, String contextSalt, EvaluateLogger evaluateLogger) throws RolloutEvaluatorException {
-        evaluateLogger.append(LogHelper.formatUserCondition(userCondition));
+        evaluateLogger.append(EvaluateLogger.formatUserCondition(userCondition));
 
         if (context.getUser() == null) {
             if (!context.isUserMissing()) {
@@ -132,7 +131,7 @@ class RolloutEvaluator {
             case HASHED_NOT_STARTS_WITH:
             case HASHED_NOT_ENDS_WITH:
                 String userAttributeForHashedStartEnd = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateHashedStartOrEndsWith(userCondition, configSalt, contextSalt, userComparator, userAttributeForHashedStartEnd);
+                return evaluateHashedStartOrEndsWith(userCondition, ensureConfigSalt(configSalt), contextSalt, userComparator, userAttributeForHashedStartEnd);
             case TEXT_STARTS_WITH:
             case TEXT_NOT_STARTS_WITH:
                 boolean negateTextStartWith = UserComparator.TEXT_NOT_STARTS_WITH.equals(userComparator);
@@ -170,7 +169,7 @@ class RolloutEvaluator {
             } else if (userAttributeValue instanceof String) {
                 result = Utils.gson.fromJson((String) userAttributeValue, String[].class);
             }
-            if(result != null && Arrays.stream(result).noneMatch(Objects::isNull)){
+            if (result != null && Arrays.stream(result).noneMatch(Objects::isNull)) {
                 return result;
             }
         } catch (Exception exception) {
@@ -307,7 +306,7 @@ class RolloutEvaluator {
             return false;
         }
         for (String userContainsValue : userContainsValues) {
-            String userContainsValueConverted = hashedArrayContains ? getSaltedUserValue(userContainsValue, configSalt, contextSalt) : userContainsValue;
+            String userContainsValueConverted = hashedArrayContains ? getSaltedUserValue(userContainsValue, ensureConfigSalt(configSalt), contextSalt) : userContainsValue;
             for (String inValuesElement : comparisonValues) {
                 if (ensureComparisonValue(inValuesElement).equals(userContainsValueConverted)) {
                     return !negateArrayContains;
@@ -320,7 +319,7 @@ class RolloutEvaluator {
     private boolean evaluateEquals(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateEquals, boolean hashedEquals) {
         String comparisonValue = ensureComparisonValue(userCondition.getStringValue());
 
-        String valueEquals = hashedEquals ? getSaltedUserValue(userValue, configSalt, contextSalt) : userValue;
+        String valueEquals = hashedEquals ? getSaltedUserValue(userValue, ensureConfigSalt(configSalt), contextSalt) : userValue;
         return negateEquals != valueEquals.equals(comparisonValue);
     }
 
@@ -333,7 +332,7 @@ class RolloutEvaluator {
     private boolean evaluateIsOneOf(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateIsOneOf, boolean sensitiveIsOneOf) {
         String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
-        String userIsOneOfValue = sensitiveIsOneOf ? getSaltedUserValue(userValue, configSalt, contextSalt) : userValue;
+        String userIsOneOfValue = sensitiveIsOneOf ? getSaltedUserValue(userValue, ensureConfigSalt(configSalt), contextSalt) : userValue;
 
         for (String inValuesElement : comparisonValues) {
             if (ensureComparisonValue(inValuesElement).equals(userIsOneOfValue)) {
@@ -421,7 +420,7 @@ class RolloutEvaluator {
         if (segmentIndex < segments.length) {
             segment = segments[segmentIndex];
         }
-        evaluateLogger.append(LogHelper.formatSegmentFlagCondition(segmentCondition, segment));
+        evaluateLogger.append(EvaluateLogger.formatSegmentFlagCondition(segmentCondition, segment));
 
         if (context.getUser() == null) {
             if (!context.isUserMissing()) {
@@ -468,7 +467,7 @@ class RolloutEvaluator {
     }
 
     private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition, EvaluationContext context, EvaluateLogger evaluateLogger) {
-        evaluateLogger.append(LogHelper.formatPrerequisiteFlagCondition(prerequisiteFlagCondition));
+        evaluateLogger.append(EvaluateLogger.formatPrerequisiteFlagCondition(prerequisiteFlagCondition));
 
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
         Setting prerequsiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
@@ -490,7 +489,7 @@ class RolloutEvaluator {
         }
         visitedKeys.add(context.getKey());
         if (visitedKeys.contains(prerequisiteFlagKey)) {
-            String dependencyCycle = LogHelper.formatCircularDependencyList(visitedKeys, prerequisiteFlagKey);
+            String dependencyCycle = EvaluateLogger.formatCircularDependencyList(visitedKeys, prerequisiteFlagKey);
             throw new IllegalArgumentException("Circular dependency detected between the following depending flags: " + dependencyCycle + ".");
         }
 
@@ -642,7 +641,7 @@ class RolloutEvaluator {
         }
         String percentageOptionAttributeValue;
         String percentageOptionAttributeName = percentageOptionAttribute;
-        if (percentageOptionAttributeName == null || percentageOptionAttributeName.isEmpty()) {
+        if (percentageOptionAttributeName == null) {
             percentageOptionAttributeName = "Identifier";
             percentageOptionAttributeValue = context.getUser().getIdentifier();
         } else {
@@ -660,7 +659,7 @@ class RolloutEvaluator {
         evaluateLogger.logPercentageOptionEvaluation(percentageOptionAttributeName);
         String hashCandidate = context.getKey() + percentageOptionAttributeValue;
         int scale = 100;
-        String hexHash = new String(Hex.encodeHex(DigestUtils.sha1(hashCandidate))).substring(0, 7);
+        String hexHash = DigestUtils.sha1Hex(hashCandidate.getBytes(StandardCharsets.UTF_8)).substring(0, 7);
         int longHash = Integer.parseInt(hexHash, 16);
         int scaled = longHash % scale;
         evaluateLogger.logPercentageOptionEvaluationHash(percentageOptionAttributeName, scaled);
@@ -683,6 +682,13 @@ class RolloutEvaluator {
             throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
         }
         return value;
+    }
+
+    private static String ensureConfigSalt(String configSalt){
+        if(configSalt == null){
+            throw new IllegalArgumentException("Config JSON salt is missing.");
+        }
+        return configSalt;
     }
 }
 

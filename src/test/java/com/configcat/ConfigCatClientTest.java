@@ -85,6 +85,12 @@ public class ConfigCatClientTest {
                 IllegalArgumentException.class, () -> ConfigCatClient.get("configcat-proxy/", options -> options.baseUrl("https://my-configcat-proxy")));
         assertEquals("SDK Key 'configcat-proxy/' is invalid.", builderException.getMessage());
 
+        //TEST OverrideBehaviour.LOCAL_ONLY skip sdkKey validation
+        ConfigCatClient clientLocalOnly = ConfigCatClient.get("sdk-key-90123456789012", options -> {
+            options.flagOverrides(OverrideDataSourceBuilder.map(new HashMap<>()), OverrideBehaviour.LOCAL_ONLY);
+        });
+        assertNotNull(clientLocalOnly);
+
         ConfigCatClient.closeAll();
     }
 
@@ -885,12 +891,12 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    void tesSpecialCharactersWorks() throws IOException {
+    void testSpecialCharactersWorks() throws IOException {
 
         ClassLoader classLoader = getClass().getClassLoader();
 
         Scanner scanner = new Scanner(new File(Objects.requireNonNull(classLoader.getResource("specialCharacters.txt")).getFile()), "UTF-8");
-        if(!scanner.hasNext()){
+        if (!scanner.hasNext()) {
             fail();
         }
         String specialCharacters = scanner.nextLine();

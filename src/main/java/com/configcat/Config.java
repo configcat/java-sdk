@@ -23,12 +23,14 @@ public class Config {
     public Preferences getPreferences() {
         return preferences;
     }
+
     /**
      * The list of segments.
      */
     public Segment[] getSegments() {
         return segments;
     }
+
     /**
      * The map of settings.
      */

@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 public class ConfigFetcherTest {
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigFetcherTest.class), LogLevel.WARNING);
-    private static final String TEST_JSON = "{ p: { s: 'test-slat' }, f: { fakeKey: { v: {s: 'fakeValue'}, s: 0, p: [] ,r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-salt' }, f: { fakeKey: { v: {s: 'fakeValue'}, s: 0, p: [] ,r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {

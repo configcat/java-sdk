@@ -518,10 +518,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 }
 
                 for (TargetingRule targetingRule : setting.getTargetingRules()) {
-                    if (targetingRule.getSimpleValue() != null && variationId.equals(targetingRule.getSimpleValue().getVariationId())) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getSimpleValue().getValue(), setting.getType()));
-                    }
-                    if (targetingRule.getPercentageOptions() != null) {
+                    if (targetingRule.getSimpleValue() != null) {
+                        if (variationId.equals(targetingRule.getSimpleValue().getVariationId())) {
+                            return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getSimpleValue().getValue(), setting.getType()));
+                        }
+                    } else if (targetingRule.getPercentageOptions() != null) {
                         for (PercentageOption percentageRule : targetingRule.getPercentageOptions()) {
                             if (variationId.equals(percentageRule.getVariationId())) {
                                 return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.getValue(), setting.getType()));
@@ -556,10 +557,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
         } else if ((classOfT == Boolean.class || classOfT == boolean.class) && settingsValue.getBooleanValue() != null && SettingType.BOOLEAN.equals(settingType)) {
             return settingsValue.getBooleanValue();
         }
-        throw new IllegalArgumentException("The type of a setting must match the type of the setting's default value. "
+        throw new IllegalArgumentException("The type of a setting must match the type of the specified default value. "
                 + "Setting's type was {" + settingType + "} but the default value's type was {" + classOfT + "}. "
                 + "Please use a default value which corresponds to the setting type {" + settingType + "}."
-                + "Learn more: https://configcat.com/docs/sdk-reference/dotnet/#setting-type-mapping");
+                + "Learn more: https://configcat.com/docs/sdk-reference/java/#setting-type-mapping");
     }
 
     private void validateReturnType(Class<?> classOfT) throws IllegalArgumentException {

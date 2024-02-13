@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class EntrySerializationTest {
 
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: { s: %s }, t: %s, p: [], r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-salt'}, f: { fakeKey: { v: { s: %s }, t: %s, p: [], r: [] } } }";
 
     private static final String SERIALIZED_DATA = "%s\n%s\n%s";
 
@@ -24,7 +24,7 @@ public class EntrySerializationTest {
 
     @Test
     void payloadSerializationPlatformIndependent() {
-        String payloadTestConfigJson = "{\"p\":{\"u\":\"https://cdn-global.configcat.com\",\"r\":0,\"s\": \"test-slat\"},\"f\":{\"testKey\":{\"v\":{\"s\":\"testValue\"},\"t\":1,\"p\":[],\"r\":[]}}}";
+        String payloadTestConfigJson = "{\"p\":{\"u\":\"https://cdn-global.configcat.com\",\"r\":0,\"s\": \"test-salt\"},\"f\":{\"testKey\":{\"v\":{\"s\":\"testValue\"},\"t\":1,\"p\":[],\"r\":[]}}}";
 
         Config config = Utils.gson.fromJson(payloadTestConfigJson, Config.class);
         Entry entry = new Entry(config, "test-etag", payloadTestConfigJson, 1686756435844L);
