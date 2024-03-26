@@ -7,7 +7,7 @@ import java.util.Objects;
 /**
  * Describes the setting type-specific value of a setting or feature flag.
  */
-public class SettingsValue {
+public class SettingValue {
     @SerializedName("b")
     private Boolean booleanValue;
 
@@ -56,7 +56,7 @@ public class SettingsValue {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SettingsValue that = (SettingsValue) o;
+        SettingValue that = (SettingValue) o;
         return Objects.equals(booleanValue, that.booleanValue) && Objects.equals(stringValue, that.stringValue) && Objects.equals(integerValue, that.integerValue) && Objects.equals(doubleValue, that.doubleValue);
     }
 

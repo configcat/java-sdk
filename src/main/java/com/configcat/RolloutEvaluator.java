@@ -506,7 +506,7 @@ class RolloutEvaluator {
         }
 
         PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
-        SettingsValue conditionValue = prerequisiteFlagCondition.getValue();
+        SettingValue conditionValue = prerequisiteFlagCondition.getValue();
         boolean result;
 
         if (prerequisiteComparator == null) {
