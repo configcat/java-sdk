@@ -243,7 +243,7 @@ class RolloutEvaluator {
             if (indexOf <= 0) {
                 throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
-            String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
+            String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf).trim();
             int comparedTextLengthInt;
             try {
                 comparedTextLengthInt = Integer.parseInt(comparedTextLength);

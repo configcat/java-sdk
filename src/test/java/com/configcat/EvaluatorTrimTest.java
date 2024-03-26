@@ -102,11 +102,10 @@ public class EvaluatorTrimTest {
                 Arguments.of("notendswithanyof", "no trim"),
                 Arguments.of("arraycontainsanyof", "no trim"),
                 Arguments.of("arraynotcontainsanyof", "no trim"),
-                // the not trimmed comparator value case an exception in case of these comparator, default value expected
-                Arguments.of("startwithanyofhashed", "default"),
-                Arguments.of("notstartwithanyofhashed", "default"),
-                Arguments.of("endswithanyofhashed", "default"),
-                Arguments.of("notendswithanyofhashed", "default"),
+                Arguments.of("startwithanyofhashed", "no trim"),
+                Arguments.of("notstartwithanyofhashed", "no trim"),
+                Arguments.of("endswithanyofhashed", "no trim"),
+                Arguments.of("notendswithanyofhashed", "no trim"),
                 //semver comparator values trimmed because of backward compatibility
                 Arguments.of("semverisoneof", "4 trim"),
                 Arguments.of("semverisnotoneof", "5 trim"),
