@@ -52,17 +52,22 @@ public class SettingValue {
         return doubleValue;
     }
 
-    @Override
-    public boolean equals(Object o) {
+    public boolean equalsBasedOnSettingType(Object o, SettingType settingType) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SettingValue that = (SettingValue) o;
-        return Objects.equals(booleanValue, that.booleanValue) && Objects.equals(stringValue, that.stringValue) && Objects.equals(integerValue, that.integerValue) && Objects.equals(doubleValue, that.doubleValue);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(booleanValue, stringValue, integerValue, doubleValue);
+        switch (settingType){
+            case BOOLEAN:
+                return Objects.equals(booleanValue, that.booleanValue);
+            case STRING:
+                return Objects.equals(stringValue, that.stringValue);
+            case INT:
+                return Objects.equals(integerValue, that.integerValue);
+            case DOUBLE:
+                return Objects.equals(doubleValue, that.doubleValue);
+            default:
+                throw new IllegalStateException("Setting is of an unsupported type (" + settingType.name() + ").");
+        }
     }
 
     @Override
