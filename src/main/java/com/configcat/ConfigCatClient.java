@@ -528,6 +528,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                                 return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.getValue(), setting.getType()));
                             }
                         }
+                    } else {
+                        throw new UnsupportedOperationException("Targeting rule THEN part is missing or invalid.");
                     }
                 }
 
