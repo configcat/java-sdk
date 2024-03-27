@@ -676,7 +676,7 @@ class RolloutEvaluator {
                 return new EvaluationResult(rule.getValue(), rule.getVariationId(), parentTargetingRule, rule);
             }
         }
-        throw new IllegalArgumentException("Sum of percentage option percentages are less than 100.");
+        throw new IllegalArgumentException("Sum of percentage option percentages is less than 100.");
     }
 
     private static <T> T ensureComparisonValue(T value) {
