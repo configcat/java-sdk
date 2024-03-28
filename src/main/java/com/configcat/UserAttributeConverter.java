@@ -30,6 +30,9 @@ final class UserAttributeConverter {
             Instant userAttributeInstant = (Instant) userAttribute;
             return doubleToString(DateTimeUtils.getUnixSeconds(userAttributeInstant));
         }
+        if (userAttribute instanceof Float) {
+            return doubleToString(((Float) userAttribute).doubleValue());
+        }
         if (userAttribute instanceof Double) {
             return doubleToString((Double) userAttribute);
         }

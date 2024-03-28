@@ -39,11 +39,11 @@ public class TargetingRule {
 
 class SimpleValue {
     @SerializedName(value = "v")
-    private SettingsValue value;
+    private SettingValue value;
     @SerializedName(value = "i")
     private String variationId;
 
-    public SettingsValue getValue() {
+    public SettingValue getValue() {
         return value;
     }
 

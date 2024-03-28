@@ -10,7 +10,7 @@ public class PercentageOption {
     @SerializedName(value = "p")
     private int percentage;
     @SerializedName(value = "v")
-    private SettingsValue value;
+    private SettingValue value;
     @SerializedName(value = "i")
     private String variationId;
 
@@ -25,7 +25,7 @@ public class PercentageOption {
      * The value associated with the percentage option.
      * Can be a value of the following types: {@link Boolean}, {@link String}, {@link Integer} or {@link Double}.
      */
-    public SettingsValue getValue() {
+    public SettingValue getValue() {
         return value;
     }
 

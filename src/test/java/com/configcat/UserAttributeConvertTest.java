@@ -48,6 +48,9 @@ public class UserAttributeConvertTest {
                 Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", Boolean.class, "NaN", false),
                 Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", Boolean.class, "+Infinity", false),
                 Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", Boolean.class, "-Infinity", false),
+                Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", Boolean.class, " NaN ", false),
+                Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", Boolean.class, " +Infinity ", false),
+                Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", Boolean.class, " -Infinity ", false),
                 //Number date
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, -1, "<2.1"),
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, 2, "<2.1"),
@@ -85,7 +88,11 @@ public class UserAttributeConvertTest {
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, Integer.MIN_VALUE, "<2.1"),
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, "NotANumber", "80%"),
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, "Infinity", ">5"),
+                Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, " Infinity ", ">5"),
+                Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, "-Infinity", "<2.1"),
+                Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, " -Infinity ", "<2.1"),
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, "NaN", "<>4.2"),
+                Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, " NaN ", "<>4.2"),
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, "NaNa", "80%"),
                 //byte
                 Arguments.of("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", String.class, (byte) -1, "<2.1"),

@@ -16,14 +16,14 @@ public class Setting {
     @SerializedName(value = "r")
     private TargetingRule[] targetingRules;
     @SerializedName(value = "v")
-    private SettingsValue settingsValue;
+    private SettingValue settingValue;
     @SerializedName(value = "i")
     private String variationId;
     private String configSalt;
     private Segment[] segments;
 
-    public void setSettingsValue(SettingsValue settingsValue) {
-        this.settingsValue = settingsValue;
+    public void setSettingsValue(SettingValue settingValue) {
+        this.settingValue = settingValue;
     }
 
     public void setType(SettingType type) {
@@ -70,8 +70,8 @@ public class Setting {
      * Setting value.
      * Can be a value of the following types: {@link Boolean}, {@link String}, {@link Integer} or {@link Double}.
      */
-    public SettingsValue getSettingsValue() {
-        return settingsValue;
+    public SettingValue getSettingsValue() {
+        return settingValue;
     }
 
     /**

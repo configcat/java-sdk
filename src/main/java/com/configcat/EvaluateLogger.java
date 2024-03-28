@@ -177,11 +177,11 @@ public class EvaluateLogger {
         decreaseIndentLevel();
     }
 
-    public void logPercentageEvaluationReturnValue(int hashValue, int i, int percentage, SettingsValue settingsValue) {
+    public void logPercentageEvaluationReturnValue(int hashValue, int i, int percentage, SettingValue settingValue) {
         if (!isLoggable) {
             return;
         }
-        String percentageOptionValue = settingsValue != null ? settingsValue.toString() : INVALID_VALUE;
+        String percentageOptionValue = settingValue != null ? settingValue.toString() : INVALID_VALUE;
         newLine();
         append("- Hash value " + hashValue + " selects % option " + (i + 1) + " (" + percentage + "%), '" + percentageOptionValue + "'.");
     }
@@ -236,7 +236,7 @@ public class EvaluateLogger {
         append("Evaluating prerequisite flag '" + prerequisiteFlagKey + "':");
     }
 
-    public void logPrerequisiteFlagEvaluationResult(PrerequisiteFlagCondition prerequisiteFlagCondition, SettingsValue prerequisiteFlagValue, boolean result) {
+    public void logPrerequisiteFlagEvaluationResult(PrerequisiteFlagCondition prerequisiteFlagCondition, SettingValue prerequisiteFlagValue, boolean result) {
         if (!isLoggable) {
             return;
         }
@@ -385,7 +385,7 @@ public class EvaluateLogger {
         if (prerequisiteComparator == null) {
             throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
         }
-        SettingsValue prerequisiteValue = prerequisiteFlagCondition.getValue();
+        SettingValue prerequisiteValue = prerequisiteFlagCondition.getValue();
         String comparisonValue = prerequisiteValue == null ? INVALID_VALUE : prerequisiteValue.toString();
         return "Flag '" + prerequisiteFlagKey + "' " + prerequisiteComparator.getName() + " '" + comparisonValue + "'";
     }
