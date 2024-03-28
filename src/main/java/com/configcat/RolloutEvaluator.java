@@ -470,12 +470,12 @@ class RolloutEvaluator {
         evaluateLogger.append(EvaluateLogger.formatPrerequisiteFlagCondition(prerequisiteFlagCondition));
 
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
-        Setting prerequsiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
-        if (prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequsiteFlagSetting == null) {
+        Setting prerequisiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
+        if (prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequisiteFlagSetting == null) {
             throw new IllegalArgumentException("Prerequisite flag key is missing or invalid.");
         }
 
-        SettingType settingType = prerequsiteFlagSetting.getType();
+        SettingType settingType = prerequisiteFlagSetting.getType();
         if ((settingType == SettingType.BOOLEAN && prerequisiteFlagCondition.getValue().getBooleanValue() == null) ||
                 (settingType == SettingType.STRING && prerequisiteFlagCondition.getValue().getStringValue() == null) ||
                 (settingType == SettingType.INT && prerequisiteFlagCondition.getValue().getIntegerValue() == null) ||
@@ -497,14 +497,14 @@ class RolloutEvaluator {
 
         EvaluationContext prerequisiteFlagContext = new EvaluationContext(prerequisiteFlagKey, context.getUser(), visitedKeys, context.getSettings());
 
-        EvaluationResult evaluateResult = evaluateSetting(prerequsiteFlagSetting, evaluateLogger, prerequisiteFlagContext);
+        EvaluationResult evaluateResult = evaluateSetting(prerequisiteFlagSetting, evaluateLogger, prerequisiteFlagContext);
 
         visitedKeys.remove(context.getKey());
 
         if (evaluateResult.value == null) {
             return false;
         }
-        validateSettingValueType(evaluateResult.value, prerequsiteFlagSetting.getType());
+        validateSettingValueType(evaluateResult.value, prerequisiteFlagSetting.getType());
 
         PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
         SettingValue conditionValue = prerequisiteFlagCondition.getValue();
@@ -516,10 +516,10 @@ class RolloutEvaluator {
 
         switch (prerequisiteComparator) {
             case EQUALS:
-                result = conditionValue.equalsBasedOnSettingType(evaluateResult.value, prerequsiteFlagSetting.getType());
+                result = conditionValue.equalsBasedOnSettingType(evaluateResult.value, prerequisiteFlagSetting.getType());
                 break;
             case NOT_EQUALS:
-                result = !conditionValue.equalsBasedOnSettingType(evaluateResult.value, prerequsiteFlagSetting.getType());
+                result = !conditionValue.equalsBasedOnSettingType(evaluateResult.value, prerequisiteFlagSetting.getType());
                 break;
             default:
                 throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
