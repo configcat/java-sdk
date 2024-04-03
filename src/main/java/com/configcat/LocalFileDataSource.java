@@ -84,32 +84,32 @@ class LocalFileDataSource extends OverrideDataSource {
 
     private Setting convertJsonToSettingsValue(JsonElement jsonElement) {
         Setting setting = new Setting();
-        SettingsValue settingsValue = new SettingsValue();
+        SettingValue settingValue = new SettingValue();
         SettingType settingType;
         if (!jsonElement.isJsonPrimitive()) {
             throw new IllegalArgumentException("Invalid Config Json content: " + jsonElement);
         }
         JsonPrimitive primitive = jsonElement.getAsJsonPrimitive();
         if (primitive.isBoolean()) {
-            settingsValue.setBooleanValue(primitive.getAsBoolean());
+            settingValue.setBooleanValue(primitive.getAsBoolean());
             settingType = SettingType.BOOLEAN;
         } else if (primitive.isString()) {
-            settingsValue.setStringValue(primitive.getAsString());
+            settingValue.setStringValue(primitive.getAsString());
             settingType = SettingType.STRING;
         } else {
             // primitive should be a number, try to cast int to see its not a double
             String numberAsSting = primitive.getAsString();
             try {
-                settingsValue.setIntegerValue(Integer.parseInt(numberAsSting));
+                settingValue.setIntegerValue(Integer.parseInt(numberAsSting));
                 settingType = SettingType.INT;
             } catch (NumberFormatException e) {
                 // if int parse failed try double parse
-                settingsValue.setDoubleValue(Double.parseDouble(numberAsSting));
+                settingValue.setDoubleValue(Double.parseDouble(numberAsSting));
                 settingType = SettingType.DOUBLE;
             }
         }
 
-        setting.setSettingsValue(settingsValue);
+        setting.setSettingsValue(settingValue);
         setting.setType(settingType);
         return setting;
     }

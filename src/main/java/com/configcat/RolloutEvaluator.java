@@ -243,7 +243,7 @@ class RolloutEvaluator {
             if (indexOf <= 0) {
                 throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
-            String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
+            String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf).trim();
             int comparedTextLengthInt;
             try {
                 comparedTextLengthInt = Integer.parseInt(comparedTextLength);
@@ -470,12 +470,12 @@ class RolloutEvaluator {
         evaluateLogger.append(EvaluateLogger.formatPrerequisiteFlagCondition(prerequisiteFlagCondition));
 
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
-        Setting prerequsiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
-        if (prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequsiteFlagSetting == null) {
+        Setting prerequisiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
+        if (prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequisiteFlagSetting == null) {
             throw new IllegalArgumentException("Prerequisite flag key is missing or invalid.");
         }
 
-        SettingType settingType = prerequsiteFlagSetting.getType();
+        SettingType settingType = prerequisiteFlagSetting.getType();
         if ((settingType == SettingType.BOOLEAN && prerequisiteFlagCondition.getValue().getBooleanValue() == null) ||
                 (settingType == SettingType.STRING && prerequisiteFlagCondition.getValue().getStringValue() == null) ||
                 (settingType == SettingType.INT && prerequisiteFlagCondition.getValue().getIntegerValue() == null) ||
@@ -497,27 +497,29 @@ class RolloutEvaluator {
 
         EvaluationContext prerequisiteFlagContext = new EvaluationContext(prerequisiteFlagKey, context.getUser(), visitedKeys, context.getSettings());
 
-        EvaluationResult evaluateResult = evaluateSetting(prerequsiteFlagSetting, evaluateLogger, prerequisiteFlagContext);
+        EvaluationResult evaluateResult = evaluateSetting(prerequisiteFlagSetting, evaluateLogger, prerequisiteFlagContext);
 
         visitedKeys.remove(context.getKey());
 
         if (evaluateResult.value == null) {
             return false;
         }
+        validateSettingValueType(evaluateResult.value, prerequisiteFlagSetting.getType());
 
         PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
-        SettingsValue conditionValue = prerequisiteFlagCondition.getValue();
+        SettingValue conditionValue = prerequisiteFlagCondition.getValue();
         boolean result;
 
         if (prerequisiteComparator == null) {
             throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
         }
+
         switch (prerequisiteComparator) {
             case EQUALS:
-                result = conditionValue.equals(evaluateResult.value);
+                result = conditionValue.equalsBasedOnSettingType(evaluateResult.value, prerequisiteFlagSetting.getType());
                 break;
             case NOT_EQUALS:
-                result = !conditionValue.equals(evaluateResult.value);
+                result = !conditionValue.equalsBasedOnSettingType(evaluateResult.value, prerequisiteFlagSetting.getType());
                 break;
             default:
                 throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
@@ -674,7 +676,7 @@ class RolloutEvaluator {
                 return new EvaluationResult(rule.getValue(), rule.getVariationId(), parentTargetingRule, rule);
             }
         }
-        throw new IllegalArgumentException("Sum of percentage option percentages are less than 100.");
+        throw new IllegalArgumentException("Sum of percentage option percentages is less than 100.");
     }
 
     private static <T> T ensureComparisonValue(T value) {
@@ -689,6 +691,15 @@ class RolloutEvaluator {
             throw new IllegalArgumentException("Config JSON salt is missing.");
         }
         return configSalt;
+    }
+
+    private void validateSettingValueType(SettingValue settingValue, SettingType settingType) {
+        if ( (SettingType.STRING.equals(settingType) && settingValue.getStringValue() == null)
+            || (SettingType.INT.equals(settingType) && settingValue.getIntegerValue() == null )
+            || (SettingType.DOUBLE.equals(settingType) && settingValue.getDoubleValue() == null)
+            || (SettingType.BOOLEAN.equals(settingType) && settingValue.getBooleanValue() == null)) {
+            throw new IllegalArgumentException("Setting value is not of the expected type " + settingType.name() + ".");
+        }
     }
 }
 

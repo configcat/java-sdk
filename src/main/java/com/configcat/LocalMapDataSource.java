@@ -23,23 +23,23 @@ class LocalMapDataSource extends OverrideDataSource {
 
     private Setting convertToSetting(Object object) {
         Setting setting = new Setting();
-        SettingsValue settingsValue = new SettingsValue();
+        SettingValue settingValue = new SettingValue();
         if (object instanceof String) {
             setting.setType(SettingType.STRING);
-            settingsValue.setStringValue((String) object);
+            settingValue.setStringValue((String) object);
         } else if (object instanceof Boolean) {
             setting.setType(SettingType.BOOLEAN);
-            settingsValue.setBooleanValue((Boolean) object);
+            settingValue.setBooleanValue((Boolean) object);
         } else if (object instanceof Integer) {
             setting.setType(SettingType.INT);
-            settingsValue.setIntegerValue((Integer) object);
+            settingValue.setIntegerValue((Integer) object);
         } else if (object instanceof Double) {
             setting.setType(SettingType.DOUBLE);
-            settingsValue.setDoubleValue((Double) object);
+            settingValue.setDoubleValue((Double) object);
         } else {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
         }
-        setting.setSettingsValue(settingsValue);
+        setting.setSettingsValue(settingValue);
         return setting;
     }
 }
