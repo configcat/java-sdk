@@ -181,6 +181,7 @@ public class DataGovernanceTest {
         // Arrange
         String firstBody = String.format(JsonTemplate, secondServerUrl, 1);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
+        firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
         // Act
         FetchResponse response = fetcher.fetchAsync(null).get();
@@ -189,6 +190,15 @@ public class DataGovernanceTest {
         assertEquals(secondServerUrl, response.entry().getConfig().getPreferences().getBaseUrl());
         assertEquals(1, response.entry().getConfig().getPreferences().getRedirect());
         assertEquals(1, firstServer.getRequestCount());
+        assertEquals(0, secondServer.getRequestCount());
+
+        // Act
+        response = fetcher.fetchAsync(null).get();
+
+        // Assert
+        assertEquals(secondServerUrl, response.entry().getConfig().getPreferences().getBaseUrl());
+        assertEquals(1, response.entry().getConfig().getPreferences().getRedirect());
+        assertEquals(2, firstServer.getRequestCount());
         assertEquals(0, secondServer.getRequestCount());
 
         // Cleanup
