@@ -10,7 +10,7 @@ public class AppConfiguration {
 
     @Bean
     public ConfigCatClient configCatClient() {
-        return ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ", options -> {
+        return ConfigCatClient.get("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/tiOvFw5gkky9LFu1Duuvzw", options -> {
             // Info level logging helps to inspect the feature flag evaluation process.
             // Use the default Warning level to avoid too detailed logging in your application.
             options.logLevel(LogLevel.DEBUG);
