@@ -60,7 +60,7 @@ jobs:
       run: ./gradlew check --stacktrace
 
     - name: Execute sonar scan
-      run: ./gradlew sonarqube -Dbuild.number=$GITHUB_RUN_NUMBER
+      run: ./gradlew sonar -Dbuild.number=$GITHUB_RUN_NUMBER
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
