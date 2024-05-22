@@ -3,10 +3,11 @@ package com.configcat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 public class ConfigCatHooks {
-    private final Object sync = new Object();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
     private final List<Consumer<Map<String, Setting>>> onConfigChanged = new ArrayList<>();
     private final List<Runnable> onClientReady = new ArrayList<>();
     private final List<Consumer<EvaluationDetails<Object>>> onFlagEvaluated = new ArrayList<>();
@@ -22,8 +23,11 @@ public class ConfigCatHooks {
      * @param callback the method to call when the event fires.
      */
     public void addOnClientReady(Runnable callback) {
-        synchronized (sync) {
+        lock.writeLock().lock();
+        try {
             this.onClientReady.add(callback);
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -34,8 +38,11 @@ public class ConfigCatHooks {
      * @param callback the method to call when the event fires.
      */
     public void addOnConfigChanged(Consumer<Map<String, Setting>> callback) {
-        synchronized (sync) {
+        lock.writeLock().lock();
+        try {
             this.onConfigChanged.add(callback);
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -45,8 +52,11 @@ public class ConfigCatHooks {
      * @param callback the method to call when the event fires.
      */
     public void addOnError(Consumer<String> callback) {
-        synchronized (sync) {
+        lock.writeLock().lock();
+        try {
             this.onError.add(callback);
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -57,49 +67,67 @@ public class ConfigCatHooks {
      * @param callback the method to call when the event fires.
      */
     public void addOnFlagEvaluated(Consumer<EvaluationDetails<Object>> callback) {
-        synchronized (sync) {
+        lock.writeLock().lock();
+        try {
             this.onFlagEvaluated.add(callback);
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
     void invokeOnClientReady() {
-        synchronized (sync) {
+        lock.readLock().lock();
+        try {
             for (Runnable func : this.onClientReady) {
                 func.run();
             }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
     void invokeOnError(String error) {
-        synchronized (sync) {
+        lock.readLock().lock();
+        try {
             for (Consumer<String> func : this.onError) {
                 func.accept(error);
             }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
     void invokeOnConfigChanged(Map<String, Setting> settingMap) {
-        synchronized (sync) {
+        lock.readLock().lock();
+        try {
             for (Consumer<Map<String, Setting>> func : this.onConfigChanged) {
                 func.accept(settingMap);
             }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
     void invokeOnFlagEvaluated(EvaluationDetails<Object> evaluationDetails) {
-        synchronized (sync) {
+        lock.readLock().lock();
+        try {
             for (Consumer<EvaluationDetails<Object>> func : this.onFlagEvaluated) {
                 func.accept(evaluationDetails);
             }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
     void clear() {
-        synchronized (sync) {
+        lock.writeLock().lock();
+        try {
             this.onConfigChanged.clear();
             this.onError.clear();
             this.onFlagEvaluated.clear();
             this.onClientReady.clear();
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 }
