@@ -58,7 +58,7 @@ public class ConfigService implements Closeable {
                 lock.lock();
                 try {
                     if (initialized.compareAndSet(false, true)) {
-                        this.configCatHooks.invokeOnClientReady();
+                        this.configCatHooks.invokeOnClientReady(determineReadyState());
                         String message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
                         this.logger.warn(4200, message);
                         completeRunningTask(Result.error(message, cachedEntry));
@@ -75,7 +75,7 @@ public class ConfigService implements Closeable {
 
     private void setInitialized() {
         if (initialized.compareAndSet(false, true)) {
-            configCatHooks.invokeOnClientReady();
+            configCatHooks.invokeOnClientReady(determineReadyState());
         }
     }
 
@@ -128,7 +128,7 @@ public class ConfigService implements Closeable {
                 cachedEntry = fromCache;
             }
             // Cache isn't expired
-            if (cachedEntry.getFetchTime() > threshold) {
+            if (!cachedEntry.isExpired(threshold)) {
                 setInitialized();
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
@@ -243,5 +243,23 @@ public class ConfigService implements Closeable {
         } catch (Exception e) {
             logger.error(2201, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_WRITE_ERROR, e);
         }
+    }
+
+    private ClientReadyState determineReadyState(){
+        if(cachedEntry.isEmpty()) {
+            return ClientReadyState.NO_FLAG_DATA;
+        }
+        if(pollingMode instanceof ManualPollingMode) {
+            return ClientReadyState.HAS_CACHED_FLAG_DATA_ONLY;
+        } else if(pollingMode instanceof LazyLoadingMode) {
+            if(cachedEntry.isExpired(System.currentTimeMillis() - (((LazyLoadingMode)pollingMode).getCacheRefreshIntervalInSeconds() * 1000L))) {
+                return ClientReadyState.HAS_CACHED_FLAG_DATA_ONLY;
+            }
+        } else if(pollingMode instanceof AutoPollingMode) {
+            if(cachedEntry.isExpired(System.currentTimeMillis() - (((AutoPollingMode)pollingMode).getAutoPollRateInSeconds() * 1000L))) {
+                return ClientReadyState.HAS_CACHED_FLAG_DATA_ONLY;
+            }
+        }
+        return ClientReadyState.HAS_UP_TO_DATE_FLAG_DATA;
     }
 }

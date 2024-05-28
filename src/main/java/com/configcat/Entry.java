@@ -26,6 +26,9 @@ public class Entry {
         return new Entry(getConfig(), getETag(), getConfigJson(), fetchTime);
     }
 
+    public boolean isExpired(long threshold) {
+        return threshold >= fetchTime;
+    }
     public Entry(Config config, String eTag, String configJson, long fetchTime) {
         this.config = config;
         this.eTag = eTag;

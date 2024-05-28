@@ -752,14 +752,14 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
-        AtomicBoolean ready = new AtomicBoolean(false);
+        AtomicReference<ClientReadyState> ready = new AtomicReference(ClientReadyState.NO_FLAG_DATA);
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnConfigChanged(map -> changed.set(true));
-            options.hooks().addOnClientReady(() -> ready.set(true));
+            options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
             options.hooks().addOnError(error::set);
         });
 
@@ -767,7 +767,7 @@ public class ConfigCatClientTest {
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertTrue(ready.get());
+        assertEquals(ClientReadyState.HAS_CACHED_FLAG_DATA_ONLY, ready.get());
         assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
@@ -812,7 +812,7 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
-        AtomicBoolean ready = new AtomicBoolean(false);
+        AtomicReference<ClientReadyState> ready = new AtomicReference(ClientReadyState.NO_FLAG_DATA);
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
@@ -821,14 +821,14 @@ public class ConfigCatClientTest {
         });
 
         cl.getHooks().addOnConfigChanged(map -> changed.set(true));
-        cl.getHooks().addOnClientReady(() -> ready.set(true));
+        cl.getHooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
         cl.getHooks().addOnError(error::set);
 
         cl.forceRefresh();
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertTrue(ready.get());
+        assertEquals(ClientReadyState.HAS_UP_TO_DATE_FLAG_DATA, ready.get());
         assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();

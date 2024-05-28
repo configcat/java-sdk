@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 public class ConfigCatHooks {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
     private final List<Consumer<Map<String, Setting>>> onConfigChanged = new ArrayList<>();
-    private final List<Runnable> onClientReady = new ArrayList<>();
+    private final List<Consumer<ClientReadyState>> onClientReady = new ArrayList<>();
     private final List<Consumer<EvaluationDetails<Object>>> onFlagEvaluated = new ArrayList<>();
     private final List<Consumer<String>> onError = new ArrayList<>();
 
@@ -22,7 +22,7 @@ public class ConfigCatHooks {
      *
      * @param callback the method to call when the event fires.
      */
-    public void addOnClientReady(Runnable callback) {
+    public void addOnClientReady(Consumer<ClientReadyState> callback) {
         lock.writeLock().lock();
         try {
             this.onClientReady.add(callback);
@@ -75,11 +75,11 @@ public class ConfigCatHooks {
         }
     }
 
-    void invokeOnClientReady() {
+    void invokeOnClientReady(ClientReadyState clientReadyState) {
         lock.readLock().lock();
         try {
-            for (Runnable func : this.onClientReady) {
-                func.run();
+            for (Consumer<ClientReadyState> func : this.onClientReady) {
+                func.accept(clientReadyState);
             }
         } finally {
             lock.readLock().unlock();
