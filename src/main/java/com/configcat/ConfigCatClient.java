@@ -56,6 +56,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     options.pollingMode.getPollingIdentifier());
 
             this.configService = new ConfigService(sdkKey, fetcher, options.pollingMode, options.cache, logger, options.offline, options.configCatHooks);
+        } else {
+            configCatHooks.invokeOnClientReady(ClientReadyState.HAS_LOCAL_OVERRIDE_FLAG_DATA_ONLY);
         }
 
         this.defaultUser = options.defaultUser;
@@ -616,18 +618,20 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * @return the ConfigCatClient instance.
      */
     public static ConfigCatClient get(String sdkKey, Consumer<Options> optionsCallback) {
-        if (sdkKey == null || sdkKey.isEmpty()) {
-            throw new IllegalArgumentException("SDK Key cannot be null or empty.");
-        }
-        Options clientOptions = new Options();
 
+        Options clientOptions = new Options();
         if (optionsCallback != null) {
             Options options = new Options();
             optionsCallback.accept(options);
             clientOptions = options;
         }
 
+        if (sdkKey == null || sdkKey.isEmpty()) {
+            clientOptions.configCatHooks.invokeOnClientReady(ClientReadyState.NO_FLAG_DATA);
+            throw new IllegalArgumentException("SDK Key cannot be null or empty.");
+        }
         if (!OverrideBehaviour.LOCAL_ONLY.equals(clientOptions.overrideBehaviour) && !isValidKey(sdkKey, clientOptions.isBaseURLCustom())) {
+            clientOptions.configCatHooks.invokeOnClientReady(ClientReadyState.NO_FLAG_DATA);
             throw new IllegalArgumentException("SDK Key '" + sdkKey + "' is invalid.");
         }
 

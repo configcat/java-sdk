@@ -69,6 +69,8 @@ public class ConfigService implements Closeable {
             }, autoPollingMode.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
 
         } else {
+            // Sync up with cache before reporting ready state
+            cachedEntry = readCache();
             setInitialized();
         }
     }
@@ -194,7 +196,6 @@ public class ConfigService implements Closeable {
     private void processResponse(FetchResponse response) {
         lock.lock();
         try {
-            setInitialized();
             if (response.isFetched()) {
                 Entry entry = response.entry();
                 cachedEntry = entry;
@@ -210,6 +211,7 @@ public class ConfigService implements Closeable {
                         ? Result.error(response.error(), cachedEntry)
                         : Result.success(cachedEntry));
             }
+            setInitialized();
         } finally {
             lock.unlock();
         }
