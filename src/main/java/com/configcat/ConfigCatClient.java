@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -385,6 +386,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public ConfigCatHooks getHooks() {
         return this.configCatHooks;
+    }
+
+
+    @Override
+    public CompletableFuture<ClientReadyState> waitForReadyAsync() {
+        CompletableFuture<ClientReadyState> completableFuture = new CompletableFuture<>();
+        getHooks().addOnClientReady((completableFuture::complete));
+        return completableFuture;
     }
 
     @Override

@@ -254,4 +254,12 @@ public interface ConfigurationProvider extends Closeable {
      * @return the hooks object used for event subscription.
      */
     ConfigCatHooks getHooks();
+
+    /**
+     * Awaits for SDK initialization.
+     *
+     * @return the future which executes the wait for ready and return with the client state.
+     */
+    CompletableFuture<ClientReadyState> waitForReadyAsync();
+
 }

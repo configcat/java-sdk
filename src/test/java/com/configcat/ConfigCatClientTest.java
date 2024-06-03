@@ -14,6 +14,7 @@ import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -1011,5 +1012,27 @@ public class ConfigCatClientTest {
         server.shutdown();
         cl.close();
     }
+
+    @Test
+    void testWaitForReady() throws IOException, InterruptedException, ExecutionException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.autoPoll(2));
+            options.baseUrl(server.url("/").toString());
+        });
+
+        CompletableFuture<ClientReadyState> clientReadyStateCompletableFuture = cl.waitForReadyAsync();
+        if(clientReadyStateCompletableFuture.isDone()) {
+            assertEquals(clientReadyStateCompletableFuture.get(), ClientReadyState.HAS_UP_TO_DATE_FLAG_DATA);
+        }
+
+        server.shutdown();
+        cl.close();
+    }
+
 
 }

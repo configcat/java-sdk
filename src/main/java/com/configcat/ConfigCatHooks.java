@@ -3,10 +3,12 @@ package com.configcat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 public class ConfigCatHooks {
+    private final AtomicReference<ClientReadyState> clientReadyState = new AtomicReference<>(null);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
     private final List<Consumer<Map<String, Setting>>> onConfigChanged = new ArrayList<>();
     private final List<Consumer<ClientReadyState>> onClientReady = new ArrayList<>();
@@ -25,7 +27,11 @@ public class ConfigCatHooks {
     public void addOnClientReady(Consumer<ClientReadyState> callback) {
         lock.writeLock().lock();
         try {
-            this.onClientReady.add(callback);
+            if(clientReadyState.get() != null) {
+                callback.accept(clientReadyState.get());
+            } else {
+                this.onClientReady.add(callback);
+            }
         } finally {
             lock.writeLock().unlock();
         }
@@ -78,6 +84,7 @@ public class ConfigCatHooks {
     void invokeOnClientReady(ClientReadyState clientReadyState) {
         lock.readLock().lock();
         try {
+            this.clientReadyState.set(clientReadyState);
             for (Consumer<ClientReadyState> func : this.onClientReady) {
                 func.accept(clientReadyState);
             }
