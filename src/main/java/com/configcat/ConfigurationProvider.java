@@ -260,6 +260,6 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @return the future which executes the wait for ready and return with the client state.
      */
-    CompletableFuture<ClientReadyState> waitForReadyAsync();
+    CompletableFuture<ClientCacheState> waitForReadyAsync();
 
 }

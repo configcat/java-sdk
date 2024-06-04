@@ -3,7 +3,7 @@ package com.configcat;
 /**
  * Describes the Client state.
  */
-public enum ClientReadyState {
+public enum ClientCacheState {
     /**
      *  The SDK has no feature flag data neither from the cache nor from the ConfigCat CDN.
      */

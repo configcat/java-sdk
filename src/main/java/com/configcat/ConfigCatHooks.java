@@ -8,10 +8,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 public class ConfigCatHooks {
-    private final AtomicReference<ClientReadyState> clientReadyState = new AtomicReference<>(null);
+    private final AtomicReference<ClientCacheState> clientCacheState = new AtomicReference<>(null);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
     private final List<Consumer<Map<String, Setting>>> onConfigChanged = new ArrayList<>();
-    private final List<Consumer<ClientReadyState>> onClientReady = new ArrayList<>();
+    private final List<Consumer<ClientCacheState>> onClientReady = new ArrayList<>();
     private final List<Consumer<EvaluationDetails<Object>>> onFlagEvaluated = new ArrayList<>();
     private final List<Consumer<String>> onError = new ArrayList<>();
 
@@ -24,11 +24,11 @@ public class ConfigCatHooks {
      *
      * @param callback the method to call when the event fires.
      */
-    public void addOnClientReady(Consumer<ClientReadyState> callback) {
+    public void addOnClientReady(Consumer<ClientCacheState> callback) {
         lock.writeLock().lock();
         try {
-            if(clientReadyState.get() != null) {
-                callback.accept(clientReadyState.get());
+            if(clientCacheState.get() != null) {
+                callback.accept(clientCacheState.get());
             } else {
                 this.onClientReady.add(callback);
             }
@@ -81,12 +81,12 @@ public class ConfigCatHooks {
         }
     }
 
-    void invokeOnClientReady(ClientReadyState clientReadyState) {
+    void invokeOnClientReady(ClientCacheState clientCacheState) {
         lock.readLock().lock();
         try {
-            this.clientReadyState.set(clientReadyState);
-            for (Consumer<ClientReadyState> func : this.onClientReady) {
-                func.accept(clientReadyState);
+            this.clientCacheState.set(clientCacheState);
+            for (Consumer<ClientCacheState> func : this.onClientReady) {
+                func.accept(clientCacheState);
             }
         } finally {
             lock.readLock().unlock();

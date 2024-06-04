@@ -753,7 +753,7 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
-        AtomicReference<ClientReadyState> ready = new AtomicReference(null);
+        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
@@ -768,7 +768,7 @@ public class ConfigCatClientTest {
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertEquals(ClientReadyState.NO_FLAG_DATA, ready.get());
+        assertEquals(ClientCacheState.NO_FLAG_DATA, ready.get());
         assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
@@ -807,7 +807,7 @@ public class ConfigCatClientTest {
     @Test
     void testReadyHookManualPollWithCache() throws IOException {
 
-        AtomicReference<ClientReadyState> ready = new AtomicReference(null);
+        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
@@ -816,14 +816,14 @@ public class ConfigCatClientTest {
             options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
         });
 
-        assertEquals(ClientReadyState.HAS_CACHED_FLAG_DATA_ONLY, ready.get());
+        assertEquals(ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY, ready.get());
 
         cl.close();
     }
 
     @Test
     void testReadyHookLocalOnly() throws IOException {
-        AtomicReference<ClientReadyState> ready = new AtomicReference(null);
+        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
@@ -831,7 +831,7 @@ public class ConfigCatClientTest {
             options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
         });
 
-        assertEquals(ClientReadyState.HAS_LOCAL_OVERRIDE_FLAG_DATA_ONLY, ready.get());
+        assertEquals(ClientCacheState.HAS_LOCAL_OVERRIDE_FLAG_DATA_ONLY, ready.get());
 
         cl.close();
     }
@@ -845,7 +845,7 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
-        AtomicReference<ClientReadyState> ready = new AtomicReference(null);
+        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
@@ -861,7 +861,7 @@ public class ConfigCatClientTest {
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertEquals(ClientReadyState.HAS_UP_TO_DATE_FLAG_DATA, ready.get());
+        assertEquals(ClientCacheState.HAS_UP_TO_DATE_FLAG_DATA, ready.get());
         assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
@@ -1025,9 +1025,9 @@ public class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
         });
 
-        CompletableFuture<ClientReadyState> clientReadyStateCompletableFuture = cl.waitForReadyAsync();
+        CompletableFuture<ClientCacheState> clientReadyStateCompletableFuture = cl.waitForReadyAsync();
         if(clientReadyStateCompletableFuture.isDone()) {
-            assertEquals(clientReadyStateCompletableFuture.get(), ClientReadyState.HAS_UP_TO_DATE_FLAG_DATA);
+            assertEquals(clientReadyStateCompletableFuture.get(), ClientCacheState.HAS_UP_TO_DATE_FLAG_DATA);
         }
 
         server.shutdown();

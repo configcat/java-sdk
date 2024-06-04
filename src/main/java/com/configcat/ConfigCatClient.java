@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -58,7 +57,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             this.configService = new ConfigService(sdkKey, fetcher, options.pollingMode, options.cache, logger, options.offline, options.configCatHooks);
         } else {
-            configCatHooks.invokeOnClientReady(ClientReadyState.HAS_LOCAL_OVERRIDE_FLAG_DATA_ONLY);
+            configCatHooks.invokeOnClientReady(ClientCacheState.HAS_LOCAL_OVERRIDE_FLAG_DATA_ONLY);
         }
 
         this.defaultUser = options.defaultUser;
@@ -390,8 +389,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
 
     @Override
-    public CompletableFuture<ClientReadyState> waitForReadyAsync() {
-        CompletableFuture<ClientReadyState> completableFuture = new CompletableFuture<>();
+    public CompletableFuture<ClientCacheState> waitForReadyAsync() {
+        CompletableFuture<ClientCacheState> completableFuture = new CompletableFuture<>();
         getHooks().addOnClientReady((completableFuture::complete));
         return completableFuture;
     }
@@ -636,11 +635,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         if (sdkKey == null || sdkKey.isEmpty()) {
-            clientOptions.configCatHooks.invokeOnClientReady(ClientReadyState.NO_FLAG_DATA);
+            clientOptions.configCatHooks.invokeOnClientReady(ClientCacheState.NO_FLAG_DATA);
             throw new IllegalArgumentException("SDK Key cannot be null or empty.");
         }
         if (!OverrideBehaviour.LOCAL_ONLY.equals(clientOptions.overrideBehaviour) && !isValidKey(sdkKey, clientOptions.isBaseURLCustom())) {
-            clientOptions.configCatHooks.invokeOnClientReady(ClientReadyState.NO_FLAG_DATA);
+            clientOptions.configCatHooks.invokeOnClientReady(ClientCacheState.NO_FLAG_DATA);
             throw new IllegalArgumentException("SDK Key '" + sdkKey + "' is invalid.");
         }
 

@@ -58,7 +58,7 @@ public class ConfigService implements Closeable {
                 lock.lock();
                 try {
                     if (initialized.compareAndSet(false, true)) {
-                        this.configCatHooks.invokeOnClientReady(determineReadyState());
+                        this.configCatHooks.invokeOnClientReady(determineCacheState());
                         String message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
                         this.logger.warn(4200, message);
                         completeRunningTask(Result.error(message, cachedEntry));
@@ -77,7 +77,7 @@ public class ConfigService implements Closeable {
 
     private void setInitialized() {
         if (initialized.compareAndSet(false, true)) {
-            configCatHooks.invokeOnClientReady(determineReadyState());
+            configCatHooks.invokeOnClientReady(determineCacheState());
         }
     }
 
@@ -247,21 +247,21 @@ public class ConfigService implements Closeable {
         }
     }
 
-    private ClientReadyState determineReadyState(){
+    private ClientCacheState determineCacheState(){
         if(cachedEntry.isEmpty()) {
-            return ClientReadyState.NO_FLAG_DATA;
+            return ClientCacheState.NO_FLAG_DATA;
         }
         if(pollingMode instanceof ManualPollingMode) {
-            return ClientReadyState.HAS_CACHED_FLAG_DATA_ONLY;
+            return ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY;
         } else if(pollingMode instanceof LazyLoadingMode) {
             if(cachedEntry.isExpired(System.currentTimeMillis() - (((LazyLoadingMode)pollingMode).getCacheRefreshIntervalInSeconds() * 1000L))) {
-                return ClientReadyState.HAS_CACHED_FLAG_DATA_ONLY;
+                return ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY;
             }
         } else if(pollingMode instanceof AutoPollingMode) {
             if(cachedEntry.isExpired(System.currentTimeMillis() - (((AutoPollingMode)pollingMode).getAutoPollRateInSeconds() * 1000L))) {
-                return ClientReadyState.HAS_CACHED_FLAG_DATA_ONLY;
+                return ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY;
             }
         }
-        return ClientReadyState.HAS_UP_TO_DATE_FLAG_DATA;
+        return ClientCacheState.HAS_UP_TO_DATE_FLAG_DATA;
     }
 }
