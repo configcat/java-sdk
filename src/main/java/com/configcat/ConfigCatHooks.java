@@ -3,12 +3,15 @@ package com.configcat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 public class ConfigCatHooks {
+    private final AtomicReference<ClientCacheState> clientCacheState = new AtomicReference<>(null);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
     private final List<Consumer<Map<String, Setting>>> onConfigChanged = new ArrayList<>();
+    private final List<Consumer<ClientCacheState>> onClientReadyWithState = new ArrayList<>();
     private final List<Runnable> onClientReady = new ArrayList<>();
     private final List<Consumer<EvaluationDetails<Object>>> onFlagEvaluated = new ArrayList<>();
     private final List<Consumer<String>> onError = new ArrayList<>();
@@ -22,6 +25,29 @@ public class ConfigCatHooks {
      *
      * @param callback the method to call when the event fires.
      */
+    public void addOnClientReady(Consumer<ClientCacheState> callback) {
+        lock.writeLock().lock();
+        try {
+            if(clientCacheState.get() != null) {
+                callback.accept(clientCacheState.get());
+            } else {
+                this.onClientReadyWithState.add(callback);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Subscribes to the onReady event. This event is fired when the SDK reaches the ready state.
+     * If the SDK is configured with lazy load or manual polling it's considered ready right after instantiation.
+     * In case of auto polling, the ready state is reached when the SDK has a valid config.json loaded
+     * into memory either from cache or from HTTP. If the config couldn't be loaded neither from cache nor from HTTP the
+     * onReady event fires when the auto polling's maxInitWaitTimeInSeconds is reached.
+     *
+     * @param callback the method to call when the event fires.
+     */
+    @Deprecated
     public void addOnClientReady(Runnable callback) {
         lock.writeLock().lock();
         try {
@@ -75,9 +101,13 @@ public class ConfigCatHooks {
         }
     }
 
-    void invokeOnClientReady() {
+    void invokeOnClientReady(ClientCacheState clientCacheState) {
         lock.readLock().lock();
         try {
+            this.clientCacheState.set(clientCacheState);
+            for (Consumer<ClientCacheState> func : this.onClientReadyWithState) {
+                func.accept(clientCacheState);
+            }
             for (Runnable func : this.onClientReady) {
                 func.run();
             }

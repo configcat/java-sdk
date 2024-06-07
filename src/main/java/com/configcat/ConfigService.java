@@ -58,7 +58,7 @@ public class ConfigService implements Closeable {
                 lock.lock();
                 try {
                     if (initialized.compareAndSet(false, true)) {
-                        this.configCatHooks.invokeOnClientReady();
+                        this.configCatHooks.invokeOnClientReady(determineCacheState());
                         String message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
                         this.logger.warn(4200, message);
                         completeRunningTask(Result.error(message, cachedEntry));
@@ -69,13 +69,15 @@ public class ConfigService implements Closeable {
             }, autoPollingMode.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
 
         } else {
+            // Sync up with cache before reporting ready state
+            cachedEntry = readCache();
             setInitialized();
         }
     }
 
     private void setInitialized() {
         if (initialized.compareAndSet(false, true)) {
-            configCatHooks.invokeOnClientReady();
+            configCatHooks.invokeOnClientReady(determineCacheState());
         }
     }
 
@@ -128,7 +130,7 @@ public class ConfigService implements Closeable {
                 cachedEntry = fromCache;
             }
             // Cache isn't expired
-            if (cachedEntry.getFetchTime() > threshold) {
+            if (!cachedEntry.isExpired(threshold)) {
                 setInitialized();
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
@@ -194,7 +196,6 @@ public class ConfigService implements Closeable {
     private void processResponse(FetchResponse response) {
         lock.lock();
         try {
-            setInitialized();
             if (response.isFetched()) {
                 Entry entry = response.entry();
                 cachedEntry = entry;
@@ -210,6 +211,7 @@ public class ConfigService implements Closeable {
                         ? Result.error(response.error(), cachedEntry)
                         : Result.success(cachedEntry));
             }
+            setInitialized();
         } finally {
             lock.unlock();
         }
@@ -243,5 +245,23 @@ public class ConfigService implements Closeable {
         } catch (Exception e) {
             logger.error(2201, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_WRITE_ERROR, e);
         }
+    }
+
+    private ClientCacheState determineCacheState(){
+        if(cachedEntry.isEmpty()) {
+            return ClientCacheState.NO_FLAG_DATA;
+        }
+        if(pollingMode instanceof ManualPollingMode) {
+            return ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY;
+        } else if(pollingMode instanceof LazyLoadingMode) {
+            if(cachedEntry.isExpired(System.currentTimeMillis() - (((LazyLoadingMode)pollingMode).getCacheRefreshIntervalInSeconds() * 1000L))) {
+                return ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY;
+            }
+        } else if(pollingMode instanceof AutoPollingMode) {
+            if(cachedEntry.isExpired(System.currentTimeMillis() - (((AutoPollingMode)pollingMode).getAutoPollRateInSeconds() * 1000L))) {
+                return ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY;
+            }
+        }
+        return ClientCacheState.HAS_UP_TO_DATE_FLAG_DATA;
     }
 }
