@@ -40,7 +40,7 @@ public class User {
         }
     }
 
-    String getIdentifier() {
+    public String getIdentifier() {
         return this.identifier;
     }
 
@@ -53,7 +53,7 @@ public class User {
         return new Builder();
     }
 
-    Object getAttribute(String key) {
+    public Object getAttribute(String key) {
         if (key == null)
             throw new IllegalArgumentException("key is null or empty");
 
