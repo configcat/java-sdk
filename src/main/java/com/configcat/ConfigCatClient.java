@@ -28,7 +28,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private final LogLevel clientLogLevel;
 
     private ConfigCatClient(String sdkKey, Options options) {
-        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.configCatHooks);
+        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.configCatHooks, options.excludeLogEventIds);
         this.clientLogLevel = options.logLevel;
 
         this.sdkKey = sdkKey;
@@ -707,6 +707,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private User defaultUser;
         private boolean offline = false;
         private final ConfigCatHooks configCatHooks = new ConfigCatHooks();
+        private List<Integer> excludeLogEventIds;
 
 
         /**
@@ -811,6 +812,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
          */
         public ConfigCatHooks hooks() {
             return configCatHooks;
+        }
+
+        /**
+         * Set the exclude Log Event Ids.
+         */
+        public void excludeLogEventIds(List<Integer> excludeLogEventIds) {
+            this.excludeLogEventIds = excludeLogEventIds;
         }
 
         private boolean isBaseURLCustom() {
