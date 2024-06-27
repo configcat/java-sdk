@@ -3,8 +3,7 @@ package com.configcat;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Function;
 
 import static org.mockito.Mockito.*;
 
@@ -95,12 +94,9 @@ public class LoggerTests {
     public void excludeLogEvents() {
         Logger mockLogger = mock(Logger.class);
 
-        List<Integer> excludeEventIds = new ArrayList<>();
-        excludeEventIds.add(1001);
-        excludeEventIds.add(3001);
-        excludeEventIds.add(5001);
+        Function<FilterFunctionParameters, Boolean> filterLogFunction = configCatLoggerFilterFunction -> configCatLoggerFilterFunction.getEventId() == 1001 || configCatLoggerFilterFunction.getEventId() == 3001 || configCatLoggerFilterFunction.getEventId() == 5001;
 
-        ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.INFO, null, excludeEventIds);
+        ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.INFO, null, filterLogFunction);
 
         logger.debug("[0] debug");
         logger.info(5000, "info");

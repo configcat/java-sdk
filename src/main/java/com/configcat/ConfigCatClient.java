@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A client for handling configurations provided by ConfigCat.
@@ -28,7 +29,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private final LogLevel clientLogLevel;
 
     private ConfigCatClient(String sdkKey, Options options) {
-        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.configCatHooks, options.excludeLogEventIds);
+        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.configCatHooks, options.logFilterFunction);
         this.clientLogLevel = options.logLevel;
 
         this.sdkKey = sdkKey;
@@ -707,7 +708,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private User defaultUser;
         private boolean offline = false;
         private final ConfigCatHooks configCatHooks = new ConfigCatHooks();
-        private List<Integer> excludeLogEventIds;
+        private Function<FilterFunctionParameters, Boolean> logFilterFunction;
 
 
         /**
@@ -815,10 +816,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         /**
-         * Set the exclude Log Event Ids.
+         * Set the client's log filter callback function. When logFilterFunction returns true, the ConfigCatLogger skips the logging.
          */
-        public void excludeLogEventIds(List<Integer> excludeLogEventIds) {
-            this.excludeLogEventIds = excludeLogEventIds;
+        public void logFilterFunction(Function<FilterFunctionParameters, Boolean> logFilterFunction) {
+            this.logFilterFunction = logFilterFunction;
         }
 
         private boolean isBaseURLCustom() {
