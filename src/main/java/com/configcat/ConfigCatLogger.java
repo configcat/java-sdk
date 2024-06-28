@@ -2,8 +2,6 @@ package com.configcat;
 
 import org.slf4j.Logger;
 
-import java.util.function.Function;
-
 class ConfigCatLogger {
     private final Logger logger;
     private final LogLevel logLevel;

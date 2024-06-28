@@ -3,8 +3,6 @@ package com.configcat;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
-import java.util.function.Function;
-
 import static org.mockito.Mockito.*;
 
 public class LoggerTests {
