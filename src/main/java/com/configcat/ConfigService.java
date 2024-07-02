@@ -123,7 +123,7 @@ public class ConfigService implements Closeable {
     private CompletableFuture<Result<Entry>> fetchIfOlder(long threshold, boolean preferCached) {
         // Sync up with the cache and use it when it's not expired.
         Entry fromCache = readCache();
-        if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.get().getETag())) {
+        if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.get().getETag()) && fromCache.getFetchTime() > cachedEntry.get().getFetchTime()) {
             configCatHooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
             cachedEntry.set(fromCache);
         }
