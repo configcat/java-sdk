@@ -92,7 +92,7 @@ public class LoggerTests {
     public void excludeLogEvents() {
         Logger mockLogger = mock(Logger.class);
 
-        LogFilterFunction filterLogFunction = (int eventId, LogLevel logLevel , String message, Throwable exception) -> eventId != 1001 && eventId != 3001 && eventId != 5001;
+        LogFilterFunction filterLogFunction = ( LogLevel logLevel, int eventId, String message, Throwable exception) -> eventId != 1001 && eventId != 3001 && eventId != 5001;
 
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.INFO, null, filterLogFunction);
 
