@@ -4,7 +4,7 @@ package com.configcat;
  * The Log Filter Functional Interface provides a custom filter option for the ConfigCat Logger.
  */
 @FunctionalInterface
-interface LogFilterFunction {
+public interface LogFilterFunction {
 
     /**
      * Apply the custom filter option to the ConfigCatLogger.
