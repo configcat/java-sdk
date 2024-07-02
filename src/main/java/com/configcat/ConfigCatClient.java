@@ -815,7 +815,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         /**
-         * Set the client's log filter callback function. When logFilterFunction returns true, the ConfigCatLogger skips the logging.
+         * Set the client's log filter callback function. When logFilterFunction returns false, the ConfigCatLogger skips the log event.
          */
         public void logFilter(LogFilterFunction logFilter) {
             this.logFilter = logFilter;
