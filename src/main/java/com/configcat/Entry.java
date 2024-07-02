@@ -3,7 +3,7 @@ package com.configcat;
 public class Entry {
     private final Config config;
     private final String eTag;
-    private final String configJson;
+    private final String cacheString;
     private final long fetchTime;
 
     public Config getConfig() {
@@ -18,12 +18,22 @@ public class Entry {
         return fetchTime;
     }
 
-    public String getConfigJson() {
-        return configJson;
+    public String getCacheString() {
+        return cacheString;
     }
 
     public Entry withFetchTime(long fetchTime) {
-        return new Entry(getConfig(), getETag(), getConfigJson(), fetchTime);
+        String cacheString = getCacheString();
+        int fetchTimeIndex = cacheString.indexOf("\n");
+        if (fetchTimeIndex == -1) {
+            return this;
+        }
+        int eTagIndex = cacheString.indexOf("\n", fetchTimeIndex + 1);
+        if (eTagIndex == -1) {
+            return this;
+        }
+        String configJson = cacheString.substring(eTagIndex + 1);
+        return new Entry(getConfig(), getETag(), configJson, fetchTime);
     }
 
     public boolean isExpired(long threshold) {
@@ -32,7 +42,7 @@ public class Entry {
     public Entry(Config config, String eTag, String configJson, long fetchTime) {
         this.config = config;
         this.eTag = eTag;
-        this.configJson = configJson;
+        this.cacheString = serialize(fetchTime, eTag, configJson);
         this.fetchTime = fetchTime;
     }
 
@@ -42,8 +52,8 @@ public class Entry {
 
     public static final Entry EMPTY = new Entry(Config.EMPTY, "", "", Constants.DISTANT_PAST);
 
-    public String serialize() {
-        return getFetchTime() + "\n" + getETag() + "\n" + getConfigJson();
+    private static String serialize(long fetchTime, String etag, String configJson) {
+        return fetchTime + "\n" + etag + "\n" + configJson;
     }
 
     public static Entry fromString(String cacheValue) throws IllegalArgumentException {
