@@ -10,14 +10,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ConfigService implements Closeable {
 
     private static final String CACHE_BASE = "%s_" + Constants.CONFIG_JSON_NAME + "_" + Constants.SERIALIZATION_FORMAT_VERSION;
 
-    private Entry cachedEntry = Entry.EMPTY;
-    private String cachedEntryString = "";
+    private final AtomicReference<Entry> cachedEntry = new AtomicReference<>(Entry.EMPTY);
     private final ConfigCache cache;
     private final String cacheKey;
     private final ConfigFetcher configFetcher;
@@ -55,29 +55,29 @@ public class ConfigService implements Closeable {
 
             this.initScheduler = Executors.newSingleThreadScheduledExecutor();
             this.initScheduler.schedule(() -> {
-                lock.lock();
-                try {
-                    if (initialized.compareAndSet(false, true)) {
-                        this.configCatHooks.invokeOnClientReady(determineCacheState());
+                if (initialized.compareAndSet(false, true)) {
+                    lock.lock();
+                    try {
+                        this.configCatHooks.invokeOnClientReady(determineCacheState(cachedEntry.get()));
                         String message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
                         this.logger.warn(4200, message);
-                        completeRunningTask(Result.error(message, cachedEntry));
+                        completeRunningTask(Result.error(message, cachedEntry.get()));
+                    } finally {
+                        lock.unlock();
                     }
-                } finally {
-                    lock.unlock();
                 }
             }, autoPollingMode.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
 
         } else {
             // Sync up with cache before reporting ready state
-            cachedEntry = readCache();
+            cachedEntry.set(readCache());
             setInitialized();
         }
     }
 
     private void setInitialized() {
         if (initialized.compareAndSet(false, true)) {
-            configCatHooks.invokeOnClientReady(determineCacheState());
+            configCatHooks.invokeOnClientReady(determineCacheState(cachedEntry.get()));
         }
     }
 
@@ -121,27 +121,27 @@ public class ConfigService implements Closeable {
     }
 
     private CompletableFuture<Result<Entry>> fetchIfOlder(long threshold, boolean preferCached) {
+        // Sync up with the cache and use it when it's not expired.
+        Entry fromCache = readCache();
+        if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.get().getETag()) && fromCache.getFetchTime() > cachedEntry.get().getFetchTime()) {
+            configCatHooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
+            cachedEntry.set(fromCache);
+        }
+        // Cache isn't expired
+        if (cachedEntry.get().getFetchTime() > threshold) {
+            setInitialized();
+            return CompletableFuture.completedFuture(Result.success(cachedEntry.get()));
+        }
+        // If we are in offline mode or the caller prefers cached values, do not initiate fetch.
+        if (offline.get() || preferCached) {
+            return CompletableFuture.completedFuture(Result.success(cachedEntry.get()));
+        }
+
         lock.lock();
         try {
-            // Sync up with the cache and use it when it's not expired.
-            Entry fromCache = readCache();
-            if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.getETag())) {
-                configCatHooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
-                cachedEntry = fromCache;
-            }
-            // Cache isn't expired
-            if (!cachedEntry.isExpired(threshold)) {
-                setInitialized();
-                return CompletableFuture.completedFuture(Result.success(cachedEntry));
-            }
-            // If we are in offline mode or the caller prefers cached values, do not initiate fetch.
-            if (offline.get() || preferCached) {
-                return CompletableFuture.completedFuture(Result.success(cachedEntry));
-            }
-
             if (runningTask == null) { // No fetch is running, initiate a new one.
                 runningTask = new CompletableFuture<>();
-                configFetcher.fetchAsync(cachedEntry.getETag())
+                configFetcher.fetchAsync(cachedEntry.get().getETag())
                         .thenAccept(this::processResponse);
             }
 
@@ -194,22 +194,23 @@ public class ConfigService implements Closeable {
     }
 
     private void processResponse(FetchResponse response) {
+        Entry previousEntry = cachedEntry.get();
         lock.lock();
         try {
             if (response.isFetched()) {
                 Entry entry = response.entry();
-                cachedEntry = entry;
+                cachedEntry.set(entry);
                 writeCache(entry);
                 configCatHooks.invokeOnConfigChanged(entry.getConfig().getEntries());
                 completeRunningTask(Result.success(entry));
             } else {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
-                    writeCache(cachedEntry);
+                    cachedEntry.set(previousEntry.withFetchTime(System.currentTimeMillis()));
+                    writeCache(cachedEntry.get());
                 }
                 completeRunningTask(response.isFailed()
-                        ? Result.error(response.error(), cachedEntry)
-                        : Result.success(cachedEntry));
+                        ? Result.error(response.error(), cachedEntry.get())
+                        : Result.success(cachedEntry.get()));
             }
             setInitialized();
         } finally {
@@ -225,10 +226,9 @@ public class ConfigService implements Closeable {
     private Entry readCache() {
         try {
             String cachedConfigJson = cache.read(cacheKey);
-            if (cachedConfigJson != null && cachedConfigJson.equals(cachedEntryString)) {
+            if (cachedConfigJson != null && cachedConfigJson.equals(cachedEntry.get().getCacheString())) {
                 return Entry.EMPTY;
             }
-            cachedEntryString = cachedConfigJson;
             Entry deserialized = Entry.fromString(cachedConfigJson);
             return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
@@ -239,26 +239,24 @@ public class ConfigService implements Closeable {
 
     private void writeCache(Entry entry) {
         try {
-            String configToCache = entry.serialize();
-            cachedEntryString = configToCache;
-            cache.write(cacheKey, configToCache);
+            cache.write(cacheKey, entry.getCacheString());
         } catch (Exception e) {
             logger.error(2201, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_WRITE_ERROR, e);
         }
     }
 
-    private ClientCacheState determineCacheState(){
-        if(cachedEntry.isEmpty()) {
+    private ClientCacheState determineCacheState(Entry cachedEntry) {
+        if (cachedEntry.isEmpty()) {
             return ClientCacheState.NO_FLAG_DATA;
         }
-        if(pollingMode instanceof ManualPollingMode) {
+        if (pollingMode instanceof ManualPollingMode) {
             return ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY;
-        } else if(pollingMode instanceof LazyLoadingMode) {
-            if(cachedEntry.isExpired(System.currentTimeMillis() - (((LazyLoadingMode)pollingMode).getCacheRefreshIntervalInSeconds() * 1000L))) {
+        } else if (pollingMode instanceof LazyLoadingMode) {
+            if (cachedEntry.isExpired(System.currentTimeMillis() - (((LazyLoadingMode) pollingMode).getCacheRefreshIntervalInSeconds() * 1000L))) {
                 return ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY;
             }
-        } else if(pollingMode instanceof AutoPollingMode) {
-            if(cachedEntry.isExpired(System.currentTimeMillis() - (((AutoPollingMode)pollingMode).getAutoPollRateInSeconds() * 1000L))) {
+        } else if (pollingMode instanceof AutoPollingMode) {
+            if (cachedEntry.isExpired(System.currentTimeMillis() - (((AutoPollingMode) pollingMode).getAutoPollRateInSeconds() * 1000L))) {
                 return ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY;
             }
         }
