@@ -28,7 +28,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private final LogLevel clientLogLevel;
 
     private ConfigCatClient(String sdkKey, Options options) {
-        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.configCatHooks);
+        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.configCatHooks, options.logFilter);
         this.clientLogLevel = options.logLevel;
 
         this.sdkKey = sdkKey;
@@ -707,6 +707,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private User defaultUser;
         private boolean offline = false;
         private final ConfigCatHooks configCatHooks = new ConfigCatHooks();
+        private LogFilterFunction logFilter;
 
 
         /**
@@ -811,6 +812,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
          */
         public ConfigCatHooks hooks() {
             return configCatHooks;
+        }
+
+        /**
+         * Set the client's log filter callback function. When logFilterFunction returns false, the ConfigCatLogger skips the log event.
+         */
+        public void logFilter(LogFilterFunction logFilter) {
+            this.logFilter = logFilter;
         }
 
         private boolean isBaseURLCustom() {
