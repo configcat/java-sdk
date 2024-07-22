@@ -11,9 +11,9 @@ public interface LogFilterFunction {
      *
      * @param logLevel  Event severity level.
      * @param eventId  Event identifier.
-     * @param message Message.
+     * @param message Message object.
      * @param exception The exception object related to the message (if any).
      * @return True to log the event, false will leave out the log.
      */
-     boolean apply(LogLevel logLevel, int eventId, String message, Throwable exception);
+     boolean apply(LogLevel logLevel, int eventId, Object message, Throwable exception);
 }

@@ -5,9 +5,9 @@ package com.configcat;
  */
 public class RefreshResult {
     private final boolean success;
-    private final String error;
+    private final Object error;
 
-    RefreshResult(boolean success, String error) {
+    RefreshResult(boolean success, Object error) {
         this.success = success;
         this.error = error;
     }
@@ -17,6 +17,9 @@ public class RefreshResult {
     }
 
     public String error() {
-        return error;
+        if(error !=  null) {
+            return error.toString();
+        }
+        return null;
     }
 }
