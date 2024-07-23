@@ -75,7 +75,7 @@ final class ConfigCatLogMessages {
      * @return The formattable log message.
      */
     public static FormattableLogMessage getSettingEvaluationFailedDueToMissingKey(final String key, final String defaultParamName, final Object defaultParamValue, final Set<String> availableKeysSet) {
-        return new FormattableLogMessageWithKeySet("Failed to evaluate setting '%s' (the key was not found in config JSON). Returning the `%s` parameter that you specified in your application: '%s'. Available keys: [%s].",  availableKeysSet, key, defaultParamName, defaultParamValue);
+        return new FormattableLogMessageWithKeySet("Failed to evaluate setting '%s' (the key was not found in config JSON). Returning the `%s` parameter that you specified in your application: '%s'. Available keys: [%s].", key, defaultParamName, defaultParamValue, availableKeysSet);
     }
 
     /**

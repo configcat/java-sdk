@@ -1,25 +1,27 @@
 package com.configcat;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 class FormattableLogMessageWithUserCondition extends FormattableLogMessage {
 
     private String cachedMessage;
     private final String message;
     private final Object[] args;
-    private final UserCondition userCondition;
 
-    FormattableLogMessageWithUserCondition(String message, UserCondition userCondition, Object... args) {
+    FormattableLogMessageWithUserCondition(String message, Object... args) {
         super(message,args);
         this.message = message;
         this.args = args;
-        this.userCondition = userCondition;
     }
 
     @Override
     public String formatLogMessage() {
-        final int argsLength = args.length;
-        Object[] newArgs = new Object[argsLength + 1];
-        System.arraycopy(args, 0, newArgs, 1, argsLength);
-        newArgs[0] = EvaluateLogger.formatUserCondition(userCondition);
-        return String.format(message, newArgs);
+        Object userConditionObject = args[0];
+        if(userConditionObject instanceof UserCondition) {
+            UserCondition userCondition = (UserCondition) userConditionObject;
+            args[0] = EvaluateLogger.formatUserCondition(userCondition);
+        }
+        return String.format(message, args);
     }
 }
