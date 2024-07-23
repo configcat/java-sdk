@@ -1,6 +1,6 @@
 package com.configcat;
 
-public class FormattableLogMessage {
+class FormattableLogMessage {
 
     private String cachedMessage;
     private final String message;
@@ -11,8 +11,7 @@ public class FormattableLogMessage {
         this.args = args;
     }
 
-
-    private String formatLogMessage(){
+    public String formatLogMessage(){
         return String.format(message, args);
     }
 

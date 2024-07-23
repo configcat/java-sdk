@@ -75,7 +75,7 @@ final class ConfigCatLogMessages {
      * @return The formattable log message.
      */
     public static FormattableLogMessage getSettingEvaluationFailedDueToMissingKey(final String key, final String defaultParamName, final Object defaultParamValue, final Set<String> availableKeysSet) {
-        return new FormattableLogMessage("Failed to evaluate setting '%s' (the key was not found in config JSON). Returning the `%s` parameter that you specified in your application: '%s'. Available keys: [%s].",key, defaultParamName, defaultParamValue,availableKeysSet.stream().map(keyTo -> "'" + keyTo + "'").collect(Collectors.joining(", ")));
+        return new FormattableLogMessageWithKeySet("Failed to evaluate setting '%s' (the key was not found in config JSON). Returning the `%s` parameter that you specified in your application: '%s'. Available keys: [%s].",  availableKeysSet, key, defaultParamName, defaultParamValue);
     }
 
     /**
@@ -206,7 +206,7 @@ final class ConfigCatLogMessages {
      * @return The formattable log message.
      */
     public static FormattableLogMessage getUserAttributeMissing(final String key, final UserCondition userCondition, final String attributeName) {
-        return new FormattableLogMessage("Cannot evaluate condition (%s) for setting '%s' (the User.%s attribute is missing). You should set the User.%s attribute in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/", EvaluateLogger.formatUserCondition(userCondition), key, attributeName, attributeName);
+        return new FormattableLogMessageWithUserCondition("Cannot evaluate condition (%s) for setting '%s' (the User.%s attribute is missing). You should set the User.%s attribute in order to make targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/", userCondition, key, attributeName, attributeName);
     }
 
     /**
@@ -230,7 +230,7 @@ final class ConfigCatLogMessages {
      * @return The formattable log message.
      */
     public static FormattableLogMessage getUserAttributeInvalid(final String key, final UserCondition userCondition, final String reason, final String attributeName) {
-        return new FormattableLogMessage("Cannot evaluate condition (%s) for setting '%s' (%s). Please check the User.%s attribute and make sure that its value corresponds to the comparison operator.", EvaluateLogger.formatUserCondition(userCondition), key, reason, attributeName);
+        return new FormattableLogMessageWithUserCondition("Cannot evaluate condition (%s) for setting '%s' (%s). Please check the User.%s attribute and make sure that its value corresponds to the comparison operator.", userCondition, key, reason, attributeName);
     }
 
 
@@ -244,7 +244,7 @@ final class ConfigCatLogMessages {
      * @return The formattable log message.
      */
     public static FormattableLogMessage getUserObjectAttributeIsAutoConverted(String key, UserCondition userCondition, String attributeName, String attributeValue) {
-        return new FormattableLogMessage("Evaluation of condition (%s) for setting '%s' may not produce the expected result (the User.%s attribute is not a string value, thus it was automatically converted to the string value '%s'). Please make sure that using a non-string value was intended.", EvaluateLogger.formatUserCondition(userCondition), key, attributeName, attributeValue);
+        return new FormattableLogMessageWithUserCondition("Evaluation of condition (%s) for setting '%s' may not produce the expected result (the User.%s attribute is not a string value, thus it was automatically converted to the string value '%s'). Please make sure that using a non-string value was intended.", userCondition, key, attributeName, attributeValue);
     }
 
     /**
