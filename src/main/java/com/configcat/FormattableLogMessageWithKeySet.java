@@ -5,13 +5,8 @@ import java.util.stream.Collectors;
 
 class FormattableLogMessageWithKeySet extends FormattableLogMessage {
 
-    private final String message;
-    private final Object[] args;
-
     FormattableLogMessageWithKeySet(String message, Object... args) {
         super(message,args);
-        this.message = message;
-        this.args = args;
     }
 
     @Override

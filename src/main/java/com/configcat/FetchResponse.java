@@ -32,11 +32,8 @@ class FetchResponse {
         return this.entry;
     }
 
-    public String error() {
-        if(error !=  null) {
-            return error.toString();
-        }
-        return null;
+    public Object error() {
+       return error;
     }
 
     FetchResponse(Status status, Entry entry, Object error, boolean fetchTimeUpdatable) {

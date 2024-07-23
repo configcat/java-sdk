@@ -2,13 +2,8 @@ package com.configcat;
 
 class FormattableLogMessageWithUserCondition extends FormattableLogMessage {
 
-    private final String message;
-    private final Object[] args;
-
     FormattableLogMessageWithUserCondition(String message, Object... args) {
         super(message,args);
-        this.message = message;
-        this.args = args;
     }
 
     @Override
