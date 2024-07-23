@@ -1,11 +1,7 @@
 package com.configcat;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
 class FormattableLogMessageWithUserCondition extends FormattableLogMessage {
 
-    private String cachedMessage;
     private final String message;
     private final Object[] args;
 

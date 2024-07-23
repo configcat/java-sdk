@@ -1,7 +1,6 @@
 package com.configcat;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
 final class ConfigCatLogMessages {
 
