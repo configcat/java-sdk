@@ -7,7 +7,7 @@ class FormattableLogMessageWithUserCondition extends FormattableLogMessage {
     }
 
     @Override
-    public String formatLogMessage() {
+    protected String formatLogMessage() {
         Object userConditionObject = args[0];
         if(userConditionObject instanceof UserCondition) {
             UserCondition userCondition = (UserCondition) userConditionObject;

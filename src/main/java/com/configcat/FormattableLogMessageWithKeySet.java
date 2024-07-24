@@ -10,7 +10,7 @@ class FormattableLogMessageWithKeySet extends FormattableLogMessage {
     }
 
     @Override
-    public String formatLogMessage() {
+    protected String formatLogMessage() {
         Object keySetObject = args[args.length - 1];
         if(keySetObject instanceof Set) {
             Set<String> keySet = (Set<String>) keySetObject;
