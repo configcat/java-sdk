@@ -9,7 +9,7 @@ public class EvaluationDetails<T> {
     private final String variationId;
     private final User user;
     private final boolean isDefaultValue;
-    private final String error;
+    private final Object error;
     private final long fetchTimeUnixMilliseconds;
     private final TargetingRule matchedTargetingRule;
     private final PercentageOption matchedPercentageOption;
@@ -19,7 +19,7 @@ public class EvaluationDetails<T> {
                              String variationId,
                              User user,
                              boolean isDefaultValue,
-                             String error,
+                             Object error,
                              long fetchTimeUnixMilliseconds,
                              TargetingRule matchedTargetingRule,
                              PercentageOption matchedPercentageOption) {
@@ -34,7 +34,7 @@ public class EvaluationDetails<T> {
         this.matchedPercentageOption = matchedPercentageOption;
     }
 
-    static <T> EvaluationDetails<T> fromError(String key, T defaultValue, String error, User user) {
+    static <T> EvaluationDetails<T> fromError(String key, T defaultValue, Object error, User user) {
         return new EvaluationDetails<>(defaultValue, key, "", user, true, error, Constants.DISTANT_PAST, null, null);
     }
 
@@ -81,7 +81,10 @@ public class EvaluationDetails<T> {
      * In case of an error, this field contains the error message.
      */
     public String getError() {
-        return error;
+        if(error !=  null) {
+            return error.toString();
+        }
+        return null;
     }
 
     /**

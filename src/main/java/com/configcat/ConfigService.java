@@ -59,9 +59,9 @@ public class ConfigService implements Closeable {
                     lock.lock();
                     try {
                         this.configCatHooks.invokeOnClientReady(determineCacheState(cachedEntry.get()));
-                        String message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
-                        this.logger.warn(4200, message);
-                        completeRunningTask(Result.error(message, cachedEntry.get()));
+                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
+                        this.logger.warn(4200, formattableLogMessage);
+                        completeRunningTask(Result.error(formattableLogMessage, cachedEntry.get()));
                     } finally {
                         lock.unlock();
                     }

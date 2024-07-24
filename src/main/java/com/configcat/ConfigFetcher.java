@@ -98,7 +98,7 @@ class ConfigFetcher implements Closeable {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 int logEventId = 1103;
-                String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
+                Object message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                 if (!isClosed.get()) {
                     if (e instanceof SocketTimeoutException) {
                         logEventId = 1102;
@@ -130,14 +130,14 @@ class ConfigFetcher implements Closeable {
                         logger.error(1100, message);
                         future.complete(FetchResponse.failed(message, true));
                     } else {
-                        String message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message());
-                        logger.error(1101, message);
-                        future.complete(FetchResponse.failed(message, false));
+                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message());
+                        logger.error(1101, formattableLogMessage);
+                        future.complete(FetchResponse.failed(formattableLogMessage, false));
                     }
                 } catch (SocketTimeoutException e) {
-                    String message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
-                    logger.error(1102, message, e);
-                    future.complete(FetchResponse.failed(message, false));
+                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
+                    logger.error(1102, formattableLogMessage, e);
+                    future.complete(FetchResponse.failed(formattableLogMessage, false));
                 } catch (Exception e) {
                     String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                     logger.error(1103, message, e);

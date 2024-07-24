@@ -480,17 +480,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     private <T> Result<Setting> checkSettingAvailable(SettingResult settingResult, String key, T defaultValue) {
         if (settingResult.isEmpty()) {
-            String errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultValue", defaultValue);
-            this.logger.error(1000, errorMessage);
-            return Result.error(errorMessage, null);
+            Object formattableLogMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultValue", defaultValue);
+            this.logger.error(1000, formattableLogMessage);
+            return Result.error(formattableLogMessage, null);
         }
 
         Map<String, Setting> settings = settingResult.settings();
         Setting setting = settings.get(key);
         if (setting == null) {
-            String errorMessage = ConfigCatLogMessages.getSettingEvaluationFailedDueToMissingKey(key, "defaultValue", defaultValue, settings.keySet());
-            this.logger.error(1001, errorMessage);
-            return Result.error(errorMessage, null);
+            FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getSettingEvaluationFailedDueToMissingKey(key, "defaultValue", defaultValue, settings.keySet());
+            this.logger.error(1001, formattableLogMessage);
+            return Result.error(formattableLogMessage, null);
         }
 
         return Result.success(setting);
@@ -506,9 +506,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             return this.evaluate(classOfT, checkSettingResult.value(), key, getEvaluateUser(user), settingResult.fetchTime(), settingResult.settings()).getValue();
         } catch (Exception e) {
-            String errorMessage = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
-            this.logger.error(2001, errorMessage, e);
-            this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, errorMessage + " " + e.getMessage(), user));
+            FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
+            this.logger.error(2001, formattableLogMessage, e);
+            this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, formattableLogMessage + " " + e.getMessage(), user));
             return defaultValue;
         }
     }

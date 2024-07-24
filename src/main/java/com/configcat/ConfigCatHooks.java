@@ -116,11 +116,14 @@ public class ConfigCatHooks {
         }
     }
 
-    void invokeOnError(String error) {
+    void invokeOnError(Object error) {
         lock.readLock().lock();
         try {
-            for (Consumer<String> func : this.onError) {
-                func.accept(error);
+            if(!this.onError.isEmpty()) {
+                String errorMessage = error.toString();
+                for (Consumer<String> func : this.onError) {
+                    func.accept(errorMessage);
+                }
             }
         } finally {
             lock.readLock().unlock();

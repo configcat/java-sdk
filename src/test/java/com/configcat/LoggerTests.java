@@ -92,7 +92,7 @@ public class LoggerTests {
     public void excludeLogEvents() {
         Logger mockLogger = mock(Logger.class);
 
-        LogFilterFunction filterLogFunction = ( LogLevel logLevel, int eventId, String message, Throwable exception) -> eventId != 1001 && eventId != 3001 && eventId != 5001;
+        LogFilterFunction filterLogFunction = ( LogLevel logLevel, int eventId, Object message, Throwable exception) -> eventId != 1001 && eventId != 3001 && eventId != 5001 && !message.toString().contains("error");
 
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.INFO, null, filterLogFunction);
 
@@ -107,7 +107,7 @@ public class LoggerTests {
         verify(mockLogger, never()).debug(anyString(), eq(0), eq("debug"));
         verify(mockLogger, times(1)).info(anyString(), eq(5000), eq("info"));
         verify(mockLogger, times(1)).warn(anyString(), eq(3000), eq("warn"));
-        verify(mockLogger, times(1)).error(anyString(), eq(1000), eq("error"), any(Exception.class));
+        verify(mockLogger, never()).error(anyString(), eq(1000), eq("error"), any(Exception.class));
         verify(mockLogger, never()).info(anyString(), eq(5001), eq("info"));
         verify(mockLogger, never()).warn(anyString(), eq(3001), eq("warn"));
         verify(mockLogger, never()).error(anyString(), eq(1001), eq("error"), any(Exception.class));
