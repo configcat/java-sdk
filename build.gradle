@@ -30,7 +30,7 @@ repositories {
 }
 
 dependencies {
-    api 'com.squareup.okhttp3:okhttp:4.11.0'
+    api 'com.squareup.okhttp3:okhttp:4.12.0'
     api 'com.squareup.okio:okio:3.4.0' // indirect dependency to solve security vulnerability in 3.2.0
     api 'org.slf4j:slf4j-api:1.7.36'
     api 'com.google.code.gson:gson:2.9.0'
