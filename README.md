@@ -1,18 +1,12 @@
 # ConfigCat SDK for Java
-https://configcat.com
-
-ConfigCat SDK for Java provides easy integration for your application to ConfigCat.
-
-ConfigCat is a feature flag and configuration management service that lets you separate feature releases from code deployments. You can turn features ON or OFF using the <a href="http://app.configcat.com" target="_blank">ConfigCat Dashboard</a> even after they are deployed. ConfigCat lets you target specific groups of users based on region, email, or any other custom user attribute.
-
-ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature flag service</a> that lets you manage feature toggles across frontend, backend, mobile, and desktop apps. <a href="https://configcat.com" target="_blank">Alternative to LaunchDarkly</a>. Management app + feature flag SDKs.
-
 [![Java CI](https://github.com/configcat/java-sdk/actions/workflows/java-ci.yml/badge.svg?branch=master)](https://github.com/configcat/java-sdk/actions/workflows/java-ci.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/com.configcat/configcat-java-client)](https://central.sonatype.com/artifact/com.configcat/configcat-java-client)
 [![Javadocs](http://javadoc.io/badge/com.configcat/configcat-java-client.svg)](http://javadoc.io/doc/com.configcat/configcat-java-client)
 [![Coverage Status](https://img.shields.io/sonar/coverage/configcat_java-sdk?logo=SonarCloud&server=https%3A%2F%2Fsonarcloud.io)](https://sonarcloud.io/project/overview?id=configcat_java-sdk)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=configcat_java-sdk&metric=alert_status)](https://sonarcloud.io/dashboard?id=configcat_java-sdk)
 ![License](https://img.shields.io/github/license/configcat/java-sdk.svg)
+
+ConfigCat SDK for Java provides easy integration for your application to [ConfigCat](https://configcat.com).
 
 ## Getting started
 
@@ -104,6 +98,10 @@ If you need help using this SDK, feel free to contact the ConfigCat Staff at [ht
 Contributions are welcome. For more info please read the [Contribution Guideline](CONTRIBUTING.md).
 
 ## About ConfigCat
+ConfigCat is a feature flag and configuration management service that lets you separate feature releases from code deployments. You can turn features ON/OFF using the <a href="http://app.configcat.com" target="_blank">ConfigCat Dashboard</a> even after they are deployed. ConfigCat lets you target specific groups of users based on region, email, or any other custom user attribute.
+
+ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature flag service</a> that lets you manage feature toggles across frontend, backend, mobile, and desktop apps. <a href="https://configcat.com" target="_blank">Alternative to LaunchDarkly</a>. Management app + feature flag SDKs.
+
 - [Official ConfigCat SDKs for other platforms](https://github.com/configcat)
 - [Documentation](https://configcat.com/docs)
 - [Blog](https://configcat.com/blog)
