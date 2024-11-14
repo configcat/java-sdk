@@ -114,12 +114,3 @@ jobs:
         ORG_GRADLE_PROJECT_OSSRH_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
         ORG_GRADLE_PROJECT_SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
         ORG_GRADLE_PROJECT_SIGNING_PASSPHRASE: ${{ secrets.PASSPHRASE }}
-
-  # Prevent GitHub from suspending your cronjob based triggers due to repository inactivity
-  keepalive:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: gautamkrishnar/keepalive-workflow@v2
