@@ -1,5 +1,8 @@
 package com.configcat;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 class FormattableLogMessage {
 
     private String cachedMessage;
@@ -29,5 +32,10 @@ class FormattableLogMessage {
             return toString().equals(obj.toString());
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(cachedMessage, message, Arrays.hashCode(args));
     }
 }
