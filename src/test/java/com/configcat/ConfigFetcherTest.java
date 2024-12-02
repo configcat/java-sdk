@@ -174,8 +174,6 @@ public class ConfigFetcherTest {
         fetch.close();
     }
 
-    // TODO add other test as well? for not modify, and for 1105 as well
-
     @Test
     public void fetchedFail403ContainsCFRAY() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(403).setBody(TEST_JSON).setHeader("ETag", "fakeETag").setHeader("CF-RAY", "12345"));
