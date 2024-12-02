@@ -22,4 +22,12 @@ class FormattableLogMessage {
         }
         return cachedMessage;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof FormattableLogMessage) {
+            return toString().equals(obj.toString());
+        }
+        return false;
+    }
 }

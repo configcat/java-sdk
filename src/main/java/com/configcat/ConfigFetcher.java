@@ -82,7 +82,7 @@ class ConfigFetcher implements Closeable {
                 }
 
             } catch (Exception exception) {
-                this.logger.error(1103, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR, exception);
+                this.logger.error(1103, ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(null), exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
 
@@ -98,11 +98,11 @@ class ConfigFetcher implements Closeable {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 int logEventId = 1103;
-                Object message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
+                Object message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(null);
                 if (!isClosed.get()) {
                     if (e instanceof SocketTimeoutException) {
                         logEventId = 1102;
-                        message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
+                        message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), null);
                     }
                     logger.error(logEventId, message, e);
                 }
@@ -111,11 +111,12 @@ class ConfigFetcher implements Closeable {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
+                String cfRayId = response.header("CF-RAY");
                 try (ResponseBody body = response.body()) {
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
-                        Result<Config> result = deserializeConfig(content);
+                        Result<Config> result = deserializeConfig(content, cfRayId);
                         if (result.error() != null) {
                             future.complete(FetchResponse.failed(result.error(), false));
                             return;
@@ -123,23 +124,27 @@ class ConfigFetcher implements Closeable {
                         logger.debug("Fetch was successful: new config fetched.");
                         future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, content, System.currentTimeMillis())));
                     } else if (response.code() == 304) {
-                        logger.debug("Fetch was successful: config not modified.");
+                        if(cfRayId != null) {
+                            logger.debug(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId)));
+                        } else {
+                            logger.debug("Fetch was successful: config not modified.");
+                        }
                         future.complete(FetchResponse.notModified());
                     } else if (response.code() == 403 || response.code() == 404) {
-                        String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_INVALID_SDK_KEY_ERROR;
+                        FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);
                         logger.error(1100, message);
                         future.complete(FetchResponse.failed(message, true));
                     } else {
-                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message());
+                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message(), cfRayId);
                         logger.error(1101, formattableLogMessage);
                         future.complete(FetchResponse.failed(formattableLogMessage, false));
                     }
                 } catch (SocketTimeoutException e) {
-                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
+                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), cfRayId);
                     logger.error(1102, formattableLogMessage, e);
                     future.complete(FetchResponse.failed(formattableLogMessage, false));
                 } catch (Exception e) {
-                    String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
+                    FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
                     logger.error(1103, message, e);
                     future.complete(FetchResponse.failed(message, false));
                 }
@@ -175,11 +180,11 @@ class ConfigFetcher implements Closeable {
         return builder.url(url).build();
     }
 
-    private Result<Config> deserializeConfig(String json) {
+    private Result<Config> deserializeConfig(String json, String cfRayId) {
         try {
             return Result.success(Utils.deserializeConfig(json));
         } catch (Exception e) {
-            String message = ConfigCatLogMessages.FETCH_RECEIVED_200_WITH_INVALID_BODY_ERROR;
+            FormattableLogMessage message = ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError(cfRayId);
             this.logger.error(1105, message, e);
             return Result.error(message, null);
         }
