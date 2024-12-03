@@ -82,11 +82,11 @@ class ConfigFetcher implements Closeable {
                 }
 
             } catch (Exception exception) {
-                this.logger.error(1103, ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(null), exception);
+                this.logger.error(1103, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR, exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
 
-            this.logger.error(1104, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_REDIRECT_LOOP_ERROR);
+            this.logger.error(1104, ConfigCatLogMessages.getFetchFailedDueToRedirectLoop(fetchResponse.cfRayId()));
             return CompletableFuture.completedFuture(fetchResponse);
         });
     }
@@ -98,27 +98,27 @@ class ConfigFetcher implements Closeable {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 int logEventId = 1103;
-                Object message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(null);
+                Object message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                 if (!isClosed.get()) {
                     if (e instanceof SocketTimeoutException) {
                         logEventId = 1102;
-                        message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), null);
+                        message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
                     }
                     logger.error(logEventId, message, e);
                 }
-                future.complete(FetchResponse.failed(message, false));
+                future.complete(FetchResponse.failed(message, false, null));
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
-                String cfRayId = response.header("CF-RAY");
                 try (ResponseBody body = response.body()) {
+                    String cfRayId = response.header("CF-RAY");
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
                         Result<Config> result = deserializeConfig(content, cfRayId);
                         if (result.error() != null) {
-                            future.complete(FetchResponse.failed(result.error(), false));
+                            future.complete(FetchResponse.failed(result.error(), false, cfRayId));
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
@@ -129,24 +129,24 @@ class ConfigFetcher implements Closeable {
                         } else {
                             logger.debug("Fetch was successful: config not modified.");
                         }
-                        future.complete(FetchResponse.notModified());
+                        future.complete(FetchResponse.notModified(cfRayId));
                     } else if (response.code() == 403 || response.code() == 404) {
                         FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);
                         logger.error(1100, message);
-                        future.complete(FetchResponse.failed(message, true));
+                        future.complete(FetchResponse.failed(message, true, cfRayId));
                     } else {
                         FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message(), cfRayId);
                         logger.error(1101, formattableLogMessage);
-                        future.complete(FetchResponse.failed(formattableLogMessage, false));
+                        future.complete(FetchResponse.failed(formattableLogMessage, false, cfRayId));
                     }
                 } catch (SocketTimeoutException e) {
-                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), cfRayId);
+                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
                     logger.error(1102, formattableLogMessage, e);
-                    future.complete(FetchResponse.failed(formattableLogMessage, false));
+                    future.complete(FetchResponse.failed(formattableLogMessage, false, null));
                 } catch (Exception e) {
-                    FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
+                    String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                     logger.error(1103, message, e);
-                    future.complete(FetchResponse.failed(message, false));
+                    future.complete(FetchResponse.failed(message, false, null));
                 }
             }
         });

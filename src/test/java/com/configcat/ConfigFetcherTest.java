@@ -192,7 +192,7 @@ public class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync("fakeETag").get();
         assertTrue(response.isFailed());
-        assertTrue(response.error().toString().contains("(CFRay Id: 12345)"));
+        assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
 
         verify(mockLogger, times(1)).error(anyString(),  eq(1100), eq(ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey("12345")));
 
@@ -243,7 +243,7 @@ public class ConfigFetcherTest {
         FetchResponse response = fetcher.fetchAsync("fakeETag").get();
 
         assertTrue(response.isFailed());
-        assertTrue(response.error().toString().contains("(CFRay Id: 12345)"));
+        assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
 
         verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(Exception.class));
 

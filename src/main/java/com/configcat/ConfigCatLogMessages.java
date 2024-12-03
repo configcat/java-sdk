@@ -8,7 +8,6 @@ final class ConfigCatLogMessages {
      * Log message for Config Service Cannot Initiate Http Calls warning. The log eventId 3200.
      */
     public static final String CONFIG_SERVICE_CANNOT_INITIATE_HTTP_CALLS_WARN = "Client is in offline mode, it cannot initiate HTTP calls.";
-
     /**
      * Log message for Data Governance Is Out Of Sync warning. The log eventId 3002.
      */
@@ -22,18 +21,18 @@ final class ConfigCatLogMessages {
      */
     public static final String CONFIG_SERVICE_CACHE_READ_ERROR = "Error occurred while reading the cache.";
     /**
-     * Log message for Fetch Failed Due To Redirect Loop error. The log eventId is 1104.
+     * Log message for Fetch Failed Due To Unexpected error. The log eventId is 1103.
      */
-    public static final String FETCH_FAILED_DUE_TO_REDIRECT_LOOP_ERROR = "Redirection loop encountered while trying to fetch config JSON. Please contact us at https://configcat.com/support/";
+    public static final String FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR = "Unexpected error occurred while trying to fetch config JSON. It is most likely due to a local network issue. Please make sure your application can reach the ConfigCat CDN servers (or your proxy server) over HTTP.";
 
     /**
      * Log message for Fetch Failed Due To Invalid Sdk Key error. The log eventId is 1100.
      */
     private static final String FETCH_FAILED_DUE_TO_INVALID_SDK_KEY_ERROR = "Your SDK Key seems to be wrong. You can find the valid SDK Key at https://app.configcat.com/sdkkey";
     /**
-     * Log message for Fetch Failed Due To Unexpected error. The log eventId is 1103.
+     * Log message for Fetch Failed Due To Redirect Loop error. The log eventId is 1104.
      */
-    private static final String FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR = "Unexpected error occurred while trying to fetch config JSON. It is most likely due to a local network issue. Please make sure your application can reach the ConfigCat CDN servers (or your proxy server) over HTTP.";
+    private static final String FETCH_FAILED_DUE_TO_REDIRECT_LOOP_ERROR = "Redirection loop encountered while trying to fetch config JSON. Please contact us at https://configcat.com/support/";
     /**
      * Log message for Fetch Received 200 With Invalid Body error. The log eventId is 1105.
      */
@@ -168,27 +167,23 @@ final class ConfigCatLogMessages {
      * @param connectTimeoutMillis Connect timeout in milliseconds.
      * @param readTimeoutMillis    Read timeout in milliseconds.
      * @param writeTimeoutMillis   Write timeout in milliseconds.
-     * @param cfRayId              The http response CF-RAY header value.
      * @return The formattable log message.
      */
-    public static FormattableLogMessage getFetchFailedDueToRequestTimeout(final Integer connectTimeoutMillis, final Integer readTimeoutMillis, final Integer writeTimeoutMillis, final String cfRayId) {
-        if (cfRayId != null) {
-            return new FormattableLogMessage("Request timed out while trying to fetch config JSON. Timeout values: [connect: %dms, read: %dms, write: %dms] %s", connectTimeoutMillis, readTimeoutMillis, writeTimeoutMillis, ConfigCatLogMessages.getCFRayIdPostFix(cfRayId));
-        }
+    public static FormattableLogMessage getFetchFailedDueToRequestTimeout(final Integer connectTimeoutMillis, final Integer readTimeoutMillis, final Integer writeTimeoutMillis) {
         return new FormattableLogMessage("Request timed out while trying to fetch config JSON. Timeout values: [connect: %dms, read: %dms, write: %dms]", connectTimeoutMillis, readTimeoutMillis, writeTimeoutMillis);
     }
 
     /**
-     * Log message for Fetch Failed Due To Unexpected error. The log eventId is 1103.
+     * Log message for Fetch Failed Due To Redirect Loop error. The log eventId is 1104.
      *
      * @param cfRayId The http response CF-RAY header value.
      * @return The formattable log message.
      */
-    public static FormattableLogMessage getFetchFailedDueToUnexpectedError(final String cfRayId) {
+    public static FormattableLogMessage getFetchFailedDueToRedirectLoop(final String cfRayId) {
         if (cfRayId != null) {
-            return new FormattableLogMessage(FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR + " %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId));
+            return new FormattableLogMessage(FETCH_FAILED_DUE_TO_REDIRECT_LOOP_ERROR + " %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId));
         }
-        return new FormattableLogMessage(FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR);
+        return new FormattableLogMessage(FETCH_FAILED_DUE_TO_REDIRECT_LOOP_ERROR);
     }
 
     /**
@@ -331,7 +326,7 @@ final class ConfigCatLogMessages {
      * @return The formattable log message.
      */
     public static  FormattableLogMessage getCFRayIdPostFix(String rayId) {
-        return new FormattableLogMessage("(CFRay Id: %s)", rayId);
+        return new FormattableLogMessage("(Ray ID: %s)", rayId);
     }
 
 }
