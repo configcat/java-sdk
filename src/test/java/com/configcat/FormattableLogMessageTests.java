@@ -9,10 +9,10 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FormattableLogMessageTests {
+class FormattableLogMessageTests {
 
     @Test
-    public void hashCodeTest() {
+    void hashCodeTest() {
         FormattableLogMessage obj1 = new FormattableLogMessage("message %s", "formatted");
         FormattableLogMessage obj2 = new FormattableLogMessage("message %s", "formatted");
 
@@ -35,7 +35,7 @@ public class FormattableLogMessageTests {
     }
 
     @Test
-    public void equalsTest() {
+    void equalsTest() {
         FormattableLogMessage obj1 = new FormattableLogMessage("message %s", "formatted");
         FormattableLogMessage obj2 = new FormattableLogMessage("message %s", "formatted");
 

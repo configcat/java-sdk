@@ -180,10 +180,10 @@ public class ConfigFetcherTest {
 
         Logger mockLogger = mock(Logger.class);
 
-        ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
-                logger,
+                localLogger,
                 "",
                 this.server.url("/").toString(),
                 false,
@@ -205,10 +205,10 @@ public class ConfigFetcherTest {
 
         Logger mockLogger = mock(Logger.class);
 
-        ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
-                logger,
+                localLogger,
                 "",
                 this.server.url("/").toString(),
                 false,
@@ -230,10 +230,10 @@ public class ConfigFetcherTest {
 
         Logger mockLogger = mock(Logger.class);
 
-        ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
-                logger,
+                localLogger,
                 "",
                 this.server.url("/").toString(),
                 false,
