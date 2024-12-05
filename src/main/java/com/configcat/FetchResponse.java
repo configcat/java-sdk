@@ -47,8 +47,8 @@ class FetchResponse {
         this.cfRayId = cfRayId;
     }
 
-    public static FetchResponse fetched(Entry entry) {
-        return new FetchResponse(Status.FETCHED, entry == null ? Entry.EMPTY : entry, null, false, null);
+    public static FetchResponse fetched(Entry entry, String cfRayId) {
+        return new FetchResponse(Status.FETCHED, entry == null ? Entry.EMPTY : entry, null, false, cfRayId);
     }
 
     public static FetchResponse notModified(String cfRayId) {

@@ -122,7 +122,7 @@ class ConfigFetcher implements Closeable {
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
-                        future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, content, System.currentTimeMillis())));
+                        future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, content, System.currentTimeMillis()), cfRayId));
                     } else if (response.code() == 304) {
                         if(cfRayId != null) {
                             logger.debug(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId)));
