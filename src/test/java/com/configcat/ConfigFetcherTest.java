@@ -8,6 +8,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -171,5 +172,81 @@ public class ConfigFetcherTest {
         assertTrue(fetch.fetchAsync(result.entry().getETag()).get().isNotModified());
 
         fetch.close();
+    }
+
+    @Test
+    public void fetchedFail403ContainsCFRAY() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(403).setBody(TEST_JSON).setHeader("ETag", "fakeETag").setHeader("CF-RAY", "12345"));
+
+        Logger mockLogger = mock(Logger.class);
+
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                localLogger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+
+        FetchResponse response = fetcher.fetchAsync("fakeETag").get();
+        assertTrue(response.isFailed());
+        assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
+
+        verify(mockLogger, times(1)).error(anyString(),  eq(1100), eq(ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey("12345")));
+
+        fetcher.close();
+    }
+
+    @Test
+    public void fetchedNotModified304ContainsCFRAY() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(304).setHeader("CF-RAY", "12345"));
+
+        Logger mockLogger = mock(Logger.class);
+
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                localLogger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+
+        FetchResponse response = fetcher.fetchAsync("fakeETag").get();
+
+        assertTrue(response.isNotModified());
+
+        verify(mockLogger, times(1)).debug(anyString(), eq(0), eq(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix("12345"))));
+
+        fetcher.close();
+    }
+
+    @Test
+    public void fetchedReceivedInvalidBodyContainsCFRAY() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setHeader("CF-RAY", "12345").setBody("test"));
+
+        Logger mockLogger = mock(Logger.class);
+
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                localLogger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+
+        FetchResponse response = fetcher.fetchAsync("fakeETag").get();
+
+        assertTrue(response.isFailed());
+        assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
+
+        verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(Exception.class));
+
+        fetcher.close();
     }
 }
