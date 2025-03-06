@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import org.junit.Assert;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -19,7 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigV2EvaluationTest {
 
@@ -154,11 +153,11 @@ public class ConfigV2EvaluationTest {
 
         EvaluationDetails<String> result = client.getValueDetails(String.class, "stringMatchedTargetingRuleAndOrPercentageOption", user, null);
 
-        Assert.assertEquals(expectedValue, result.getValue());
-        Assert.assertEquals(expectedTargetingRule, result.getMatchedTargetingRule() != null);
-        Assert.assertEquals(expectedPercentageOption, result.getMatchedPercentageOption() != null);
+        assertEquals(expectedValue, result.getValue());
+        assertEquals(expectedTargetingRule, result.getMatchedTargetingRule() != null);
+        assertEquals(expectedPercentageOption, result.getMatchedPercentageOption() != null);
 
-        ConfigCatClient.closeAll();
+        client.close();
     }
 
     @ParameterizedTest
@@ -170,9 +169,9 @@ public class ConfigV2EvaluationTest {
         });
 
         EvaluationDetails<String> result = client.getValueDetails(String.class, key, null, null);
-        Assert.assertEquals("java.lang.IllegalArgumentException: Circular dependency detected between the following depending flags: " + dependencyCycle + ".", result.getError());
+        assertEquals("java.lang.IllegalArgumentException: Circular dependency detected between the following depending flags: " + dependencyCycle + ".", result.getError());
 
-        ConfigCatClient.closeAll();
+        client.close();
     }
 
     @ParameterizedTest
@@ -200,27 +199,27 @@ public class ConfigV2EvaluationTest {
 
         String value = client.getValue(String.class, key, null, null);
 
-        Assert.assertEquals(expectedValue, value);
+        assertEquals(expectedValue, value);
 
         if (expectedValue == null) {
             List<ILoggingEvent> logsList = listAppender.list;
 
             List<ILoggingEvent> errorLogs = logsList.stream().filter(iLoggingEvent -> iLoggingEvent.getLevel().equals(Level.ERROR)).collect(Collectors.toList());
-            Assert.assertEquals(1, errorLogs.size());
+            assertEquals(1, errorLogs.size());
             String errorMessage = errorLogs.get(0).getFormattedMessage();
             String causeExceptionMessage = errorLogs.get(0).getThrowableProxy().getMessage();
 
-            Assert.assertTrue(errorMessage.contains("[2001]"));
+            assertTrue(errorMessage.contains("[2001]"));
 
             if (prerequisiteFlagValue == null) {
-                Assert.assertTrue(causeExceptionMessage.contains("Setting value is null"));
+                assertTrue(causeExceptionMessage.contains("Setting value is null"));
             } else {
-                Assert.assertTrue(causeExceptionMessage.contains("Type mismatch between comparison value"));
+                assertTrue(causeExceptionMessage.contains("Type mismatch between comparison value"));
             }
 
         }
 
-        ConfigCatClient.closeAll();
+        client.close();
     }
 
     @ParameterizedTest
@@ -244,9 +243,9 @@ public class ConfigV2EvaluationTest {
 
         String value = client.getValue(String.class, key, user, null);
 
-        Assert.assertEquals(expectedValue, value);
+        assertEquals(expectedValue, value);
 
-        ConfigCatClient.closeAll();
+        client.close();
     }
 
     @ParameterizedTest
@@ -270,9 +269,9 @@ public class ConfigV2EvaluationTest {
 
         Boolean value = client.getValue(Boolean.class, key, user, null);
 
-        Assert.assertEquals(expectedValue, value);
+        assertEquals(expectedValue, value);
 
-        ConfigCatClient.closeAll();
+        client.close();
     }
 
     @ParameterizedTest
@@ -312,8 +311,8 @@ public class ConfigV2EvaluationTest {
 
         String value = client.getValue(String.class, key, user, "default");
 
-        Assert.assertEquals(expectedValue, value);
+        assertEquals(expectedValue, value);
 
-        ConfigCatClient.closeAll();
+        client.close();
     }
 }
