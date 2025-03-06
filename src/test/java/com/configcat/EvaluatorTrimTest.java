@@ -42,34 +42,6 @@ public class EvaluatorTrimTest {
      */
     private final static String TRIM_COMPARATOR_VALUES_JSON = "trim_comparator_values.json";
 
-    private ConfigCatClient client;
-    private MockWebServer server;
-
-    @BeforeEach
-    void setUp() throws IOException {
-        this.server = new MockWebServer();
-        this.server.start();
-
-        this.client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
-            options.httpClient(new OkHttpClient.Builder().build());
-            options.pollingMode(PollingModes.lazyLoad(2));
-            options.baseUrl(this.server.url("/").toString());
-        });
-    }
-
-    @AfterEach
-    void tearDown() throws IOException {
-        ConfigCatClient.closeAll();
-        this.server.shutdown();
-    }
-
-    private String loadJsonFileAsString(String fileName) throws IOException {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(Objects.requireNonNull(classLoader.getResource(fileName)).getFile());
-        byte[] byteArray = Files.readAllBytes(file.toPath());
-        return new String(byteArray);
-    }
-
     private User createTestUser(String identifier, String country, String version, String number, String date) {
         Map<String, Object> customAttributes = new HashMap<>();
         customAttributes.put("Version", version);
@@ -119,10 +91,16 @@ public class EvaluatorTrimTest {
     @ParameterizedTest
     @MethodSource("testComparatorValueTrimsData")
     void testComparatorValueTrims(String key, String expectedValue) throws IOException {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(loadJsonFileAsString(TRIM_COMPARATOR_VALUES_JSON)));
+        OverrideDataSourceBuilder ds = OverrideDataSourceBuilder.classPathResource(TRIM_COMPARATOR_VALUES_JSON);
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.flagOverrides(ds, OverrideBehaviour.LOCAL_ONLY);
+        });
+
         User user = createTestUser(TEST_IDENTIFIER, TEST_COUNTRY, TEST_VERSION, TEST_NUMBER, TEST_DATE);
-        String result = this.client.getValue(String.class, key, user, "default");
+        String result = client.getValue(String.class, key, user, "default");
         assertEquals(expectedValue, result);
+
+        client.close();
     }
 
     private static Stream<Arguments> testUserValueTrimsData() {
@@ -172,9 +150,15 @@ public class EvaluatorTrimTest {
     @ParameterizedTest
     @MethodSource("testUserValueTrimsData")
     void testUserValueTrims(String key, String expectedValue) throws IOException {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(loadJsonFileAsString(TRIM_USER_VALUES_JSON)));
+        OverrideDataSourceBuilder ds = OverrideDataSourceBuilder.classPathResource(TRIM_USER_VALUES_JSON);
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.flagOverrides(ds, OverrideBehaviour.LOCAL_ONLY);
+        });
+
         User user = createTestUser(addWhiteSpaces(TEST_IDENTIFIER), TEST_COUNTRY_WITH_WHITESPACES, addWhiteSpaces(TEST_VERSION), addWhiteSpaces(TEST_NUMBER), addWhiteSpaces(TEST_DATE));
-        String result = this.client.getValue(String.class, key, user, "default");
+        String result = client.getValue(String.class, key, user, "default");
         assertEquals(expectedValue, result);
+
+        client.close();
     }
 }

@@ -1,7 +1,6 @@
 package com.configcat;
 
 import de.skuzzle.semantic.Version;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
@@ -400,7 +399,7 @@ class RolloutEvaluator {
     }
 
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String contextSalt) {
-        return DigestUtils.sha256Hex(userValue + configJsonSalt + contextSalt);
+        return Utils.sha256(userValue + configJsonSalt + contextSalt);
     }
 
     private static String getSaltedUserValueSlice(byte[] userValueSliceUTF8, String configJsonSalt, String contextSalt) {
@@ -411,7 +410,7 @@ class RolloutEvaluator {
         System.arraycopy(userValueSliceUTF8, 0, concatByteArrays, 0, userValueSliceUTF8.length);
         System.arraycopy(configSaltByteArray, 0, concatByteArrays, userValueSliceUTF8.length, configSaltByteArray.length);
         System.arraycopy(contextSaltByteArray, 0, concatByteArrays, userValueSliceUTF8.length + configSaltByteArray.length, contextSaltByteArray.length);
-        return DigestUtils.sha256Hex(concatByteArrays);
+        return Utils.sha256(concatByteArrays);
     }
 
     private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
@@ -661,7 +660,7 @@ class RolloutEvaluator {
         evaluateLogger.logPercentageOptionEvaluation(percentageOptionAttributeName);
         String hashCandidate = context.getKey() + percentageOptionAttributeValue;
         int scale = 100;
-        String hexHash = DigestUtils.sha1Hex(hashCandidate.getBytes(StandardCharsets.UTF_8)).substring(0, 7);
+        String hexHash = Utils.sha1(hashCandidate.getBytes(StandardCharsets.UTF_8)).substring(0, 7);
         int longHash = Integer.parseInt(hexHash, 16);
         int scaled = longHash % scale;
         evaluateLogger.logPercentageOptionEvaluationHash(percentageOptionAttributeName, scaled);

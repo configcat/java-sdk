@@ -1,8 +1,5 @@
 package com.configcat;
 
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -42,7 +39,7 @@ public class ConfigService implements Closeable {
                          ConfigCatHooks configCatHooks) {
         this.configFetcher = configFetcher;
         this.pollingMode = pollingMode;
-        this.cacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CACHE_BASE, sdkKey))));
+        this.cacheKey = Utils.sha1(String.format(CACHE_BASE, sdkKey));
         this.cache = cache;
         this.logger = logger;
         this.offline = new AtomicBoolean(offline);
