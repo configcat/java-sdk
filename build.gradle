@@ -42,8 +42,6 @@ dependencies {
     testImplementation(libs.junitJupiterParams)
     testRuntimeOnly(libs.junitJupiterEngine)
     testRuntimeOnly(libs.junitVintageEngine)
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.10.0'
 }
 
 jar {
@@ -65,7 +63,7 @@ sonarqube {
 }
 
 jacoco {
-    toolVersion = "0.8.6"
+    toolVersion = "0.8.8"
 }
 
 tasks.withType(Test).configureEach {
