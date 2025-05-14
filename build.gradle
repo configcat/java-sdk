@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 buildscript {
     repositories {
         mavenCentral()
@@ -5,16 +7,12 @@ buildscript {
 }
 
 plugins {
-    id "org.sonarqube" version "5.0.0.4638"
+    alias(libs.plugins.sonarqube)
     id "java"
     id 'java-library'
-    id "signing"
-    id "maven-publish"
     id "jacoco"
+    alias(libs.plugins.mavenPublish)
 }
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
 
 ext {
     buildNumber = System.getProperty("build.number")
@@ -30,21 +28,22 @@ repositories {
 }
 
 dependencies {
-    api 'com.squareup.okhttp3:okhttp:4.12.0'
-    api 'com.squareup.okio:okio:3.4.0' // indirect dependency to solve security vulnerability in 3.2.0
-    api 'org.slf4j:slf4j-api:1.7.36'
-    api 'com.google.code.gson:gson:2.9.0'
-    api 'commons-codec:commons-codec:1.15'
-    api 'de.skuzzle:semantic-version:2.1.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
-    testImplementation 'ch.qos.logback:logback-classic:1.3.11'
-    testImplementation 'ch.qos.logback:logback-core:1.3.11'
-    testImplementation 'com.squareup.okhttp3:mockwebserver:4.11.0'
-    testImplementation 'org.mockito:mockito-core:4.2.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
+    api(libs.okhttp)
+    api(libs.okio)
+    api(libs.slf4jApi)
+    api(libs.gson)
+    api(libs.commonsCodec)
+    api(libs.semanticVersion)
+    testImplementation(libs.junit)
+    testImplementation(libs.logbackClassic)
+    testImplementation(libs.logbackCore)
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.mockito)
+    testImplementation(libs.junitJupiterParams)
+    testRuntimeOnly(libs.junitJupiterEngine)
+    testRuntimeOnly(libs.junitVintageEngine)
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.10.0'
-
 }
 
 jar {
@@ -94,22 +93,16 @@ extensions.getByType(JavaPluginExtension).with {
     withSourcesJar()
 }
 
-def publishing = extensions.getByType(PublishingExtension)
-publishing.repositories {
-    maven {
-        credentials {
-            username findProperty('OSSRH_USERNAME') as String
-            password findProperty('OSSRH_PASSWORD') as String
-        }
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
-        def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
-        def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
-        url = isSnapshot ? snapshotsRepoUrl : releasesRepoUrl
+    def signingInMemoryKey = findProperty("ORG_GRADLE_PROJECT_signingInMemoryKey")
+    def signingInMemoryKeyPassword = findProperty("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
+    if (signingInMemoryKey && signingInMemoryKeyPassword) {
+        signAllPublications()
     }
-}
 
-def publication = publishing.publications.create("main", MavenPublication) {
-    from(components.getByName("java"))
+    coordinates(project.group as String, project.name, project.version as String)
 
     pom {
         name.set("ConfigCat Java SDK")
@@ -138,14 +131,5 @@ def publication = publishing.publications.create("main", MavenPublication) {
             url.set("https://configcat.com")
             name.set("ConfigCat")
         }
-    }
-}
-
-signing {
-    def signingKey = findProperty("SIGNING_KEY")
-    def signingPassphrase = findProperty("SIGNING_PASSPHRASE")
-    if (signingKey && signingPassphrase) {
-        useInMemoryPgpKeys(signingKey as String, signingPassphrase as String)
-        sign publication
     }
 }

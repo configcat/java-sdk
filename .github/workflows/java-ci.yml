@@ -83,12 +83,12 @@ jobs:
       run: chmod +x gradlew
       
     - name: Deploy snapshot with Gradle
-      run: ./gradlew publishMainPublicationToMavenRepository -Dsnapshot=true -Dbuild.number=$GITHUB_RUN_NUMBER
+      run: ./gradlew publishAllPublicationsToMavenCentralRepository -Dsnapshot=true
       env:
-        ORG_GRADLE_PROJECT_OSSRH_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        ORG_GRADLE_PROJECT_OSSRH_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-        ORG_GRADLE_PROJECT_SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-        ORG_GRADLE_PROJECT_SIGNING_PASSPHRASE: ${{ secrets.PASSPHRASE }}
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.PASSPHRASE }}
       
   deploy-release:
     needs: [ coverage-scan, test ]
@@ -108,9 +108,9 @@ jobs:
       run: chmod +x gradlew
       
     - name: Deploy release with Gradle
-      run: ./gradlew publishMainPublicationToMavenRepository -Dbuild.number=$GITHUB_RUN_NUMBER
+      run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
       env:
-        ORG_GRADLE_PROJECT_OSSRH_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        ORG_GRADLE_PROJECT_OSSRH_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-        ORG_GRADLE_PROJECT_SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-        ORG_GRADLE_PROJECT_SIGNING_PASSPHRASE: ${{ secrets.PASSPHRASE }}
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.PASSPHRASE }}
