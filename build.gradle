@@ -30,18 +30,18 @@ repositories {
 dependencies {
     api(libs.okhttp)
     api(libs.okio)
-    api(libs.slf4jApi)
+    api(libs.slf4j.api)
     api(libs.gson)
-    api(libs.commonsCodec)
-    api(libs.semanticVersion)
-    testImplementation(libs.junit)
-    testImplementation(libs.logbackClassic)
-    testImplementation(libs.logbackCore)
+    api(libs.commons.codec)
+    api(libs.semantic.version)
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.logback.classic)
+    testImplementation(libs.logback.core)
     testImplementation(libs.mockwebserver)
-    testImplementation(libs.mockito)
-    testImplementation(libs.junitJupiterParams)
-    testRuntimeOnly(libs.junitJupiterEngine)
-    testRuntimeOnly(libs.junitVintageEngine)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.junit.jupiter.params)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.vintage.engine)
 }
 
 jar {
