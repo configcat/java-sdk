@@ -1,6 +1,6 @@
 [versions]
 sonarqube = "5.0.0.4638"
-mavenPublish = "0.31.0"
+mavenPublish = "0.32.0"
 okhttp = "4.12.0"
 okio = "3.4.0" # indirect dependency to solve security vulnerability in 3.2.0
 slf4j-api = "1.7.36"

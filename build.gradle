@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.JavaLibrary
+import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SonatypeHost
 
 buildscript {
@@ -86,11 +88,6 @@ tasks.named("check") {
     it.dependsOn(tasks.named("jacocoTestReport"))
 }
 
-extensions.getByType(JavaPluginExtension).with {
-    withJavadocJar()
-    withSourcesJar()
-}
-
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
@@ -99,6 +96,8 @@ mavenPublishing {
     if (signingInMemoryKey && signingInMemoryKeyPassword) {
         signAllPublications()
     }
+
+    configure(new JavaLibrary(new JavadocJar.Javadoc(), true))
 
     coordinates(project.group as String, project.name, project.version as String)
 
