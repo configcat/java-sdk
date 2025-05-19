@@ -1,0 +1,34 @@
+[versions]
+sonarqube = "5.0.0.4638"
+mavenPublish = "0.32.0"
+okhttp = "4.12.0"
+okio = "3.4.0" # indirect dependency to solve security vulnerability in 3.2.0
+slf4j-api = "1.7.36"
+gson = "2.9.0"
+commons-codec = "1.15"
+semantic-version = "2.1.0"
+junit-jupiter = "5.10.0"
+logback = "1.5.13"
+mockwebserver = "4.12.0"
+mockito = "4.2.0"
+
+[libraries]
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
+semantic-version = { module = "de.skuzzle:semantic-version", version.ref = "semantic-version" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
+mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "mockwebserver" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-jupiter" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
+junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "junit-jupiter" }
+
+[plugins]
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
+mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
+
