@@ -16,6 +16,9 @@ plugins {
     alias(libs.plugins.mavenPublish)
 }
 
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
 ext {
     buildNumber = System.getProperty("build.number")
     isSnapshot = Boolean.valueOf(System.getProperty("snapshot"))
