@@ -60,7 +60,7 @@ sonarqube {
         property "sonar.organization", "configcat"
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.sources", "src/main/java/com/configcat"
-        property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/report.xml"
+        property "sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory}/reports/jacoco/report.xml"
     }
 }
 
@@ -78,7 +78,7 @@ tasks.named("jacocoTestReport", JacocoReport) {
     sourceSets sourceSets.main
     reports {
         xml.required.set(true)
-        xml.destination file("${buildDir}/reports/jacoco/report.xml")
+        xml.destination file("${layout.buildDirectory}/reports/jacoco/report.xml")
         html.required.set(false)
         csv.required.set(false)
     }
