@@ -26,6 +26,7 @@ Use the **same version** for the git tag as in the properties file.
   notes.
 
 ## Sync
+
 1. Log in to [Maven Central Repository](https://central.sonatype.org/) and follow these steps:
     1. Go to the `Publish` page and select the version you published.
     2. Click `Publish`. The process might take some time, click `Refresh` to get the latest state.
