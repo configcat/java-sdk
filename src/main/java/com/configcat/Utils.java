@@ -38,6 +38,14 @@ final class Utils {
 
     public static Config deserializeConfig(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
+
+        if (config == null ||
+                config.getEntries() == null ||
+                config.getPreferences() == null ||
+                config.getSegments() == null) {
+            throw new IllegalArgumentException("Invalid config JSON content: " + json);
+        }
+
         String salt = config.getPreferences().getSalt();
         Segment[] segments = config.getSegments();
         if (segments == null) {

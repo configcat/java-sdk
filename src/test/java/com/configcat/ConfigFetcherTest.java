@@ -161,16 +161,16 @@ public class ConfigFetcherTest {
 
     private static Stream<Arguments> emptyFetchTestData() {
         return Stream.of(
-                Arguments.of("", "Fetching config JSON was successful but the HTTP response content was invalid."),
-                Arguments.of("null", "Fetching config JSON was successful but the HTTP response content was invalid."),
-                Arguments.of("{}", "Fetching config JSON was successful but the HTTP response content was invalid."),
-                Arguments.of("{\"nonsense\": true}", "Fetching config JSON was successful but the HTTP response content was invalid.")
+                Arguments.of(""),
+                Arguments.of("null"),
+                Arguments.of("{}"),
+                Arguments.of("{\"nonsense\": true}")
         );
     }
 
     @ParameterizedTest
     @MethodSource("emptyFetchTestData")
-    public void fetchEmpty(String body, String error) throws Exception {
+    public void fetchEmpty(String body) throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
@@ -182,7 +182,7 @@ public class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync(null).get();
         assertFalse(response.isFetched());
-        assertEquals(error, response.error().toString());
+        assertEquals("Fetching config JSON was successful but the HTTP response content was invalid.", response.error().toString());
 
         fetcher.close();
     }

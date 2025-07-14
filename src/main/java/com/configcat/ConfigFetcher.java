@@ -113,11 +113,10 @@ class ConfigFetcher implements Closeable {
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
                     String cfRayId = response.header("CF-RAY");
-                    if (response.code() == 200 && body != null) {
-                        String content = body.string();
+                    if (response.code() == 200) {
+                        String content = body != null ? body.string() : "";
                         if (content.isEmpty()) {
-                            FormattableLogMessage message = ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError(cfRayId);
-                            logger.error(1105, message);
+                            FormattableLogMessage message = logInvalidBodyError(cfRayId, null);
                             future.complete(FetchResponse.failed(message, false, cfRayId));
                             return;
                         }
@@ -190,10 +189,19 @@ class ConfigFetcher implements Closeable {
         try {
             return Result.success(Utils.deserializeConfig(json));
         } catch (Exception e) {
-            FormattableLogMessage message = ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError(cfRayId);
-            this.logger.error(1105, message, e);
+            FormattableLogMessage message = this.logInvalidBodyError(cfRayId, e);
             return Result.error(message, null);
         }
+    }
+
+    private FormattableLogMessage logInvalidBodyError(String cfRayId, Exception e) {
+        FormattableLogMessage message = ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError(cfRayId);
+        if (e != null) {
+            this.logger.error(1105, message, e);
+        } else {
+            this.logger.error(1105, message);
+        }
+        return message;
     }
 }
 
