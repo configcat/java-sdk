@@ -113,8 +113,14 @@ class ConfigFetcher implements Closeable {
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
                     String cfRayId = response.header("CF-RAY");
-                    if (response.isSuccessful() && body != null) {
+                    if (response.code() == 200 && body != null) {
                         String content = body.string();
+                        if (content.isEmpty()) {
+                            FormattableLogMessage message = ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError(cfRayId);
+                            logger.error(1105, message);
+                            future.complete(FetchResponse.failed(message, false, cfRayId));
+                            return;
+                        }
                         String eTag = response.header("ETag");
                         Result<Config> result = deserializeConfig(content, cfRayId);
                         if (result.error() != null) {

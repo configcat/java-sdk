@@ -8,12 +8,16 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -151,6 +155,34 @@ public class ConfigFetcherTest {
         FetchResponse response = fetcher.fetchAsync(null).get();
         assertTrue(response.isFetched());
         assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
+
+        fetcher.close();
+    }
+
+    private static Stream<Arguments> emptyFetchTestData() {
+        return Stream.of(
+                Arguments.of("", "Fetching config JSON was successful but the HTTP response content was invalid."),
+                Arguments.of("null", "Fetching config JSON was successful but the HTTP response content was invalid."),
+                Arguments.of("{}", "Fetching config JSON was successful but the HTTP response content was invalid."),
+                Arguments.of("{\"nonsense\": true}", "Fetching config JSON was successful but the HTTP response content was invalid.")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("emptyFetchTestData")
+    public void fetchEmpty(String body, String error) throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+        assertFalse(response.isFetched());
+        assertEquals(error, response.error().toString());
 
         fetcher.close();
     }
