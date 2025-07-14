@@ -162,9 +162,7 @@ public class ConfigFetcherTest {
     private static Stream<Arguments> emptyFetchTestData() {
         return Stream.of(
                 Arguments.of(""),
-                Arguments.of("null"),
-                Arguments.of("{}"),
-                Arguments.of("{\"nonsense\": true}")
+                Arguments.of("null")
         );
     }
 

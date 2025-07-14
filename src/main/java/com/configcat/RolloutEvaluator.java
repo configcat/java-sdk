@@ -45,7 +45,7 @@ class RolloutEvaluator {
     @NotNull
     private EvaluationResult evaluateSetting(Setting setting, EvaluateLogger evaluateLogger, EvaluationContext context) {
         EvaluationResult evaluationResult = null;
-        if (setting.getTargetingRules() != null) {
+        if (setting.getTargetingRules() != null && setting.getTargetingRules().length > 0) {
             evaluationResult = evaluateTargetingRules(setting, context, evaluateLogger);
         }
         if (evaluationResult == null && setting.getPercentageOptions() != null && setting.getPercentageOptions().length > 0) {

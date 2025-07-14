@@ -43,7 +43,7 @@ final class Utils {
             throw new IllegalArgumentException("Invalid config JSON content: " + json);
         }
 
-        String salt = config.getPreferences().getSalt();
+        String salt = config.getPreferences() != null ? config.getPreferences().getSalt() : null;
         Segment[] segments = config.getSegments();
         if (segments == null) {
             segments = new Segment[]{};
