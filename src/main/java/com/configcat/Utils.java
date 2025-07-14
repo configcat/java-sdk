@@ -37,6 +37,10 @@ final class Utils {
     }
 
     public static Config deserializeConfig(String json) {
+        if (json == null || json.isEmpty()) {
+            throw new IllegalArgumentException("Config JSON content cannot be null or empty.");
+        }
+
         Config config = Utils.gson.fromJson(json, Config.class);
 
         if (config == null) {
