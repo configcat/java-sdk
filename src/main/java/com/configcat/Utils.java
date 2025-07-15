@@ -37,8 +37,17 @@ final class Utils {
     }
 
     public static Config deserializeConfig(String json) {
+        if (json == null || json.isEmpty()) {
+            throw new IllegalArgumentException("Config JSON content cannot be null or empty.");
+        }
+
         Config config = Utils.gson.fromJson(json, Config.class);
-        String salt = config.getPreferences().getSalt();
+
+        if (config == null) {
+            throw new IllegalArgumentException("Invalid config JSON content: " + json);
+        }
+
+        String salt = config.getPreferences() != null ? config.getPreferences().getSalt() : null;
         Segment[] segments = config.getSegments();
         if (segments == null) {
             segments = new Segment[]{};

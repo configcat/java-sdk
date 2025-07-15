@@ -13,7 +13,7 @@ public class Config {
     @SerializedName(value = "p")
     private Preferences preferences;
     @SerializedName(value = "f")
-    private final Map<String, Setting> entries = new HashMap<>();
+    private Map<String, Setting> entries = new HashMap<>();
     @SerializedName(value = "s")
     private Segment[] segments;
 
@@ -35,7 +35,9 @@ public class Config {
      * The map of settings.
      */
     public Map<String, Setting> getEntries() {
-        return entries;
+        // NOTE: Deserializing a JSON like '{ "f": null }' overwrites entries with null.
+        // However, we want to treat null as an empty map in that case too.
+        return entries != null ? entries : (entries = new HashMap<>());
     }
 
     boolean isEmpty() {
