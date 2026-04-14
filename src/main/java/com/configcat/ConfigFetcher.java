@@ -82,7 +82,7 @@ class ConfigFetcher implements Closeable {
                 }
 
             } catch (Exception exception) {
-                this.logger.error(1103, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR, exception);
+                this.logger.error(1103, ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(fetchResponse.cfRayId()), exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
 
@@ -98,11 +98,11 @@ class ConfigFetcher implements Closeable {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 int logEventId = 1103;
-                Object message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
+                Object message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(null);
                 if (!isClosed.get()) {
                     if (e instanceof SocketTimeoutException) {
                         logEventId = 1102;
-                        message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
+                        message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), null);
                     }
                     logger.error(logEventId, message, e);
                 }
@@ -111,8 +111,9 @@ class ConfigFetcher implements Closeable {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
+                String cfRayId = null;
                 try (ResponseBody body = response.body()) {
-                    String cfRayId = response.header("CF-RAY");
+                    cfRayId = response.header("CF-RAY");
                     if (response.code() == 200) {
                         String content = body != null ? body.string() : null;
                         String eTag = response.header("ETag");
@@ -140,13 +141,13 @@ class ConfigFetcher implements Closeable {
                         future.complete(FetchResponse.failed(formattableLogMessage, false, cfRayId));
                     }
                 } catch (SocketTimeoutException e) {
-                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
+                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), cfRayId);
                     logger.error(1102, formattableLogMessage, e);
-                    future.complete(FetchResponse.failed(formattableLogMessage, false, null));
+                    future.complete(FetchResponse.failed(formattableLogMessage, false, cfRayId));
                 } catch (Exception e) {
-                    String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
-                    logger.error(1103, message, e);
-                    future.complete(FetchResponse.failed(message, false, null));
+                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
+                    logger.error(1103, formattableLogMessage, e);
+                    future.complete(FetchResponse.failed(formattableLogMessage, false, cfRayId));
                 }
             }
         });

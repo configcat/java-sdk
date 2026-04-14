@@ -86,6 +86,29 @@ public class ConfigFetcherTest {
     }
 
     @Test
+    public void fetchExceptionContainsCFRayIdIfPresented() throws IOException, ExecutionException, InterruptedException {
+
+        ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
+                .readTimeout(1, TimeUnit.SECONDS)
+                .build(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        this.server.enqueue(new MockResponse().setBody("test").setHeader("CF-RAY", "12345").setBodyDelay(2, TimeUnit.SECONDS));
+        FetchResponse response = fetch.fetchAsync(null).get();
+        assertTrue(response.isFailed());
+        assertTrue(response.entry().isEmpty());
+        assertTrue(response.entry().getConfig().isEmpty());
+
+        assertEquals("12345", response.cfRayId());
+
+        fetch.close();
+    }
+
+    @Test
     public void fetchedETagNotUpdatesCache() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON).setHeader("ETag", "fakeETag"));
         this.server.enqueue(new MockResponse().setResponseCode(304));
