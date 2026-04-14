@@ -77,6 +77,7 @@ public class ConfigFetcherTest {
                 PollingModes.manualPoll().getPollingIdentifier());
 
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(2, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(2, TimeUnit.SECONDS));
         FetchResponse response = fetch.fetchAsync(null).get();
         assertTrue(response.isFailed());
         assertTrue(response.entry().isEmpty());
@@ -276,6 +277,73 @@ public class ConfigFetcherTest {
         assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
 
         verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(Exception.class));
+
+        fetcher.close();
+    }
+
+    @Test
+    public void retryOnTransientHttpError() throws Exception {
+        // First request returns 500, retry returns 200
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFetched());
+        assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
+        assertEquals(2, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void retryOnTransientHttpErrorBothFail() throws Exception {
+        // Both first request and retry return 500
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFailed());
+        assertEquals(2, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void noRetryOn403() throws Exception {
+        // 403 is a permanent error, no retry
+        this.server.enqueue(new MockResponse().setResponseCode(403));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFailed());
+        assertEquals(1, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void noRetryOn404() throws Exception {
+        // 404 is a permanent error, no retry
+        this.server.enqueue(new MockResponse().setResponseCode(404));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFailed());
+        assertEquals(1, this.server.getRequestCount());
 
         fetcher.close();
     }

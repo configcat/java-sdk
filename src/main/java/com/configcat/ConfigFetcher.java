@@ -91,12 +91,22 @@ class ConfigFetcher implements Closeable {
         });
     }
 
+    private static final long RETRY_DELAY_MS = 50;
+
     private CompletableFuture<FetchResponse> getResponseAsync(final String eTag) {
+        return getResponseAsync(eTag, false);
+    }
+
+    private CompletableFuture<FetchResponse> getResponseAsync(final String eTag, final boolean isRetry) {
         Request request = this.getRequest(eTag);
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                if (!isRetry && !isClosed.get()) {
+                    scheduleRetry(eTag, future);
+                    return;
+                }
                 int logEventId = 1103;
                 Object message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                 if (!isClosed.get()) {
@@ -135,15 +145,27 @@ class ConfigFetcher implements Closeable {
                         logger.error(1100, message);
                         future.complete(FetchResponse.failed(message, true, cfRayId));
                     } else {
+                        if (!isRetry) {
+                            scheduleRetry(eTag, future);
+                            return;
+                        }
                         FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message(), cfRayId);
                         logger.error(1101, formattableLogMessage);
                         future.complete(FetchResponse.failed(formattableLogMessage, false, cfRayId));
                     }
                 } catch (SocketTimeoutException e) {
+                    if (!isRetry) {
+                        scheduleRetry(eTag, future);
+                        return;
+                    }
                     FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
                     logger.error(1102, formattableLogMessage, e);
                     future.complete(FetchResponse.failed(formattableLogMessage, false, null));
                 } catch (Exception e) {
+                    if (!isRetry) {
+                        scheduleRetry(eTag, future);
+                        return;
+                    }
                     String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                     logger.error(1103, message, e);
                     future.complete(FetchResponse.failed(message, false, null));
@@ -152,6 +174,16 @@ class ConfigFetcher implements Closeable {
         });
 
         return future;
+    }
+
+    private void scheduleRetry(final String eTag, final CompletableFuture<FetchResponse> originalFuture) {
+        httpClient.connectionPool().evictAll();
+        try {
+            Thread.sleep(RETRY_DELAY_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        getResponseAsync(eTag, true).thenAccept(originalFuture::complete);
     }
 
     @Override
