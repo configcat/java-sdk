@@ -111,9 +111,8 @@ class ConfigFetcher implements Closeable {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
-                String cfRayId = null;
+                String cfRayId = response.header("CF-RAY");
                 try (ResponseBody body = response.body()) {
-                    cfRayId = response.header("CF-RAY");
                     if (response.code() == 200) {
                         String content = body != null ? body.string() : null;
                         String eTag = response.header("ETag");

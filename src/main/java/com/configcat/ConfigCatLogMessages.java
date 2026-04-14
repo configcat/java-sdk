@@ -174,7 +174,7 @@ final class ConfigCatLogMessages {
      */
     public static FormattableLogMessage getFetchFailedDueToRequestTimeout(final Integer connectTimeoutMillis, final Integer readTimeoutMillis, final Integer writeTimeoutMillis, final String cfRayId) {
         if (cfRayId != null) {
-            return new FormattableLogMessage("Request timed out while trying to fetch config JSON. Timeout values: [connect: %dms, read: %dms, write: %dms]  %s", connectTimeoutMillis, readTimeoutMillis, writeTimeoutMillis, ConfigCatLogMessages.getCFRayIdPostFix(cfRayId));
+            return new FormattableLogMessage("Request timed out while trying to fetch config JSON. Timeout values: [connect: %dms, read: %dms, write: %dms] %s", connectTimeoutMillis, readTimeoutMillis, writeTimeoutMillis, ConfigCatLogMessages.getCFRayIdPostFix(cfRayId));
         }
         return new FormattableLogMessage("Request timed out while trying to fetch config JSON. Timeout values: [connect: %dms, read: %dms, write: %dms]", connectTimeoutMillis, readTimeoutMillis, writeTimeoutMillis);
     }
