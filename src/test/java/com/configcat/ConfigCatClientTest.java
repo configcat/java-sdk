@@ -139,6 +139,7 @@ public class ConfigCatClientTest {
         });
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         assertEquals("", cl.getValue(String.class, "fakeKey", ""));
 
@@ -157,6 +158,7 @@ public class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
         });
 
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         assertEquals("", cl.getValue(String.class, "fakeKey", ""));
@@ -177,6 +179,7 @@ public class ConfigCatClientTest {
         });
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         assertEquals("", cl.getValue(String.class, "fakeKey", ""));
 
@@ -196,6 +199,7 @@ public class ConfigCatClientTest {
         });
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(3, TimeUnit.SECONDS));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(3, TimeUnit.SECONDS));
 
         cl.forceRefresh();
@@ -239,6 +243,7 @@ public class ConfigCatClientTest {
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         server.enqueue(new MockResponse().setResponseCode(500));
+        server.enqueue(new MockResponse().setResponseCode(500));
 
         cl.forceRefresh();
         assertEquals("fakeValue", cl.getValueAsync(String.class, "fakeKey", null).get());
@@ -264,6 +269,7 @@ public class ConfigCatClientTest {
         String def = "def";
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(3, TimeUnit.SECONDS));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(3, TimeUnit.SECONDS));
 
         cl.forceRefresh();
         assertSame(def, cl.getValue(String.class, "test", def));
@@ -286,6 +292,7 @@ public class ConfigCatClientTest {
             options.httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build());
         });
 
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(3, TimeUnit.SECONDS));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(3, TimeUnit.SECONDS));
 
         cl.forceRefresh();
@@ -570,6 +577,7 @@ public class ConfigCatClientTest {
         server.start();
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
@@ -589,6 +597,7 @@ public class ConfigCatClientTest {
         server.start();
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
@@ -607,6 +616,7 @@ public class ConfigCatClientTest {
         MockWebServer server = new MockWebServer();
         server.start();
 
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
@@ -751,6 +761,7 @@ public class ConfigCatClientTest {
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(RULES_JSON));
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
         AtomicReference<ClientCacheState> ready = new AtomicReference<>(null);
@@ -781,6 +792,7 @@ public class ConfigCatClientTest {
         server.start();
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(RULES_JSON));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
@@ -843,6 +855,7 @@ public class ConfigCatClientTest {
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(RULES_JSON));
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
         AtomicReference<ClientCacheState> ready = new AtomicReference<>(null);
@@ -872,6 +885,7 @@ public class ConfigCatClientTest {
         MockWebServer server = new MockWebServer();
         server.start();
 
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean called = new AtomicBoolean(false);

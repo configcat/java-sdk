@@ -10,6 +10,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class ConfigFetcher implements Closeable {
+
+    private static final long RETRY_DELAY_MS = 50;
+
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
     private final OkHttpClient httpClient;
@@ -45,7 +48,7 @@ class ConfigFetcher implements Closeable {
     }
 
     private CompletableFuture<FetchResponse> executeFetchAsync(int executionCount, String eTag) {
-        return this.getResponseAsync(eTag).thenComposeAsync(fetchResponse -> {
+        return this.fetchWithRetryAsync(eTag).thenComposeAsync(fetchResponse -> {
             if (!fetchResponse.isFetched()) {
                 return CompletableFuture.completedFuture(fetchResponse);
             }
@@ -106,12 +109,13 @@ class ConfigFetcher implements Closeable {
                     }
                     logger.error(logEventId, message, e);
                 }
-                future.complete(FetchResponse.failed(message, false, null));
+                future.complete(FetchResponse.failed(message, false, null, true));
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 String cfRayId = null;
+                FetchResponse fetchResponse = null;
                 try (ResponseBody body = response.body()) {
                     cfRayId = response.header("CF-RAY");
                     if (response.code() == 200) {
@@ -119,40 +123,63 @@ class ConfigFetcher implements Closeable {
                         String eTag = response.header("ETag");
                         Result<Config> result = deserializeConfig(content, cfRayId);
                         if (result.error() != null) {
-                            future.complete(FetchResponse.failed(result.error(), false, cfRayId));
-                            return;
+                            fetchResponse = FetchResponse.failed(result.error(), false, cfRayId, false);
+                        } else {
+                            fetchResponse = FetchResponse.fetched(new Entry(result.value(), eTag, content, System.currentTimeMillis()), cfRayId);
+                            logger.debug("Fetch was successful: new config fetched.");
                         }
-                        logger.debug("Fetch was successful: new config fetched.");
-                        future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, content, System.currentTimeMillis()), cfRayId));
                     } else if (response.code() == 304) {
+                        fetchResponse = FetchResponse.notModified(cfRayId);
                         if(cfRayId != null) {
                             logger.debug(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId)));
                         } else {
                             logger.debug("Fetch was successful: config not modified.");
                         }
-                        future.complete(FetchResponse.notModified(cfRayId));
                     } else if (response.code() == 403 || response.code() == 404) {
                         FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);
+                        fetchResponse = FetchResponse.failed(message, true, cfRayId, false);
                         logger.error(1100, message);
-                        future.complete(FetchResponse.failed(message, true, cfRayId));
                     } else {
                         FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message(), cfRayId);
+                        fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
                         logger.error(1101, formattableLogMessage);
-                        future.complete(FetchResponse.failed(formattableLogMessage, false, cfRayId));
                     }
                 } catch (SocketTimeoutException e) {
                     FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), cfRayId);
+                    fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
                     logger.error(1102, formattableLogMessage, e);
-                    future.complete(FetchResponse.failed(formattableLogMessage, false, cfRayId));
                 } catch (Exception e) {
                     FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
+                    fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
                     logger.error(1103, formattableLogMessage, e);
-                    future.complete(FetchResponse.failed(formattableLogMessage, false, cfRayId));
+                } finally {
+                    if(fetchResponse == null) {
+                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
+                        fetchResponse = FetchResponse.failed(formattableLogMessage,false, cfRayId, false);
+                    }
+                    future.complete(fetchResponse);
                 }
             }
         });
 
         return future;
+    }
+
+    private CompletableFuture<FetchResponse> fetchWithRetryAsync(final String eTag) {
+        return this.getResponseAsync(eTag).thenComposeAsync(response -> {
+            if (response.shouldRetry()) {
+                try {
+                    this.httpClient.connectionPool().evictAll();
+                    Thread.sleep(RETRY_DELAY_MS);
+                    return this.getResponseAsync(eTag);
+                } catch (InterruptedException e) {
+                    this.logger.error(0, "Thread interrupted.", e);
+                    Thread.currentThread().interrupt();
+                    return CompletableFuture.completedFuture(response);
+                }
+            }
+            return CompletableFuture.completedFuture(response);
+        });
     }
 
     @Override
