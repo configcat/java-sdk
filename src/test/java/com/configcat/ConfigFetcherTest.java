@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,6 +82,64 @@ public class ConfigFetcherTest {
         assertTrue(response.isFailed());
         assertTrue(response.entry().isEmpty());
         assertTrue(response.entry().getConfig().isEmpty());
+
+        fetch.close();
+    }
+
+    @Test
+    public void fetchTimeOutExceptionContainsCFRayIdIfPresented() throws IOException, ExecutionException, InterruptedException {
+
+        ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
+                .readTimeout(1, TimeUnit.SECONDS)
+                .build(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        this.server.enqueue(new MockResponse().setBody("test").setHeader("CF-RAY", "12345").setBodyDelay(2, TimeUnit.SECONDS));
+        FetchResponse response = fetch.fetchAsync(null).get();
+        assertTrue(response.isFailed());
+        assertTrue(response.entry().isEmpty());
+        assertTrue(response.entry().getConfig().isEmpty());
+
+        assertTrue(response.error().toString().contains("Request timed out while trying to fetch config JSON."));
+        assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
+        assertEquals("12345", response.cfRayId());
+
+        fetch.close();
+    }
+
+    @Test
+    public void fetchUnexpectedErrorExceptionContainsCFRayIdIfPresented() throws IOException, ExecutionException, InterruptedException {
+
+        ConfigFetcher fetch = new ConfigFetcher(
+                new OkHttpClient
+                        .Builder()
+                        .readTimeout(1, TimeUnit.SECONDS)
+                        .build(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        this.server.enqueue(
+                new MockResponse()
+                        .setResponseCode(200)
+                        .setHeader("CF-RAY", "12345")
+                        .setBody("test")
+                        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
+
+        FetchResponse response = fetch.fetchAsync(null).get();
+        assertTrue(response.isFailed());
+        assertTrue(response.entry().isEmpty());
+        assertTrue(response.entry().getConfig().isEmpty());
+
+        assertTrue(response.error().toString().contains("Unexpected error occurred while trying to fetch config JSON."));
+        assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
+        assertEquals("12345", response.cfRayId());
 
         fetch.close();
     }

@@ -20,15 +20,17 @@ final class ConfigCatLogMessages {
      * Log message for Config Service Cache Read error. The log eventId is 2200.
      */
     public static final String CONFIG_SERVICE_CACHE_READ_ERROR = "Error occurred while reading the cache.";
-    /**
-     * Log message for Fetch Failed Due To Unexpected error. The log eventId is 1103.
-     */
-    public static final String FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR = "Unexpected error occurred while trying to fetch config JSON. It is most likely due to a local network issue. Please make sure your application can reach the ConfigCat CDN servers (or your proxy server) over HTTP.";
 
     /**
      * Log message for Fetch Failed Due To Invalid Sdk Key error. The log eventId is 1100.
      */
     private static final String FETCH_FAILED_DUE_TO_INVALID_SDK_KEY_ERROR = "Your SDK Key seems to be wrong. You can find the valid SDK Key at https://app.configcat.com/sdkkey";
+
+    /**
+     * Log message for Fetch Failed Due To Unexpected error. The log eventId is 1103.
+     */
+    private static final String FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR = "Unexpected error occurred while trying to fetch config JSON. It is most likely due to a local network issue. Please make sure your application can reach the ConfigCat CDN servers (or your proxy server) over HTTP.";
+
     /**
      * Log message for Fetch Failed Due To Redirect Loop error. The log eventId is 1104.
      */
@@ -167,10 +169,27 @@ final class ConfigCatLogMessages {
      * @param connectTimeoutMillis Connect timeout in milliseconds.
      * @param readTimeoutMillis    Read timeout in milliseconds.
      * @param writeTimeoutMillis   Write timeout in milliseconds.
+     * @param cfRayId The http response CF-RAY header value.
      * @return The formattable log message.
      */
-    public static FormattableLogMessage getFetchFailedDueToRequestTimeout(final Integer connectTimeoutMillis, final Integer readTimeoutMillis, final Integer writeTimeoutMillis) {
+    public static FormattableLogMessage getFetchFailedDueToRequestTimeout(final Integer connectTimeoutMillis, final Integer readTimeoutMillis, final Integer writeTimeoutMillis, final String cfRayId) {
+        if (cfRayId != null) {
+            return new FormattableLogMessage("Request timed out while trying to fetch config JSON. Timeout values: [connect: %dms, read: %dms, write: %dms] %s", connectTimeoutMillis, readTimeoutMillis, writeTimeoutMillis, ConfigCatLogMessages.getCFRayIdPostFix(cfRayId));
+        }
         return new FormattableLogMessage("Request timed out while trying to fetch config JSON. Timeout values: [connect: %dms, read: %dms, write: %dms]", connectTimeoutMillis, readTimeoutMillis, writeTimeoutMillis);
+    }
+
+    /**
+     * Log message for Fetch Failed Due To Unexpected error. The log eventId is 1103.
+     *
+     * @param cfRayId The http response CF-RAY header value.
+     * @return The formattable log message.
+     */
+    public static FormattableLogMessage getFetchFailedDueToUnexpectedError(final String cfRayId) {
+        if (cfRayId != null) {
+            return new FormattableLogMessage(FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR + " %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId));
+        }
+        return new FormattableLogMessage(FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR);
     }
 
     /**
