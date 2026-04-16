@@ -145,23 +145,19 @@ class ConfigFetcher implements Closeable {
                         logger.error(1101, formattableLogMessage);
                     }
                 } catch (SocketTimeoutException e) {
-                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
-                    fetchResponse = FetchResponse.failed(formattableLogMessage, false, null, true);
                     FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), cfRayId);
+                    fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
                     logger.error(1102, formattableLogMessage, e);
-                    future.complete(FetchResponse.failed(formattableLogMessage, false, cfRayId));
                 } catch (Exception e) {
-                    String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
-                    fetchResponse = FetchResponse.failed(message, false, null, true);
-                    logger.error(1103, message, e);
+                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
+                    fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
+                    logger.error(1103, formattableLogMessage, e);
                 } finally {
                     if(fetchResponse == null) {
-                        fetchResponse = FetchResponse.failed(ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR,false, null, false);
+                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
+                        fetchResponse = FetchResponse.failed(formattableLogMessage,false, cfRayId, false);
                     }
                     future.complete(fetchResponse);
-                    FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
-                    logger.error(1103, formattableLogMessage, e);
-                    future.complete(FetchResponse.failed(formattableLogMessage, false, cfRayId));
                 }
             }
         });

@@ -100,6 +100,8 @@ public class ConfigFetcherTest {
                 PollingModes.manualPoll().getPollingIdentifier());
 
         this.server.enqueue(new MockResponse().setBody("test").setHeader("CF-RAY", "12345").setBodyDelay(2, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setBody("test").setHeader("CF-RAY", "12345").setBodyDelay(2, TimeUnit.SECONDS));
+
         FetchResponse response = fetch.fetchAsync(null).get();
         assertTrue(response.isFailed());
         assertTrue(response.entry().isEmpty());
@@ -126,6 +128,12 @@ public class ConfigFetcherTest {
                 false,
                 PollingModes.manualPoll().getPollingIdentifier());
 
+        this.server.enqueue(
+                new MockResponse()
+                        .setResponseCode(200)
+                        .setHeader("CF-RAY", "12345")
+                        .setBody("test")
+                        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
         this.server.enqueue(
                 new MockResponse()
                         .setResponseCode(200)
