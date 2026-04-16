@@ -856,8 +856,6 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(RULES_JSON));
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
-        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
-        server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
         AtomicReference<ClientCacheState> ready = new AtomicReference<>(null);

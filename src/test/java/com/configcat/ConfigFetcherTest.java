@@ -367,6 +367,40 @@ public class ConfigFetcherTest {
     }
 
     @Test
+    public void retryOnSocketTimeoutException() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBodyDelay(2, TimeUnit.SECONDS).setBody(TEST_JSON));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFetched());
+        assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
+        assertEquals(2, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void retryOnUnexpectedError() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY).setBody(TEST_JSON));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFetched());
+        assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
+        assertEquals(2, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
     public void retryOnTransientHttpErrorBothFail() throws Exception {
         // Both first request and retry return 500
         this.server.enqueue(new MockResponse().setResponseCode(500));
