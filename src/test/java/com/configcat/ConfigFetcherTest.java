@@ -448,4 +448,65 @@ public class ConfigFetcherTest {
 
         fetcher.close();
     }
+
+    @Test
+    public void finallyBlockReturnsWithUnexpectedErrorMessageAndNoRetry() throws Exception {
+        // Use an OkHttp interceptor that returns a response whose body throws an Error on read.
+        // Error extends Throwable (not Exception), so it bypasses both catch(SocketTimeoutException)
+        // and catch(Exception) blocks, but the finally block still executes and handles fetchResponse == null.
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
+                    return originalResponse.newBuilder()
+                            .body(new okhttp3.ResponseBody() {
+                                @Override
+                                public okhttp3.MediaType contentType() {
+                                    return okhttp3.MediaType.parse("application/json");
+                                }
+
+                                @Override
+                                public long contentLength() {
+                                    return -1;
+                                }
+
+                                @Override
+                                public okio.BufferedSource source() {
+                                    return okio.Okio.buffer(new okio.Source() {
+                                        @Override
+                                        public long read(okio.Buffer sink, long byteCount) {
+                                            throw new OutOfMemoryError("Simulated error to exercise finally block");
+                                        }
+
+                                        @Override
+                                        public okio.Timeout timeout() {
+                                            return okio.Timeout.NONE;
+                                        }
+
+                                        @Override
+                                        public void close() {
+                                        }
+                                    });
+                                }
+                            })
+                            .build();
+                })
+                .build();
+
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON).setHeader("CF-RAY", "12345"));
+
+        ConfigFetcher fetcher = new ConfigFetcher(client,
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFailed());
+        assertFalse(response.shouldRetry());
+        assertEquals(1, this.server.getRequestCount());
+
+        fetcher.close();
+    }
 }
