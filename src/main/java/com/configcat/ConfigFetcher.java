@@ -13,7 +13,7 @@ class ConfigFetcher implements Closeable {
 
     private static final long RETRY_DELAY_MS = 50;
 
-    private static final long EVICT_ALL_THRESHOLD_MS = 30_000;
+    private static final long EVICT_ALL_THRESHOLD_MS = 30000;
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
