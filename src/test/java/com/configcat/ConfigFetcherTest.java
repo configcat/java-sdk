@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -415,6 +416,45 @@ public class ConfigFetcherTest {
         assertEquals(2, this.server.getRequestCount());
 
         fetcher.close();
+    }
+
+    @Test
+    public void evictAllThrottledWithin30Seconds() throws Exception {
+        // 4 requests: 2 per fetch (initial + retry), both fetches trigger retry
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        // First fetch: evictAll should be called, timestamp set
+        assertEquals(0, getLastEvictAllTimestampWithReflection(fetcher));
+        FetchResponse response1 = fetcher.fetchAsync(null).get();
+        assertTrue(response1.isFetched());
+        long firstTimestamp = getLastEvictAllTimestampWithReflection(fetcher);
+        assertTrue(firstTimestamp > 0);
+
+        // Second fetch immediately: evictAll should be skipped (within 30s threshold)
+        FetchResponse response2 = fetcher.fetchAsync(null).get();
+        assertTrue(response2.isFetched());
+        assertEquals(firstTimestamp, getLastEvictAllTimestampWithReflection(fetcher));
+
+        assertEquals(4, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    private static long getLastEvictAllTimestampWithReflection(ConfigFetcher fetcher) {
+        try {
+            Field field = ConfigFetcher.class.getDeclaredField("lastEvictAllTimestamp");
+            field.setAccessible(true);
+            return field.getLong(fetcher);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            fail("Could not access lastEvictAllTimestamp for test assertions", e);
+            return -1;
+        }
     }
 
     @Test

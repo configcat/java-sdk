@@ -27,7 +27,6 @@ public class VariationIdTests {
         this.server.start();
 
         this.client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
-            options.httpClient(new OkHttpClient.Builder().build());
             options.pollingMode(PollingModes.lazyLoad(2));
             options.baseUrl(this.server.url("/").toString());
         });

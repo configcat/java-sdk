@@ -33,7 +33,6 @@ public class ConfigCatClientIntegrationTest {
         this.server.start();
 
         this.client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
-            options.httpClient(new OkHttpClient.Builder().build());
             options.pollingMode(PollingModes.lazyLoad(2));
             options.baseUrl(this.server.url("/").toString());
         });
@@ -195,7 +194,7 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     void getConfigurationJsonStringWithDefaultConfigTimeout() {
-        ConfigCatClient cl = ConfigCatClient.get("configcat-sdk-1/TEST_KEY1-123456789012/1234567890123456789012", options -> options.httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build()));
+        ConfigCatClient cl = ConfigCatClient.get("configcat-sdk-1/TEST_KEY1-123456789012/1234567890123456789012", options -> options.httpOptions().readTimeoutMillis(2000));
 
         // makes a call to a real url which would fail, null expected
         String config = cl.getValue(String.class, "test", null);

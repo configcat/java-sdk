@@ -99,7 +99,7 @@ public class ConfigCatClientTest {
     void getValueWithDefaultConfigTimeout() throws IOException {
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options ->
-                options.httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build()));
+                options.httpOptions().readTimeoutMillis(2000));
 
         // makes a call to a real url which would fail, default expected
         boolean config = cl.getValue(Boolean.class, "key", true);
@@ -195,7 +195,7 @@ public class ConfigCatClientTest {
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
-            options.httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build());
+            options.httpOptions().readTimeoutMillis(1000);
         });
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
@@ -262,7 +262,7 @@ public class ConfigCatClientTest {
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
-            options.httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build());
+            options.httpOptions().readTimeoutMillis(1000);
         });
 
         String badJson = "{ test: test] }";
@@ -289,7 +289,7 @@ public class ConfigCatClientTest {
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
-            options.httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build());
+            options.httpOptions().readTimeoutMillis(1000);
         });
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(3, TimeUnit.SECONDS));

@@ -13,10 +13,14 @@ class ConfigFetcher implements Closeable {
 
     private static final long RETRY_DELAY_MS = 50;
 
+    private static final long EVICT_ALL_THRESHOLD_MS = 30_000;
+
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
     private final OkHttpClient httpClient;
     private final String mode;
+
+    private long lastEvictAllTimestamp = 0;
 
     private final String sdkKey;
     private final boolean urlIsCustom;
@@ -178,7 +182,11 @@ class ConfigFetcher implements Closeable {
         return this.getResponseAsync(eTag).thenComposeAsync(response -> {
             if (response.shouldRetry()) {
                 try {
-                    this.httpClient.connectionPool().evictAll();
+                    long now = System.currentTimeMillis();
+                    if (lastEvictAllTimestamp == 0 || (now - lastEvictAllTimestamp) >= EVICT_ALL_THRESHOLD_MS) {
+                        this.httpClient.connectionPool().evictAll();
+                        lastEvictAllTimestamp = now;
+                    }
                     Thread.sleep(RETRY_DELAY_MS);
                     return this.getResponseAsync(eTag);
                 } catch (InterruptedException e) {
