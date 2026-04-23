@@ -100,16 +100,25 @@ class ConfigFetcher implements Closeable {
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                int logEventId = 1103;
-                Object message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(null);
-                if (!isClosed.get()) {
-                    if (e instanceof SocketTimeoutException) {
-                        logEventId = 1102;
-                        message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), null);
+                FetchResponse fetchResponse = null;
+                try{
+                    int logEventId = 1103;
+                    Object message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(null);
+                    if (!isClosed.get()) {
+                        if (e instanceof SocketTimeoutException) {
+                            logEventId = 1102;
+                            message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), null);
+                        }
+                        logger.error(logEventId, message, e);
                     }
-                    logger.error(logEventId, message, e);
+                    fetchResponse =  FetchResponse.failed(message, false, null, true);
+                } finally {
+                    if(fetchResponse == null) {
+                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(null);
+                        fetchResponse = FetchResponse.failed(formattableLogMessage,false, null, false);
+                    }
+                    future.complete(fetchResponse);
                 }
-                future.complete(FetchResponse.failed(message, false, null, true));
             }
 
             @Override
