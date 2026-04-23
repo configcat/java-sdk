@@ -711,7 +711,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * Options for configuring  {@link ConfigCatClient} instance.
      */
     public static class Options {
-        private HttpOptions httpOptions = new HttpOptions();
+        private final HttpOptions httpOptions = new HttpOptions();
         private ConfigCache cache = new NullConfigCache();
         private String baseUrl;
         private PollingMode pollingMode = PollingModes.autoPoll();
