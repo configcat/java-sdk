@@ -359,4 +359,28 @@ final class ConfigCatLogMessages {
         return new FormattableLogMessage("[%s] Preparing request...", requestId);
     }
 
+    /**
+     * Extra log message for Config Fetcher if LogLevel.Debug enabled. Sending Request.
+     *
+     * @param requestId The request UUID.
+     * @param requestUrl The request URL.
+     * @param ifNoneMatch The value of the If-None-Match header in the request.
+     * @return The formattable log messag   e.
+     */
+    public static  FormattableLogMessage getDebugEnabledRequestWillBeSent(UUID requestId, String requestUrl, String ifNoneMatch) {
+        return new FormattableLogMessage("[%s] Sending request... (Url: '%s', IfNoneMatch: '%s') ", requestId,  requestUrl, ifNoneMatch);
+    }
+
+    /**
+     * Extra log message for Config Fetcher if LogLevel.Debug enabled. Sending Request.
+     *
+     * @param requestId The request UUID.
+     * @param requestUrl The request URL.
+     * @param ifNoneMatch The value of the If-None-Match header in the request.
+     * @return The formattable log messag   e.
+     */
+    public static  FormattableLogMessage getDebugEnabledRequestWillBeSentViaProxy(UUID requestId, String proxyUrl,String requestUrl, String ifNoneMatch) {
+        return new FormattableLogMessage("[%s] Sending request via proxy '%s' ... (Url: '%s', IfNoneMatch: '%s') ", requestId, proxyUrl, requestUrl, ifNoneMatch);
+    }
+
 }
