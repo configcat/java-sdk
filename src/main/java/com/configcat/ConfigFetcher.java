@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -24,6 +25,7 @@ class ConfigFetcher implements Closeable {
 
     private final String sdkKey;
     private final boolean urlIsCustom;
+    private final boolean isDebugLoggingEnabled;
 
     private String url;
 
@@ -45,6 +47,7 @@ class ConfigFetcher implements Closeable {
         this.url = url;
         this.httpClient = httpClient;
         this.mode = pollingIdentifier;
+        this.isDebugLoggingEnabled = logger.isEnabled(LogLevel.DEBUG);
     }
 
     public CompletableFuture<FetchResponse> fetchAsync(String eTag) {
@@ -52,6 +55,7 @@ class ConfigFetcher implements Closeable {
     }
 
     private CompletableFuture<FetchResponse> executeFetchAsync(int executionCount, String eTag) {
+
         return this.fetchWithRetryAsync(eTag).thenComposeAsync(fetchResponse -> {
             if (!fetchResponse.isFetched()) {
                 return CompletableFuture.completedFuture(fetchResponse);
@@ -179,6 +183,12 @@ class ConfigFetcher implements Closeable {
     }
 
     private CompletableFuture<FetchResponse> fetchWithRetryAsync(final String eTag) {
+        UUID requestId;
+        if(isDebugLoggingEnabled){
+            requestId = UUID.randomUUID();
+            this.logger.debug(ConfigCatLogMessages.getDebugEnabledPreparingRequest(requestId));
+        }
+
         return this.getResponseAsync(eTag).thenComposeAsync(response -> {
             if (response.shouldRetry()) {
                 try {

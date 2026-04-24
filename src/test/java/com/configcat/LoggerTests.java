@@ -3,6 +3,8 @@ package com.configcat;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class LoggerTests {
@@ -111,5 +113,27 @@ public class LoggerTests {
         verify(mockLogger, never()).info(anyString(), eq(5001), eq("info"));
         verify(mockLogger, never()).warn(anyString(), eq(3001), eq("warn"));
         verify(mockLogger, never()).error(anyString(), eq(1001), eq("error"), any(Exception.class));
+    }
+
+    @Test
+    public void isEnabledAtInfoThreshold() {
+        ConfigCatLogger logger = new ConfigCatLogger(mock(Logger.class), LogLevel.INFO);
+
+        assertFalse(logger.isEnabled(LogLevel.DEBUG));
+        assertTrue(logger.isEnabled(LogLevel.INFO));
+        assertTrue(logger.isEnabled(LogLevel.WARNING));
+        assertTrue(logger.isEnabled(LogLevel.ERROR));
+        assertTrue(logger.isEnabled(LogLevel.NO_LOG));
+    }
+
+    @Test
+    public void isEnabledAtNoLogThreshold() {
+        ConfigCatLogger logger = new ConfigCatLogger(mock(Logger.class), LogLevel.NO_LOG);
+
+        assertFalse(logger.isEnabled(LogLevel.DEBUG));
+        assertFalse(logger.isEnabled(LogLevel.INFO));
+        assertFalse(logger.isEnabled(LogLevel.WARNING));
+        assertFalse(logger.isEnabled(LogLevel.ERROR));
+        assertTrue(logger.isEnabled(LogLevel.NO_LOG));
     }
 }

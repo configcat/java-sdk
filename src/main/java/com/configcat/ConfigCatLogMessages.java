@@ -1,6 +1,7 @@
 package com.configcat;
 
 import java.util.Set;
+import java.util.UUID;
 
 final class ConfigCatLogMessages {
 
@@ -346,6 +347,16 @@ final class ConfigCatLogMessages {
      */
     public static  FormattableLogMessage getCFRayIdPostFix(String rayId) {
         return new FormattableLogMessage("(Ray ID: %s)", rayId);
+    }
+
+    /**
+     * Extra log message for Config Fetcher if LogLevel.Debug enabled. Preparing request.
+     *
+     * @param requestId The request UUID.
+     * @return The formattable log message.
+     */
+    public static  FormattableLogMessage getDebugEnabledPreparingRequest(UUID requestId) {
+        return new FormattableLogMessage("[%s] Preparing request...", requestId);
     }
 
 }
