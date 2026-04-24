@@ -4,8 +4,10 @@ import okhttp3.OkHttpClient;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.Proxy;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -40,11 +42,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.configCatHooks = options.configCatHooks;
 
         if (this.overrideBehaviour != OverrideBehaviour.LOCAL_ONLY) {
-            ConfigFetcher fetcher = new ConfigFetcher(options.httpClient == null
-                    ? new OkHttpClient
-                    .Builder()
-                    .build()
-                    : options.httpClient,
+            ConfigFetcher fetcher = new ConfigFetcher(
+                    createHttpClient(options.httpOptions()),
                     this.logger,
                     sdkKey,
                     !options.isBaseURLCustom()
@@ -61,6 +60,22 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         this.defaultUser = options.defaultUser;
+    }
+
+    private static OkHttpClient createHttpClient(Options.HttpOptions httpOptions) {
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+
+        if (httpOptions.getConnectTimeoutMillis() != null) {
+            builder.connectTimeout(httpOptions.getConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
+        }
+        if (httpOptions.getReadTimeoutMillis() != null) {
+            builder.readTimeout(httpOptions.getReadTimeoutMillis(), TimeUnit.MILLISECONDS);
+        }
+        if (httpOptions.getProxy() != null) {
+            builder.proxy(httpOptions.getProxy());
+        }
+
+        return builder.build();
     }
 
     @Override
@@ -696,7 +711,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * Options for configuring  {@link ConfigCatClient} instance.
      */
     public static class Options {
-        private OkHttpClient httpClient;
+        private final HttpOptions httpOptions = new HttpOptions();
         private ConfigCache cache = new NullConfigCache();
         private String baseUrl;
         private PollingMode pollingMode = PollingModes.autoPoll();
@@ -708,16 +723,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private boolean offline = false;
         private final ConfigCatHooks configCatHooks = new ConfigCatHooks();
         private LogFilterFunction logFilter;
-
-
-        /**
-         * Sets the underlying http client which will be used to fetch the latest configuration.
-         *
-         * @param httpClient the http client.
-         */
-        public void httpClient(OkHttpClient httpClient) {
-            this.httpClient = httpClient;
-        }
 
         /**
          * Sets the internal cache implementation.
@@ -815,6 +820,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         /**
+         * HTTP related options for {@link ConfigCatClient}.
+         **/
+        public HttpOptions httpOptions() {
+            return this.httpOptions;
+        }
+
+
+        /**
          * Set the client's log filter callback function. When logFilterFunction returns false, the ConfigCatLogger skips the log event.
          */
         public void logFilter(LogFilterFunction logFilter) {
@@ -823,6 +836,57 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         private boolean isBaseURLCustom() {
             return this.baseUrl != null && !this.baseUrl.isEmpty();
+        }
+
+        /**
+         * HTTP configuration options for a {@link ConfigCatClient} instance.
+         */
+        public static class HttpOptions {
+            private Integer connectTimeoutMillis;
+            private Integer readTimeoutMillis;
+            private Proxy proxy;
+
+            /**
+             * Sets HTTP connect timeout in milliseconds.
+             *
+             * @param connectTimeoutMillis the connect timeout in milliseconds.
+             */
+            public HttpOptions connectTimeoutMillis(int connectTimeoutMillis) {
+                this.connectTimeoutMillis = connectTimeoutMillis;
+                return this;
+            }
+
+            /**
+             * Sets the HTTP read timeout in milliseconds.
+             *
+             * @param readTimeoutMillis the read timeout in milliseconds.
+             */
+            public HttpOptions readTimeoutMillis(int readTimeoutMillis) {
+                this.readTimeoutMillis = readTimeoutMillis;
+                return this;
+            }
+
+            /**
+             * Sets the HTTP proxy.
+             *
+             * @param proxy the HTTP proxy.
+             */
+            public HttpOptions proxy(Proxy proxy) {
+                this.proxy = proxy;
+                return this;
+            }
+
+            Integer getConnectTimeoutMillis() {
+                return connectTimeoutMillis;
+            }
+
+            Integer getReadTimeoutMillis() {
+                return readTimeoutMillis;
+            }
+
+            Proxy getProxy() {
+                return proxy;
+            }
         }
     }
 }

@@ -69,6 +69,7 @@ public class AutoPollingTest {
     @Test
     public void getFail() throws InterruptedException, ExecutionException, IOException {
         this.server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
+        this.server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         ConfigCache cache = new NullConfigCache();
         PollingMode pollingMode = PollingModes.autoPoll(2);
@@ -132,6 +133,7 @@ public class AutoPollingTest {
     @Test
     public void getWithFailedRefresh() throws InterruptedException, ExecutionException, IOException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+        this.server.enqueue(new MockResponse().setResponseCode(500));
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         ConfigCache cache = new NullConfigCache();

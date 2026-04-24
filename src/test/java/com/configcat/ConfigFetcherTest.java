@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -78,6 +79,7 @@ public class ConfigFetcherTest {
                 PollingModes.manualPoll().getPollingIdentifier());
 
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(2, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(2, TimeUnit.SECONDS));
         FetchResponse response = fetch.fetchAsync(null).get();
         assertTrue(response.isFailed());
         assertTrue(response.entry().isEmpty());
@@ -99,6 +101,8 @@ public class ConfigFetcherTest {
                 PollingModes.manualPoll().getPollingIdentifier());
 
         this.server.enqueue(new MockResponse().setBody("test").setHeader("CF-RAY", "12345").setBodyDelay(2, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setBody("test").setHeader("CF-RAY", "12345").setBodyDelay(2, TimeUnit.SECONDS));
+
         FetchResponse response = fetch.fetchAsync(null).get();
         assertTrue(response.isFailed());
         assertTrue(response.entry().isEmpty());
@@ -125,6 +129,12 @@ public class ConfigFetcherTest {
                 false,
                 PollingModes.manualPoll().getPollingIdentifier());
 
+        this.server.enqueue(
+                new MockResponse()
+                        .setResponseCode(200)
+                        .setHeader("CF-RAY", "12345")
+                        .setBody("test")
+                        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
         this.server.enqueue(
                 new MockResponse()
                         .setResponseCode(200)
@@ -335,6 +345,208 @@ public class ConfigFetcherTest {
         assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
 
         verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(Exception.class));
+
+        fetcher.close();
+    }
+
+    @Test
+    public void retryOnTransientHttpError() throws Exception {
+        // First request returns 500, retry returns 200
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFetched());
+        assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
+        assertEquals(2, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void retryOnSocketTimeoutException() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBodyDelay(2, TimeUnit.SECONDS).setBody(TEST_JSON));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFetched());
+        assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
+        assertEquals(2, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void retryOnUnexpectedError() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY).setBody(TEST_JSON));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFetched());
+        assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
+        assertEquals(2, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void retryOnTransientHttpErrorBothFail() throws Exception {
+        // Both first request and retry return 500
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFailed());
+        assertEquals(2, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void evictAllThrottledWithin30Seconds() throws Exception {
+        // 4 requests: 2 per fetch (initial + retry), both fetches trigger retry
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        // First fetch: evictAll should be called, timestamp set
+        assertEquals(Long.MIN_VALUE, getLastEvictAllTimestampWithReflection(fetcher));
+        FetchResponse response1 = fetcher.fetchAsync(null).get();
+        assertTrue(response1.isFetched());
+        long firstTimestamp = getLastEvictAllTimestampWithReflection(fetcher);
+        assertTrue(firstTimestamp > 0);
+
+        // Second fetch immediately: evictAll should be skipped (within 30s threshold)
+        FetchResponse response2 = fetcher.fetchAsync(null).get();
+        assertTrue(response2.isFetched());
+        assertEquals(firstTimestamp, getLastEvictAllTimestampWithReflection(fetcher));
+
+        assertEquals(4, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    private static long getLastEvictAllTimestampWithReflection(ConfigFetcher fetcher) {
+        try {
+            Field field = ConfigFetcher.class.getDeclaredField("lastEvictAllTimestamp");
+            field.setAccessible(true);
+            return field.getLong(fetcher);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            fail("Could not access lastEvictAllTimestamp for test assertions", e);
+            return -1;
+        }
+    }
+
+    @Test
+    public void noRetryOn403() throws Exception {
+        // 403 is a permanent error, no retry
+        this.server.enqueue(new MockResponse().setResponseCode(403));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFailed());
+        assertEquals(1, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void noRetryOn404() throws Exception {
+        // 404 is a permanent error, no retry
+        this.server.enqueue(new MockResponse().setResponseCode(404));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFailed());
+        assertEquals(1, this.server.getRequestCount());
+
+        fetcher.close();
+    }
+
+    @Test
+    public void finallyBlockReturnsWithUnexpectedErrorMessageAndNoRetry() throws Exception {
+        // Use an OkHttp interceptor that returns a response whose body throws an Error on read.
+        // Error extends Throwable (not Exception), so it bypasses both catch(SocketTimeoutException)
+        // and catch(Exception) blocks, but the finally block still executes and handles fetchResponse == null.
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
+                    return originalResponse.newBuilder()
+                            .body(new okhttp3.ResponseBody() {
+                                @Override
+                                public okhttp3.MediaType contentType() {
+                                    return okhttp3.MediaType.parse("application/json");
+                                }
+
+                                @Override
+                                public long contentLength() {
+                                    return -1;
+                                }
+
+                                @Override
+                                public okio.BufferedSource source() {
+                                    return okio.Okio.buffer(new okio.Source() {
+                                        @Override
+                                        public long read(okio.Buffer sink, long byteCount) {
+                                            throw new OutOfMemoryError("Simulated error to exercise finally block");
+                                        }
+
+                                        @Override
+                                        public okio.Timeout timeout() {
+                                            return okio.Timeout.NONE;
+                                        }
+
+                                        @Override
+                                        public void close() {
+                                            throw new UnsupportedOperationException("Not implemented for test");
+                                        }
+                                    });
+                                }
+                            })
+                            .build();
+                })
+                .build();
+
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON).setHeader("CF-RAY", "12345"));
+
+        ConfigFetcher fetcher = new ConfigFetcher(client,
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+
+        assertTrue(response.isFailed());
+        assertFalse(response.shouldRetry());
+        assertEquals(1, this.server.getRequestCount());
 
         fetcher.close();
     }
