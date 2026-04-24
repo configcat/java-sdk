@@ -1,5 +1,6 @@
 package com.configcat;
 
+import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -105,6 +108,55 @@ public class ConfigCatClientTest {
         assertTrue(config);
 
         cl.close();
+    }
+
+    @Test
+    void httpOptionsDefaultValuesPreserveOkHttpDefaults() throws Exception {
+
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+        });
+
+        OkHttpClient fetcherClient = getFetcherClientWithReflection(client);
+        OkHttpClient baselineClient = new OkHttpClient.Builder().build();
+
+        assertEquals(baselineClient.connectTimeoutMillis(), fetcherClient.connectTimeoutMillis());
+        assertEquals(baselineClient.readTimeoutMillis(), fetcherClient.readTimeoutMillis());
+
+        client.close();
+    }
+
+    @Test
+    void httpOptionsTimeoutsAppliedToClient() throws Exception {
+
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.httpOptions().connectTimeoutMillis(1234).readTimeoutMillis(5678);
+        });
+
+        OkHttpClient fetcherClient = getFetcherClientWithReflection(client);
+
+        assertEquals(1234, fetcherClient.connectTimeoutMillis());
+        assertEquals(5678, fetcherClient.readTimeoutMillis());
+
+        client.close();
+    }
+
+    @Test
+    void httpOptionsProxyAppliedToClient() throws Exception {
+
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 8080));
+
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.httpOptions().proxy(proxy);
+        });
+
+        OkHttpClient fetcherClient = getFetcherClientWithReflection(client);
+
+        assertSame(proxy, fetcherClient.proxy());
+
+        client.close();
     }
 
     @Test
@@ -933,6 +985,20 @@ public class ConfigCatClientTest {
         cacheKeyField.setAccessible(true);
 
         return (String) cacheKeyField.get(configService);
+    }
+
+    private static OkHttpClient getFetcherClientWithReflection(ConfigCatClient client) throws NoSuchFieldException, IllegalAccessException {
+        Field configServiceField = ConfigCatClient.class.getDeclaredField("configService");
+        configServiceField.setAccessible(true);
+        ConfigService configService = (ConfigService) configServiceField.get(client);
+
+        Field configFetcherField = ConfigService.class.getDeclaredField("configFetcher");
+        configFetcherField.setAccessible(true);
+        ConfigFetcher configFetcher = (ConfigFetcher) configFetcherField.get(configService);
+
+        Field httpClientField = ConfigFetcher.class.getDeclaredField("httpClient");
+        httpClientField.setAccessible(true);
+        return (OkHttpClient) httpClientField.get(configFetcher);
     }
 
     @Test
