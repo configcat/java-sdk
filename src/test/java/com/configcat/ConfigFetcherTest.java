@@ -524,6 +524,7 @@ public class ConfigFetcherTest {
 
                                         @Override
                                         public void close() {
+                                            throw new UnsupportedOperationException("Not implemented for test");
                                         }
                                     });
                                 }
