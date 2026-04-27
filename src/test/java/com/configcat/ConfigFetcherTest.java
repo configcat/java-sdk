@@ -17,12 +17,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -457,6 +461,74 @@ public class ConfigFetcherTest {
         }
     }
 
+    /**
+     * Invokes the private getProxyUri method using reflection.
+     *
+     * @param fetcher the ConfigFetcher instance
+     * @return the result of getProxyUri()
+     */
+    private static String getProxyUriUsingReflection(ConfigFetcher fetcher) {
+        try {
+            Method method = ConfigFetcher.class.getDeclaredMethod("getProxyUri");
+            method.setAccessible(true);
+            return (String) method.invoke(fetcher);
+        } catch (Exception e) {
+            fail("Could not invoke getProxyUri via reflection", e);
+            return null;
+        }
+    }
+
+    @Test
+    public void getProxyUriWhenProxyIsNullReturnsNull() throws IOException {
+        OkHttpClient httpClient = new OkHttpClient.Builder().proxy(null).build();
+        ConfigFetcher fetcher = new ConfigFetcher(httpClient, logger, "", "http://test.com", false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        String result = getProxyUriUsingReflection(fetcher);
+
+        assertNull(result);
+        fetcher.close();
+    }
+
+    @Test
+    public void getProxyUriWhenProxyTypeIsDirectReturnsNull() throws IOException {
+        // Proxy.NO_PROXY is a direct proxy (no proxy), so getProxyUri should return null
+        OkHttpClient httpClient = new OkHttpClient.Builder().proxy(Proxy.NO_PROXY).build();
+        ConfigFetcher fetcher = new ConfigFetcher(httpClient, logger, "", "http://test.com", false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        String result = getProxyUriUsingReflection(fetcher);
+
+        assertNull(result);
+        fetcher.close();
+    }
+
+    @Test
+    public void getProxyUriWhenProxyIsHTTPReturnsFormattedHttpProxyUri() throws IOException {
+        Proxy httpProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("proxy.example.com", 8080));
+        OkHttpClient httpClient = new OkHttpClient.Builder().proxy(httpProxy).build();
+        ConfigFetcher fetcher = new ConfigFetcher(httpClient, logger, "", "http://test.com", false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        String result = getProxyUriUsingReflection(fetcher);
+
+        assertEquals("http://proxy.example.com:8080", result);
+        fetcher.close();
+    }
+
+    @Test
+    public void getProxyUriWhenProxyIsSOCKSReturnsFormattedSocks5ProxyUri() throws IOException {
+        Proxy socksProxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("socks.example.com", 1080));
+        OkHttpClient httpClient = new OkHttpClient.Builder().proxy(socksProxy).build();
+        ConfigFetcher fetcher = new ConfigFetcher(httpClient, logger, "", "http://test.com", false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        String result = getProxyUriUsingReflection(fetcher);
+
+        assertEquals("socks5://socks.example.com:1080", result);
+        fetcher.close();
+    }
+
     @Test
     public void noRetryOn403() throws Exception {
         // 403 is a permanent error, no retry
@@ -550,4 +622,121 @@ public class ConfigFetcherTest {
 
         fetcher.close();
     }
+
+    @Test
+    public void debugLogsOnSuccessfulFetch() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON).setHeader("ETag", "fakeETag"));
+
+        Logger mockLogger = mock(Logger.class);
+        when(mockLogger.isDebugEnabled()).thenReturn(true);
+
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                localLogger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+        assertTrue(response.isFetched());
+
+        // Verify: preparing request
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Preparing request...")));
+        // Verify: sending request (with URL and IfNoneMatch)
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Sending request...")));
+        // Verify: received headers (status 200)
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Received headers.") && arg.toString().contains("200")));
+        // Verify: received body
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Received body.")));
+        // Verify: fetch successful message
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), eq("Fetch was successful: new config fetched."));
+
+        // Verify no retry-related debug logs
+        verify(mockLogger, never()).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Trying request again...")));
+        verify(mockLogger, never()).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Reset connection pool.")));
+
+        fetcher.close();
+    }
+
+    @Test
+    public void debugLogsOnFailedResponseWithRetry() throws Exception {
+        // First request returns 500 (triggers retry), retry returns 200
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        Logger mockLogger = mock(Logger.class);
+        when(mockLogger.isDebugEnabled()).thenReturn(true);
+
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                localLogger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+        assertTrue(response.isFetched());
+        assertEquals(2, this.server.getRequestCount());
+
+        // Verify: preparing request (once for the whole fetch cycle)
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Preparing request...")));
+        // Verify: sending request called twice (initial + retry)
+        verify(mockLogger, times(2)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Sending request...")));
+        // Verify: received unexpected status code for the 500 response
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Received unexpected status code.")));
+        // Verify: reset connection pool on retry
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Reset connection pool.")));
+        // Verify: trying request again
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Trying request again...")));
+        // Verify: received headers for both calls (500 + 200)
+        verify(mockLogger, times(2)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Received headers.") && !arg.toString().contains("Received body.")));
+        // Verify: successful fetch on retry
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), eq("Fetch was successful: new config fetched."));
+
+        fetcher.close();
+    }
+
+    @Test
+    public void debugLogsRetrySkipsEvictWhenWithinThreshold() throws Exception {
+        // First fetch: 500 + 200 (evictAll called, timestamp set)
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+        // Second fetch: 500 + 200 (evictAll skipped because within 30s threshold)
+        this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        Logger mockLogger = mock(Logger.class);
+        when(mockLogger.isDebugEnabled()).thenReturn(true);
+
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                localLogger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        // First fetch triggers retry - evictAll should be called
+        FetchResponse response1 = fetcher.fetchAsync(null).get();
+        assertTrue(response1.isFetched());
+
+        // Second fetch triggers retry - evictAll should be skipped (within 30s threshold)
+        FetchResponse response2 = fetcher.fetchAsync(null).get();
+        assertTrue(response2.isFetched());
+
+        assertEquals(4, this.server.getRequestCount());
+
+        // Verify: reset connection pool called only ONCE (first retry), skipped on second retry
+        verify(mockLogger, times(1)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Reset connection pool.")));
+        // Verify: trying request again called twice (once per fetch cycle)
+        verify(mockLogger, times(2)).debug(eq("[{}] {}"), eq(0), argThat(arg -> arg.toString().contains("Trying request again...")));
+
+        fetcher.close();
+    }
 }
+
