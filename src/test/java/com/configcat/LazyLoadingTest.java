@@ -87,6 +87,7 @@ public class LazyLoadingTest {
     public void getWithFailedRefresh() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(500));
+        this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
         assertEquals("test", this.configService.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
