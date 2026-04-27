@@ -20,7 +20,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.lang.reflect.Field;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -435,7 +434,7 @@ public class ConfigFetcherTest {
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         // First fetch: evictAll should be called, timestamp set
-        assertEquals(0, getLastEvictAllTimestampWithReflection(fetcher));
+        assertEquals(Long.MIN_VALUE, getLastEvictAllTimestampWithReflection(fetcher));
         FetchResponse response1 = fetcher.fetchAsync(null).get();
         assertTrue(response1.isFetched());
         long firstTimestamp = getLastEvictAllTimestampWithReflection(fetcher);

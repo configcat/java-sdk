@@ -223,8 +223,8 @@ class ConfigFetcher implements Closeable {
         return this.getResponseAsync(eTag, requestId).thenComposeAsync(response -> {
             if (response.shouldRetry()) {
                 try {
-                    long now = System.currentTimeMillis();
-                    if (lastEvictAllTimestamp == 0 || (now - lastEvictAllTimestamp) >= EVICT_ALL_THRESHOLD_NS) {
+                    long now = System.nanoTime();
+                    if (lastEvictAllTimestamp == Long.MIN_VALUE || (now - lastEvictAllTimestamp) >= EVICT_ALL_THRESHOLD_NS) {
                         this.httpClient.connectionPool().evictAll();
                         lastEvictAllTimestamp = now;
                         if (isDebugLoggingEnabled){
