@@ -16,14 +16,14 @@ class ConfigFetcher implements Closeable {
 
     private static final long RETRY_DELAY_MS = 50;
 
-    private static final long EVICT_ALL_THRESHOLD_MS = 30000;
+    private static final long EVICT_ALL_THRESHOLD_NS = 30_000_000_000L; // 30 seconds in nanoseconds
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
     private final OkHttpClient httpClient;
     private final String mode;
 
-    private long lastEvictAllTimestamp = 0;
+    private long lastEvictAllTimestamp = Long.MIN_VALUE;
 
     private final String sdkKey;
     private final boolean urlIsCustom;
@@ -57,7 +57,6 @@ class ConfigFetcher implements Closeable {
     }
 
     private CompletableFuture<FetchResponse> executeFetchAsync(int executionCount, String eTag) {
-
         return this.fetchWithRetryAsync(eTag).thenComposeAsync(fetchResponse -> {
             if (!fetchResponse.isFetched()) {
                 return CompletableFuture.completedFuture(fetchResponse);
@@ -103,8 +102,6 @@ class ConfigFetcher implements Closeable {
             return CompletableFuture.completedFuture(fetchResponse);
         });
     }
-
-
 
     private CompletableFuture<FetchResponse> getResponseAsync(final String eTag, final UUID requestId) {
         Request request = this.getRequest(eTag);
@@ -227,7 +224,7 @@ class ConfigFetcher implements Closeable {
             if (response.shouldRetry()) {
                 try {
                     long now = System.currentTimeMillis();
-                    if (lastEvictAllTimestamp == 0 || (now - lastEvictAllTimestamp) >= EVICT_ALL_THRESHOLD_MS) {
+                    if (lastEvictAllTimestamp == 0 || (now - lastEvictAllTimestamp) >= EVICT_ALL_THRESHOLD_NS) {
                         this.httpClient.connectionPool().evictAll();
                         lastEvictAllTimestamp = now;
                         if (isDebugLoggingEnabled){
