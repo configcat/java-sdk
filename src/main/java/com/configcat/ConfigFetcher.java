@@ -109,7 +109,7 @@ class ConfigFetcher implements Closeable {
     private CompletableFuture<FetchResponse> getResponseAsync(final String eTag, final UUID requestId) {
         Request request = this.getRequest(eTag);
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
-        if(isDebugLoggingEnabled)  {
+        if(isDebugLoggingEnabled) {
             String proxyUri = getProxyUri();
             if (proxyUri == null) {
                 this.logger.debug(ConfigCatLogMessages.getDebugEnabledRequestWillBeSent(requestId,request.url().toString(),request.header("If-None-Match")));
@@ -123,12 +123,8 @@ class ConfigFetcher implements Closeable {
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 FetchResponse fetchResponse = null;
                 try{
-                    if (isDebugLoggingEnabled)
-                    {
-                        //TODO here are 2 options logged as error. on debug side one fail is enough?
-//                        logger!.LogInterpolated(LogLevel.Debug, 0, ex,
-//                            $"[{requestId}] Request failed.",
-//                            "REQUEST_ID");
+                    if (isDebugLoggingEnabled){
+                        logger.debug(ConfigCatLogMessages.getDebugEnabledRequestFailed(requestId));
                     }
                     int logEventId = 1103;
                     Object message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(null);
@@ -153,76 +149,54 @@ class ConfigFetcher implements Closeable {
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 String cfRayId = null;
                 FetchResponse fetchResponse = null;
-                if (isDebugLoggingEnabled)
-                {
-                    //TODO
-//                    logger!.LogInterpolated(LogLevel.Debug, 0,
-//                        $"[{requestId}] Received headers. (StatusCode: {(int)httpResponse.StatusCode}, ReasonPhrase: '{httpResponse.ReasonPhrase}', ETag: '{httpResponse.Headers.ETag?.ToString()}')",
-//                        "REQUEST_ID", "STATUS_CODE", "REASON_PHRASE", "ETAG");
-                }
                 try (ResponseBody body = response.body()) {
                     cfRayId = response.header("CF-RAY");
-                    if (response.code() == 200) {
+                    int responseCode = response.code();
+                    String eTag = response.header("ETag");
+                    if (isDebugLoggingEnabled) {
+                        logger.debug(ConfigCatLogMessages.getDebugEnabledReceivedHeaders(requestId, String.valueOf(responseCode), response.message(), eTag));
+                    }
+                    if (responseCode == 200) {
                         String content = body != null ? body.string() : null;
-                        String eTag = response.header("ETag");
                         Result<Config> result = deserializeConfig(content, cfRayId);
                         if (result.error() != null) {
                             fetchResponse = FetchResponse.failed(result.error(), false, cfRayId, false);
                         } else {
-
-                            if (isDebugLoggingEnabled)
-                            {
-                                //TODO
-//                                logger!.LogInterpolated(LogLevel.Debug, 0,
-//                                    $"[{requestId}] Received body. (Length: {httpResponseBody.Length})",
-//                                    "REQUEST_ID", "LENGTH");
+                            if (isDebugLoggingEnabled && body != null) {
+                                logger.debug(ConfigCatLogMessages.getDebugEnabledReceivedBody(requestId, body.contentLength()));
                             }
-
                             fetchResponse = FetchResponse.fetched(new Entry(result.value(), eTag, content, System.currentTimeMillis()), cfRayId);
-                            //TODO is this log-debig replaced via isDebugLoggingEnabled check?
                             logger.debug("Fetch was successful: new config fetched.");
                         }
-                    } else if (response.code() == 304) {
+                    } else if (responseCode == 304) {
                         fetchResponse = FetchResponse.notModified(cfRayId);
-                        if(cfRayId != null) {
+                        if(cfRayId != null && isDebugLoggingEnabled) {
                             logger.debug(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId)));
                         } else {
                             logger.debug("Fetch was successful: config not modified.");
                         }
-                    } else if (response.code() == 403 || response.code() == 404) {
+                    } else if (responseCode == 403 || responseCode == 404) {
                         FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);
                         fetchResponse = FetchResponse.failed(message, true, cfRayId, false);
                         logger.error(1100, message);
                     } else {
-                        if (isDebugLoggingEnabled)
-                        {
-                            //TODO
-//                            logger!.LogInterpolated(LogLevel.Debug, 0,
-//                                $"[{requestId}] Received unexpected status code.",
-//                                "REQUEST_ID");
+                        if (isDebugLoggingEnabled){
+                          logger.debug(ConfigCatLogMessages.getDebugEnabledReceivedUnexpectedStatusCode(requestId));
                         }
-                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message(), cfRayId);
+                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(responseCode, response.message(), cfRayId);
                         fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
                         logger.error(1101, formattableLogMessage);
                     }
                 } catch (SocketTimeoutException e) {
-                    if (isDebugLoggingEnabled)
-                    {
-                        //TODO
-//                        logger!.LogInterpolated(LogLevel.Debug, 0, ex,
-//                            $"[{requestId}] Request timed out.",
-//                            "REQUEST_ID");
+                    if (isDebugLoggingEnabled) {
+                        logger.debug(ConfigCatLogMessages.getDebugEnabledRequestTimedOut(requestId));
                     }
                     FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), cfRayId);
                     fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
                     logger.error(1102, formattableLogMessage, e);
                 } catch (Exception e) {
-                    if (isDebugLoggingEnabled)
-                    {
-                        //TODO
-//                        logger!.LogInterpolated(LogLevel.Debug, 0, ex,
-//                            $"[{requestId}] Request failed.",
-//                            "REQUEST_ID");
+                    if (isDebugLoggingEnabled) {
+                        logger.debug(ConfigCatLogMessages.getDebugEnabledRequestFailed(requestId));
                     }
                     FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
                     fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
@@ -256,21 +230,13 @@ class ConfigFetcher implements Closeable {
                     if (lastEvictAllTimestamp == 0 || (now - lastEvictAllTimestamp) >= EVICT_ALL_THRESHOLD_MS) {
                         this.httpClient.connectionPool().evictAll();
                         lastEvictAllTimestamp = now;
-                        if (isDebugLoggingEnabled)
-                        {
-                            //TODO fix the message, not renewed but evicted all
-//                            logger!.LogInterpolated(LogLevel.Debug, 0,
-//                                $"[{requestId}] Renewed HttpClient.",
-//                                "REQUEST_ID");
+                        if (isDebugLoggingEnabled){
+                            this.logger.debug(ConfigCatLogMessages.getDebugEnabledResetConnectionPool(requestId));
                         }
                     }
                     Thread.sleep(RETRY_DELAY_MS);
-                    if (isDebugLoggingEnabled)
-                    {
-                        //TODO
-//                        logger!.LogInterpolated(LogLevel.Debug, 0,
-//                            $"[{requestId}] Trying request again...",
-//                            "REQUEST_ID");
+                    if (isDebugLoggingEnabled) {
+                        this.logger.debug(ConfigCatLogMessages.getDebugEnabledReTryRequest(requestId));
                     }
                     return this.getResponseAsync(eTag, requestId);
                 } catch (InterruptedException e) {

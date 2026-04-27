@@ -365,10 +365,10 @@ final class ConfigCatLogMessages {
      * @param requestId The request UUID.
      * @param requestUrl The request URL.
      * @param ifNoneMatch The value of the If-None-Match header in the request.
-     * @return The formattable log messag   e.
+     * @return The formattable log message.
      */
     public static  FormattableLogMessage getDebugEnabledRequestWillBeSent(UUID requestId, String requestUrl, String ifNoneMatch) {
-        return new FormattableLogMessage("[%s] Sending request... (Url: '%s', IfNoneMatch: '%s') ", requestId,  requestUrl, ifNoneMatch);
+        return new FormattableLogMessage("[%s] Sending request... (Url: '%s', IfNoneMatch: '%s')", requestId,  requestUrl, ifNoneMatch);
     }
 
     /**
@@ -377,10 +377,84 @@ final class ConfigCatLogMessages {
      * @param requestId The request UUID.
      * @param requestUrl The request URL.
      * @param ifNoneMatch The value of the If-None-Match header in the request.
-     * @return The formattable log messag   e.
+     * @return The formattable log message.
      */
-    public static  FormattableLogMessage getDebugEnabledRequestWillBeSentViaProxy(UUID requestId, String proxyUrl,String requestUrl, String ifNoneMatch) {
-        return new FormattableLogMessage("[%s] Sending request via proxy '%s' ... (Url: '%s', IfNoneMatch: '%s') ", requestId, proxyUrl, requestUrl, ifNoneMatch);
+    public static  FormattableLogMessage getDebugEnabledRequestWillBeSentViaProxy(UUID requestId, String proxyUrl, String requestUrl, String ifNoneMatch) {
+        return new FormattableLogMessage("[%s] Sending request via proxy '%s' ... (Url: '%s', IfNoneMatch: '%s')", requestId, proxyUrl, requestUrl, ifNoneMatch);
+    }
+
+    /**
+     * Extra log message for Config Fetcher if LogLevel.Debug enabled. Received Headers.
+     *
+     * @param requestId The request UUID.
+     * @param statusCode The HTTP response status code.
+     * @param message The value of the Message in the HTTP response.
+     * @param eTag The value of the ETag header in the response.
+     * @return The formattable log message.
+     */
+    public static  FormattableLogMessage getDebugEnabledReceivedHeaders(UUID requestId, String statusCode, String message, String eTag) {
+        return new FormattableLogMessage("[%s] Received headers. (StatusCode: %s, ReasonPhrase: ' %s', ETag: ' %s'", requestId, statusCode, message, eTag);
+    }
+
+    /**
+     * Extra log message for Config Fetcher if LogLevel.Debug enabled. Received Body.
+     *
+     * @param requestId The request UUID.
+     * @param bodyLength The length of the HTTP response body.
+     * @return The formattable log message.
+     */
+    public static  FormattableLogMessage getDebugEnabledReceivedBody(UUID requestId, long bodyLength) {
+        return new FormattableLogMessage("[%s] Received headers. Received body. (Length: %d)", requestId, bodyLength);
+    }
+
+    /**
+     * Extra log message for Config Fetcher if LogLevel.Debug enabled. Received unexpected status code.
+     *
+     * @param requestId The request UUID.
+     * @return The formattable log message.
+     */
+    public static  FormattableLogMessage getDebugEnabledReceivedUnexpectedStatusCode(UUID requestId) {
+        return new FormattableLogMessage("[%s] Received unexpected status code.", requestId);
+    }
+
+    /**
+     * Extra log message for Config Fetcher if LogLevel.Debug enabled. Request timed out.
+     *
+     * @param requestId The request UUID.
+     * @return The formattable log message.
+     */
+    public static  FormattableLogMessage getDebugEnabledRequestTimedOut(UUID requestId) {
+        return new FormattableLogMessage("[%s] Request timed out.", requestId);
+    }
+
+    /**
+     * Extra log message for Config Fetcher if LogLevel.Debug enabled. Request failed.
+     *
+     * @param requestId The request UUID.
+     * @return The formattable log message.
+     */
+    public static  FormattableLogMessage getDebugEnabledRequestFailed(UUID requestId) {
+        return new FormattableLogMessage("[%s] Request failed.", requestId);
+    }
+
+    /**
+     * Extra log message for Config Fetcher if LogLevel.Debug enabled. Reset connection pool.
+     *
+     * @param requestId The request UUID.
+     * @return The formattable log message.
+     */
+    public static  FormattableLogMessage getDebugEnabledResetConnectionPool(UUID requestId) {
+        return new FormattableLogMessage("[%s] Reset connection pool.", requestId);
+    }
+
+    /**
+     * Extra log message for Config Fetcher if LogLevel.Debug enabled. Trying request again.
+     *
+     * @param requestId The request UUID.
+     * @return The formattable log message.
+     */
+    public static  FormattableLogMessage getDebugEnabledReTryRequest(UUID requestId) {
+        return new FormattableLogMessage("[%s] Trying request again...", requestId);
     }
 
 }
