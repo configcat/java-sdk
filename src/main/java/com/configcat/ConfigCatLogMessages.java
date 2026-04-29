@@ -394,7 +394,7 @@ final class ConfigCatLogMessages {
      * @return The formattable log message.
      */
     public static  FormattableLogMessage getDebugEnabledReceivedHeaders(UUID requestId, String statusCode, String message, String eTag) {
-        return new FormattableLogMessage("[%s] Received headers. (StatusCode: %s, ReasonPhrase: '%s', ETag: '%s'", requestId, statusCode, message, eTag);
+        return new FormattableLogMessage("[%s] Received headers. (StatusCode: %s, ReasonPhrase: '%s', ETag: '%s')", requestId, statusCode, message, eTag);
     }
 
     /**

@@ -107,11 +107,11 @@ class ConfigFetcher implements Closeable {
         Request request = this.getRequest(eTag);
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
         if(isDebugLoggingEnabled) {
-            String proxyUri = getProxyAddress();
-            if (proxyUri == null) {
+            String proxyAddress = getProxyAddress();
+            if (proxyAddress == null) {
                 this.logger.debug(ConfigCatLogMessages.getDebugEnabledRequestWillBeSent(requestId,request.url().toString(),request.header("If-None-Match")));
             } else {
-                this.logger.debug(ConfigCatLogMessages.getDebugEnabledRequestWillBeSentViaProxy(requestId, proxyUri, request.url().toString(),request.header("If-None-Match")));
+                this.logger.debug(ConfigCatLogMessages.getDebugEnabledRequestWillBeSentViaProxy(requestId, proxyAddress, request.url().toString(),request.header("If-None-Match")));
             }
         }
 
