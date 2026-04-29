@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.util.UUID;
@@ -282,8 +283,11 @@ class ConfigFetcher implements Closeable {
         if (proxy == null || proxy.type() == Proxy.Type.DIRECT) {
             return null;
         }
-
-        return proxy.toString();
+        if (proxy.address() instanceof InetSocketAddress) {
+            InetSocketAddress addr = (InetSocketAddress) proxy.address();
+            return proxy.type() + " @ " + addr.getHostString() + ":" + addr.getPort();
+        }
+        return proxy.type() + " @ " + proxy.address();
     }
 
     private Result<Config> deserializeConfig(String json, String cfRayId) {

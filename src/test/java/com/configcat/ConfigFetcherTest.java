@@ -512,7 +512,7 @@ public class ConfigFetcherTest {
 
         String result = getProxyUriUsingReflection(fetcher);
 
-        assertEquals("HTTP @ proxy.example.com/<unresolved>:8080", result);
+        assertEquals("HTTP @ proxy.example.com:8080", result);
         fetcher.close();
     }
 
@@ -525,7 +525,7 @@ public class ConfigFetcherTest {
 
         String result = getProxyUriUsingReflection(fetcher);
 
-        assertEquals("SOCKS @ socks.example.com/<unresolved>:1080", result);
+        assertEquals("SOCKS @ socks.example.com:1080", result);
         fetcher.close();
     }
 
