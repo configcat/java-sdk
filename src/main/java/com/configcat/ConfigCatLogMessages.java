@@ -368,19 +368,20 @@ final class ConfigCatLogMessages {
      * @return The formattable log message.
      */
     public static  FormattableLogMessage getDebugEnabledRequestWillBeSent(UUID requestId, String requestUrl, String ifNoneMatch) {
-        return new FormattableLogMessage("[%s] Sending request... (Url: '%s', IfNoneMatch: '%s')", requestId,  requestUrl, ifNoneMatch);
+        return new FormattableLogMessage("[%s] Sending request... (Url: '%s', If-None-Match: '%s')", requestId,  requestUrl, ifNoneMatch);
     }
 
     /**
      * Extra log message for Config Fetcher if LogLevel.Debug enabled. Sending Request.
      *
      * @param requestId The request UUID.
+     * @param proxyAddress The proxy address.
      * @param requestUrl The request URL.
      * @param ifNoneMatch The value of the If-None-Match header in the request.
      * @return The formattable log message.
      */
-    public static  FormattableLogMessage getDebugEnabledRequestWillBeSentViaProxy(UUID requestId, String proxyUrl, String requestUrl, String ifNoneMatch) {
-        return new FormattableLogMessage("[%s] Sending request via proxy '%s' ... (Url: '%s', IfNoneMatch: '%s')", requestId, proxyUrl, requestUrl, ifNoneMatch);
+    public static  FormattableLogMessage getDebugEnabledRequestWillBeSentViaProxy(UUID requestId, String proxyAddress, String requestUrl, String ifNoneMatch) {
+        return new FormattableLogMessage("[%s] Sending request via proxy '%s' ... (Url: '%s', If-None-Match: '%s')", requestId, proxyAddress, requestUrl, ifNoneMatch);
     }
 
     /**
@@ -393,7 +394,7 @@ final class ConfigCatLogMessages {
      * @return The formattable log message.
      */
     public static  FormattableLogMessage getDebugEnabledReceivedHeaders(UUID requestId, String statusCode, String message, String eTag) {
-        return new FormattableLogMessage("[%s] Received headers. (StatusCode: %s, ReasonPhrase: ' %s', ETag: ' %s'", requestId, statusCode, message, eTag);
+        return new FormattableLogMessage("[%s] Received headers. (StatusCode: %s, ReasonPhrase: '%s', ETag: '%s'", requestId, statusCode, message, eTag);
     }
 
     /**
@@ -404,7 +405,7 @@ final class ConfigCatLogMessages {
      * @return The formattable log message.
      */
     public static  FormattableLogMessage getDebugEnabledReceivedBody(UUID requestId, long bodyLength) {
-        return new FormattableLogMessage("[%s] Received headers. Received body. (Length: %d)", requestId, bodyLength);
+        return new FormattableLogMessage("[%s] Received body. (Length: %d)", requestId, bodyLength);
     }
 
     /**

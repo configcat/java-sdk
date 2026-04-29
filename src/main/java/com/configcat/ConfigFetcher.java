@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.util.UUID;
@@ -107,7 +106,7 @@ class ConfigFetcher implements Closeable {
         Request request = this.getRequest(eTag);
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
         if(isDebugLoggingEnabled) {
-            String proxyUri = getProxyUri();
+            String proxyUri = getProxyAddress();
             if (proxyUri == null) {
                 this.logger.debug(ConfigCatLogMessages.getDebugEnabledRequestWillBeSent(requestId,request.url().toString(),request.header("If-None-Match")));
             } else {
@@ -155,13 +154,14 @@ class ConfigFetcher implements Closeable {
                     }
                     if (responseCode == 200) {
                         String content = body != null ? body.string() : null;
+                        if (isDebugLoggingEnabled && content != null) {
+
+                            logger.debug(ConfigCatLogMessages.getDebugEnabledReceivedBody(requestId, content.length()));
+                        }
                         Result<Config> result = deserializeConfig(content, cfRayId);
                         if (result.error() != null) {
                             fetchResponse = FetchResponse.failed(result.error(), false, cfRayId, false);
                         } else {
-                            if (isDebugLoggingEnabled && body != null) {
-                                logger.debug(ConfigCatLogMessages.getDebugEnabledReceivedBody(requestId, body.contentLength()));
-                            }
                             fetchResponse = FetchResponse.fetched(new Entry(result.value(), eTag, content, System.currentTimeMillis()), cfRayId);
                             logger.debug("Fetch was successful: new config fetched.");
                         }
@@ -273,23 +273,17 @@ class ConfigFetcher implements Closeable {
     }
 
     /**
-     * Returns the proxy URI if a proxy is configured for the OkHttpClient, otherwise returns null.
+     * Returns the proxy address if a proxy is configured for the OkHttpClient, otherwise returns null.
      *
-     * @return the proxy URI or null if no proxy is configured or bypassed.
+     * @return the proxy address or null if no proxy is configured or bypassed.
      */
-    private String getProxyUri() {
+    private String getProxyAddress() {
         Proxy proxy = this.httpClient.proxy();
         if (proxy == null || proxy.type() == Proxy.Type.DIRECT) {
             return null;
         }
 
-        if (!(proxy.address() instanceof InetSocketAddress)) {
-            return proxy.address() != null ? proxy.address().toString() : null;
-        }
-
-        InetSocketAddress address = (InetSocketAddress) proxy.address();
-        String scheme = proxy.type() == Proxy.Type.SOCKS ? "socks5" : "http";
-        return scheme + "://" + address.getHostString() + ":" + address.getPort();
+        return proxy.toString();
     }
 
     private Result<Config> deserializeConfig(String json, String cfRayId) {

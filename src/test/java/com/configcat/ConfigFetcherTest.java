@@ -469,7 +469,7 @@ public class ConfigFetcherTest {
      */
     private static String getProxyUriUsingReflection(ConfigFetcher fetcher) {
         try {
-            Method method = ConfigFetcher.class.getDeclaredMethod("getProxyUri");
+            Method method = ConfigFetcher.class.getDeclaredMethod("getProxyAddress");
             method.setAccessible(true);
             return (String) method.invoke(fetcher);
         } catch (Exception e) {
@@ -512,7 +512,7 @@ public class ConfigFetcherTest {
 
         String result = getProxyUriUsingReflection(fetcher);
 
-        assertEquals("http://proxy.example.com:8080", result);
+        assertEquals("HTTP @ proxy.example.com/<unresolved>:8080", result);
         fetcher.close();
     }
 
@@ -525,7 +525,7 @@ public class ConfigFetcherTest {
 
         String result = getProxyUriUsingReflection(fetcher);
 
-        assertEquals("socks5://socks.example.com:1080", result);
+        assertEquals("SOCKS @ socks.example.com/<unresolved>:1080", result);
         fetcher.close();
     }
 
