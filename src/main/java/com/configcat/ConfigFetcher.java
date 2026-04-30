@@ -5,7 +5,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.SocketTimeoutException;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -24,6 +27,7 @@ class ConfigFetcher implements Closeable {
 
     private final String sdkKey;
     private final boolean urlIsCustom;
+    private final boolean isDebugLoggingEnabled;
 
     private String url;
 
@@ -45,6 +49,7 @@ class ConfigFetcher implements Closeable {
         this.url = url;
         this.httpClient = httpClient;
         this.mode = pollingIdentifier;
+        this.isDebugLoggingEnabled = logger.isEnabled(LogLevel.DEBUG);
     }
 
     public CompletableFuture<FetchResponse> fetchAsync(String eTag) {
@@ -98,14 +103,26 @@ class ConfigFetcher implements Closeable {
         });
     }
 
-    private CompletableFuture<FetchResponse> getResponseAsync(final String eTag) {
+    private CompletableFuture<FetchResponse> getResponseAsync(final String eTag, final UUID requestId) {
         Request request = this.getRequest(eTag);
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
+        if(isDebugLoggingEnabled) {
+            String proxyAddress = getProxyAddress();
+            if (proxyAddress == null) {
+                this.logger.debug(ConfigCatLogMessages.getDebugEnabledRequestWillBeSent(requestId,request.url().toString(),request.header("If-None-Match")));
+            } else {
+                this.logger.debug(ConfigCatLogMessages.getDebugEnabledRequestWillBeSentViaProxy(requestId, proxyAddress, request.url().toString(),request.header("If-None-Match")));
+            }
+        }
+
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 FetchResponse fetchResponse = null;
                 try{
+                    if (isDebugLoggingEnabled){
+                        logger.debug(ConfigCatLogMessages.getDebugEnabledRequestFailed(requestId));
+                    }
                     int logEventId = 1103;
                     Object message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(null);
                     if (!isClosed.get()) {
@@ -131,9 +148,17 @@ class ConfigFetcher implements Closeable {
                 FetchResponse fetchResponse = null;
                 try (ResponseBody body = response.body()) {
                     cfRayId = response.header("CF-RAY");
-                    if (response.code() == 200) {
+                    int responseCode = response.code();
+                    String eTag = response.header("ETag");
+                    if (isDebugLoggingEnabled) {
+                        logger.debug(ConfigCatLogMessages.getDebugEnabledReceivedHeaders(requestId, String.valueOf(responseCode), response.message(), eTag));
+                    }
+                    if (responseCode == 200) {
                         String content = body != null ? body.string() : null;
-                        String eTag = response.header("ETag");
+                        if (isDebugLoggingEnabled && content != null) {
+
+                            logger.debug(ConfigCatLogMessages.getDebugEnabledReceivedBody(requestId, content.length()));
+                        }
                         Result<Config> result = deserializeConfig(content, cfRayId);
                         if (result.error() != null) {
                             fetchResponse = FetchResponse.failed(result.error(), false, cfRayId, false);
@@ -141,27 +166,36 @@ class ConfigFetcher implements Closeable {
                             fetchResponse = FetchResponse.fetched(new Entry(result.value(), eTag, content, System.currentTimeMillis()), cfRayId);
                             logger.debug("Fetch was successful: new config fetched.");
                         }
-                    } else if (response.code() == 304) {
+                    } else if (responseCode == 304) {
                         fetchResponse = FetchResponse.notModified(cfRayId);
-                        if(cfRayId != null) {
+                        if(cfRayId != null && isDebugLoggingEnabled) {
                             logger.debug(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId)));
                         } else {
                             logger.debug("Fetch was successful: config not modified.");
                         }
-                    } else if (response.code() == 403 || response.code() == 404) {
+                    } else if (responseCode == 403 || responseCode == 404) {
                         FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);
                         fetchResponse = FetchResponse.failed(message, true, cfRayId, false);
                         logger.error(1100, message);
                     } else {
-                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message(), cfRayId);
+                        if (isDebugLoggingEnabled){
+                          logger.debug(ConfigCatLogMessages.getDebugEnabledReceivedUnexpectedStatusCode(requestId));
+                        }
+                        FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(responseCode, response.message(), cfRayId);
                         fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
                         logger.error(1101, formattableLogMessage);
                     }
                 } catch (SocketTimeoutException e) {
+                    if (isDebugLoggingEnabled) {
+                        logger.debug(ConfigCatLogMessages.getDebugEnabledRequestTimedOut(requestId));
+                    }
                     FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis(), cfRayId);
                     fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
                     logger.error(1102, formattableLogMessage, e);
                 } catch (Exception e) {
+                    if (isDebugLoggingEnabled) {
+                        logger.debug(ConfigCatLogMessages.getDebugEnabledRequestFailed(requestId));
+                    }
                     FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
                     fetchResponse = FetchResponse.failed(formattableLogMessage, false, cfRayId, true);
                     logger.error(1103, formattableLogMessage, e);
@@ -179,16 +213,30 @@ class ConfigFetcher implements Closeable {
     }
 
     private CompletableFuture<FetchResponse> fetchWithRetryAsync(final String eTag) {
-        return this.getResponseAsync(eTag).thenComposeAsync(response -> {
+        UUID requestId;
+        if(isDebugLoggingEnabled){
+            requestId = UUID.randomUUID();
+            this.logger.debug(ConfigCatLogMessages.getDebugEnabledPreparingRequest(requestId));
+        } else {
+            requestId = null;
+        }
+
+        return this.getResponseAsync(eTag, requestId).thenComposeAsync(response -> {
             if (response.shouldRetry()) {
                 try {
                     long now = System.nanoTime();
                     if (lastEvictAllTimestamp == Long.MIN_VALUE || (now - lastEvictAllTimestamp) >= EVICT_ALL_THRESHOLD_NS) {
                         this.httpClient.connectionPool().evictAll();
                         lastEvictAllTimestamp = now;
+                        if (isDebugLoggingEnabled){
+                            this.logger.debug(ConfigCatLogMessages.getDebugEnabledResetConnectionPool(requestId));
+                        }
                     }
                     Thread.sleep(RETRY_DELAY_MS);
-                    return this.getResponseAsync(eTag);
+                    if (isDebugLoggingEnabled) {
+                        this.logger.debug(ConfigCatLogMessages.getDebugEnabledReTryRequest(requestId));
+                    }
+                    return this.getResponseAsync(eTag, requestId);
                 } catch (InterruptedException e) {
                     this.logger.error(0, "Thread interrupted.", e);
                     Thread.currentThread().interrupt();
@@ -223,6 +271,23 @@ class ConfigFetcher implements Closeable {
             builder.addHeader("If-None-Match", etag);
 
         return builder.url(url).build();
+    }
+
+    /**
+     * Returns the proxy address if a proxy is configured for the OkHttpClient, otherwise returns null.
+     *
+     * @return the proxy address or null if no proxy is configured or bypassed.
+     */
+    private String getProxyAddress() {
+        Proxy proxy = this.httpClient.proxy();
+        if (proxy == null || proxy.type() == Proxy.Type.DIRECT) {
+            return null;
+        }
+        if (proxy.address() instanceof InetSocketAddress) {
+            InetSocketAddress addr = (InetSocketAddress) proxy.address();
+            return proxy.type() + " @ " + addr.getHostString() + ":" + addr.getPort();
+        }
+        return proxy.type() + " @ " + proxy.address();
     }
 
     private Result<Config> deserializeConfig(String json, String cfRayId) {

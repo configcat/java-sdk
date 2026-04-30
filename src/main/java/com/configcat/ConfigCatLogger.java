@@ -55,7 +55,13 @@ class ConfigCatLogger {
         }
     }
 
-    private boolean filter(int eventId, LogLevel logLevel, Object message, Exception exception) {
-        return this.logLevel.ordinal() <= logLevel.ordinal() && (this.filterFunction == null || this.filterFunction.apply(logLevel, eventId, message, exception));
+    public boolean isEnabled(LogLevel loglevel) {
+        return this.logLevel.ordinal() <= loglevel.ordinal();
     }
+
+    private boolean filter(int eventId, LogLevel logLevel, Object message, Exception exception) {
+        return isEnabled(logLevel) && (this.filterFunction == null || this.filterFunction.apply(logLevel, eventId, message, exception));
+    }
+
+
 }
