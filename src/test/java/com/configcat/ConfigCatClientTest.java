@@ -992,7 +992,7 @@ public class ConfigCatClientTest {
         configServiceField.setAccessible(true);
         ConfigService configService = (ConfigService) configServiceField.get(client);
 
-        Field configFetcherField = ConfigService.class.getDeclaredField("configFetcher");
+        Field configFetcherField = configService.getClass().getDeclaredField("configFetcher");
         configFetcherField.setAccessible(true);
         ConfigFetcher configFetcher = (ConfigFetcher) configFetcherField.get(configService);
 
@@ -1112,5 +1112,40 @@ public class ConfigCatClientTest {
         cl.close();
     }
 
+    @Test
+    void getValueAfterCloseWithDefaultUserAndClearedUser() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        User user1 = User.newBuilder().build("test1");
+        User user2 = User.newBuilder().build("test2");
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.baseUrl(server.url("/").toString());
+        });
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_DEFAULT_USER));
+        cl.forceRefresh();
+
+        cl.setDefaultUser(user1);
+
+        String result = assertDoesNotThrow(() -> cl.getValue(String.class, "fakeKey", "fallback"));
+        assertEquals("fakeValue1", result);
+
+        cl.close();
+
+        cl.setDefaultUser(user2);
+
+        result = assertDoesNotThrow(() -> cl.getValue(String.class, "fakeKey", "fallback"));
+        assertEquals("fakeValue2", result);
+
+        cl.clearDefaultUser();
+
+        result = assertDoesNotThrow(() -> cl.getValue(String.class, "fakeKey", "fallback"));
+        assertEquals("defaultValue", result);
+    }
+
 
 }
+

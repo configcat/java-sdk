@@ -350,19 +350,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public void setDefaultUser(User defaultUser) {
-        if (isClosed()) {
-            logger.warn(3201, ConfigCatLogMessages.getConfigServiceMethodHasNoEffectDueToClosedClient("setDefaultUser"));
-            return;
-        }
         this.defaultUser = defaultUser;
     }
 
     @Override
     public void clearDefaultUser() {
-        if (isClosed()) {
-            logger.warn(3201, ConfigCatLogMessages.getConfigServiceMethodHasNoEffectDueToClosedClient("clearDefaultUser"));
-            return;
-        }
         this.defaultUser = null;
     }
 
