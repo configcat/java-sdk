@@ -301,9 +301,6 @@ class RolloutEvaluator {
     private boolean evaluateArrayContains(UserCondition userCondition, String configSalt, String contextSalt, String[] userContainsValues, boolean negateArrayContains, boolean hashedArrayContains) {
         String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
-        if (userContainsValues.length == 0) {
-            return false;
-        }
         for (String userContainsValue : userContainsValues) {
             String userContainsValueConverted = hashedArrayContains ? getSaltedUserValue(userContainsValue, ensureConfigSalt(configSalt), contextSalt) : userContainsValue;
             for (String inValuesElement : comparisonValues) {
