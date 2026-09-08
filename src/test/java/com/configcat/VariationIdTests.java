@@ -42,6 +42,7 @@ public class VariationIdTests {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         EvaluationDetails<Boolean> valueDetails = client.getValueDetails(Boolean.class, "key1", null);
         assertEquals("fakeId1", valueDetails.getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, valueDetails.getErrorCode());
     }
 
     @Test
@@ -49,6 +50,7 @@ public class VariationIdTests {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         EvaluationDetails<Boolean> valueDetails = client.getValueDetails(Boolean.class, "nonexisting", false);
         assertEquals("", valueDetails.getVariationId());
+        assertEquals(EvaluationErrorCode.SETTING_KEY_MISSING, valueDetails.getErrorCode());
     }
 
     @Test
@@ -58,8 +60,11 @@ public class VariationIdTests {
         List<EvaluationDetails<Object>> allValueDetails = client.getAllValueDetails(null);
         assertEquals(3, allValueDetails.size());
         assertEquals("fakeId1", allValueDetails.get(0).getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, allValueDetails.get(0).getErrorCode());
         assertEquals("fakeId2", allValueDetails.get(1).getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, allValueDetails.get(1).getErrorCode());
         assertEquals("fakeId3", allValueDetails.get(2).getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, allValueDetails.get(2).getErrorCode());
     }
 
     @Test
