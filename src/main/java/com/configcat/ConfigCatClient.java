@@ -120,10 +120,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         validateReturnType(classOfT);
 
-        User userObject = getEvaluateUser(user);
-
         return this.getSettingsAsync()
-                .thenApply(settingResult -> this.getValueFromSettingsMap(classOfT, settingResult, key, userObject, defaultValue));
+                .thenApply(settingResult -> this.getValueFromSettingsMap(classOfT, settingResult, key, user, defaultValue));
     }
 
     @Override
@@ -547,21 +545,23 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private <T> T getValueFromSettingsMap(Class<T> classOfT, SettingResult settingResult, String key, User user, T defaultValue) {
+        User userObject = getEvaluateUser(user);
+
         try {
             Result<Setting, EvaluationErrorCode> checkSettingResult = checkSettingAvailable(settingResult, key, defaultValue);
             if (checkSettingResult.error() != null) {
                 this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue,
-                        checkSettingResult.errorCode(), checkSettingResult.error(), null, user));
+                        checkSettingResult.errorCode(), checkSettingResult.error(), null, userObject));
                 return defaultValue;
             }
 
-            return this.evaluate(classOfT, checkSettingResult.value(), key, user, settingResult.fetchTime(), settingResult.settings()).getValue();
+            return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(), settingResult.settings()).getValue();
         } catch (Exception e) {
             FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.logger.error(2001, formattableLogMessage, e);
             this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue,
                     EvaluationErrorCode.fromException(e), formattableLogMessage + " " + e.getMessage(), e,
-                    user));
+                    userObject));
             return defaultValue;
         }
     }
