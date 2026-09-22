@@ -105,7 +105,7 @@ public class EvaluationDetails<T> {
     }
 
     /**
-     * The exception object related to the error in case the operation failed, otherwise null.
+     * The exception object related to the error in case the operation failed. (If the evaluation was successful, this will be null.)
      */
     public Throwable getErrorException() {
         return errorException;

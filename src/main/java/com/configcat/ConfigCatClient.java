@@ -89,19 +89,20 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         validateReturnType(classOfT);
+        User userObject = getEvaluateUser(user);
         try {
-            return this.getValueAsync(classOfT, key, user, defaultValue).get();
+            return this.getValueAsync(classOfT, key, userObject, defaultValue).get();
         } catch (InterruptedException e) {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
             EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue,
-                    EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, user);
+                    EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, userObject);
             this.configCatHooks.invokeOnFlagEvaluated(evaluationDetails);
             return defaultValue;
         } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValue", key, "defaultValue", defaultValue.toString()), e);
             EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue,
-                    EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
+                    EvaluationErrorCode.fromException(e), e.getMessage(), e, userObject);
             this.configCatHooks.invokeOnFlagEvaluated(evaluationDetails);
             return defaultValue;
         }
@@ -119,8 +120,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         validateReturnType(classOfT);
 
+        User userObject = getEvaluateUser(user);
+
         return this.getSettingsAsync()
-                .thenApply(settingResult -> this.getValueFromSettingsMap(classOfT, settingResult, key, user, defaultValue));
+                .thenApply(settingResult -> this.getValueFromSettingsMap(classOfT, settingResult, key, userObject, defaultValue));
     }
 
     @Override
@@ -135,20 +138,22 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         validateReturnType(classOfT);
 
+        User userObject = getEvaluateUser(user);
+
         try {
-            return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
+            return this.getValueDetailsAsync(classOfT, key, userObject, defaultValue).get();
         } catch (InterruptedException e) {
             String error = "Thread interrupted.";
             this.logger.error(0, error, e);
             Thread.currentThread().interrupt();
             EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue,
-                    EvaluationErrorCode.UNEXPECTED_ERROR, error + ": " + e.getMessage(), e, user);
+                    EvaluationErrorCode.UNEXPECTED_ERROR, error + ": " + e.getMessage(), e, userObject);
             this.configCatHooks.invokeOnFlagEvaluated(evaluationDetails);
             return evaluationDetails.asTypeSpecific();
         } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
             EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue,
-                    EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
+                    EvaluationErrorCode.fromException(e), e.getMessage(), e, userObject);
             this.configCatHooks.invokeOnFlagEvaluated(evaluationDetails);
             return evaluationDetails.asTypeSpecific();
         }
@@ -165,6 +170,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         validateReturnType(classOfT);
+        User userObject = getEvaluateUser(user);
 
         return this.getSettingsAsync()
                 .thenApply(settingsResult -> {
@@ -172,18 +178,18 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         Result<Setting, EvaluationErrorCode> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
                         if (checkSettingResult.error() != null) {
                             EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue,
-                                    checkSettingResult.errorCode(), checkSettingResult.error(), null, user);
+                                    checkSettingResult.errorCode(), checkSettingResult.error(), null, userObject);
                             this.configCatHooks.invokeOnFlagEvaluated(evaluationDetails);
                             return evaluationDetails.asTypeSpecific();
                         }
 
                         return this.evaluate(classOfT, checkSettingResult.value(),
-                                key, user != null ? user : this.defaultUser, settingsResult.fetchTime(), settingsResult.settings());
+                                key, userObject, settingsResult.fetchTime(), settingsResult.settings());
                     } catch (Exception e) {
                         this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue(
                                 "getValueDetailsAsync", key, "defaultValue", defaultValue), e);
                         EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue,
-                                EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
+                                EvaluationErrorCode.fromException(e), e.getMessage(), e, userObject);
                         this.configCatHooks.invokeOnFlagEvaluated(evaluationDetails);
                         return evaluationDetails.asTypeSpecific();
                     }
@@ -216,6 +222,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<Map<String, Object>> getAllValuesAsync(User user) {
+
         return this.getSettingsAsync()
                 .thenApply(settingResult -> {
                     try {
@@ -226,12 +233,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         Map<String, Setting> settings = settingResult.settings();
                         Collection<String> keys = settings.keySet();
                         Map<String, Object> result = new HashMap<>();
+                        User userObject = getEvaluateUser(user);
 
                         for (String key : keys) {
                             Setting setting = settings.get(key);
 
                             Object value = this.evaluateObject(this.classBySettingType(setting.getType()), setting, key,
-                                    getEvaluateUser(user), settingResult.fetchTime(), settings).getValue();
+                                    userObject, settingResult.fetchTime(), settings).getValue();
                             result.put(key, value);
                         }
 
@@ -276,6 +284,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                             return new ArrayList<>();
                         }
 
+                        User userObject = getEvaluateUser(user);
                         Map<String, Setting> settings = settingResult.settings();
                         List<EvaluationDetails<Object>> result = new ArrayList<>();
 
@@ -283,7 +292,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                             Setting setting = settings.get(key);
 
                             EvaluationDetails<Object> evaluationDetails = this.evaluateObject(this.classBySettingType(setting.getType()), setting,
-                                    key, user != null ? user : this.defaultUser, settingResult.fetchTime(), settings);
+                                    key, userObject, settingResult.fetchTime(), settings);
                             result.add(evaluationDetails);
                         }
 
@@ -546,13 +555,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return defaultValue;
             }
 
-            return this.evaluate(classOfT, checkSettingResult.value(), key, getEvaluateUser(user), settingResult.fetchTime(), settingResult.settings()).getValue();
+            return this.evaluate(classOfT, checkSettingResult.value(), key, user, settingResult.fetchTime(), settingResult.settings()).getValue();
         } catch (Exception e) {
             FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.logger.error(2001, formattableLogMessage, e);
             this.configCatHooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue,
                     EvaluationErrorCode.fromException(e), formattableLogMessage + " " + e.getMessage(), e,
-                    getEvaluateUser(user)));
+                    user));
             return defaultValue;
         }
     }
@@ -584,7 +593,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                                 }
                             }
                         } else {
-                            throw new UnsupportedOperationException("Targeting rule THEN part is missing or invalid.");
+                            throw new InvalidConfigModelException("Targeting rule THEN part is missing or invalid.");
                         }
                     }
                 }

@@ -38,7 +38,7 @@ public enum RefreshErrorCode implements ErrorCode {
     /** The refresh operation failed because the client is in offline mode and cannot initiate HTTP requests. */
     OFFLINE_CLIENT(3200),
 
-    /** Client initialization could not complete within the configured maximum initialization wait time. */
+    /** Client initialization could not complete within `maxInitWaitTimeSeconds`. */
     CLIENT_INIT_TIMED_OUT(4200);
 
     public final int code;
