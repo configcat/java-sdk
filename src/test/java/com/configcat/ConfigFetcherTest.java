@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -57,11 +58,15 @@ public class ConfigFetcherTest {
         FetchResponse fResult = fetcher.fetchAsync(null).get();
 
         assertEquals("fakeValue", fResult.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
+        assertEquals(RefreshErrorCode.NONE, fResult.errorCode());
+        assertNull(fResult.errorException());
         assertTrue(fResult.isFetched());
         assertFalse(fResult.isNotModified());
         assertFalse(fResult.isFailed());
 
         FetchResponse notModifiedResponse = fetcher.fetchAsync(fResult.entry().getETag()).get();
+        assertEquals(RefreshErrorCode.NONE, notModifiedResponse.errorCode());
+        assertNull(notModifiedResponse.errorException());
         assertTrue(notModifiedResponse.isNotModified());
         assertFalse(notModifiedResponse.isFailed());
         assertFalse(notModifiedResponse.isFetched());
@@ -86,6 +91,8 @@ public class ConfigFetcherTest {
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(2, TimeUnit.SECONDS));
         FetchResponse response = fetch.fetchAsync(null).get();
         assertTrue(response.isFailed());
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_TIMEOUT, response.errorCode());
+        assertInstanceOf(SocketTimeoutException.class, response.errorException());
         assertTrue(response.entry().isEmpty());
         assertTrue(response.entry().getConfig().isEmpty());
 
@@ -109,6 +116,8 @@ public class ConfigFetcherTest {
 
         FetchResponse response = fetch.fetchAsync(null).get();
         assertTrue(response.isFailed());
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_TIMEOUT, response.errorCode());
+        assertInstanceOf(SocketTimeoutException.class, response.errorException());
         assertTrue(response.entry().isEmpty());
         assertTrue(response.entry().getConfig().isEmpty());
 
@@ -148,6 +157,8 @@ public class ConfigFetcherTest {
 
         FetchResponse response = fetch.fetchAsync(null).get();
         assertTrue(response.isFailed());
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_FAILURE, response.errorCode());
+        assertNotNull(response.errorException());
         assertTrue(response.entry().isEmpty());
         assertTrue(response.entry().getConfig().isEmpty());
 
@@ -227,6 +238,8 @@ public class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync(null).get();
         assertTrue(response.isFetched());
+        assertEquals(RefreshErrorCode.NONE, response.errorCode());
+        assertNull(response.errorException());
         assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
 
         fetcher.close();
@@ -253,6 +266,8 @@ public class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync(null).get();
         assertFalse(response.isFetched());
+        assertEquals(RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, response.errorCode());
+        assertNotNull(response.errorException());
         assertEquals("Fetching config JSON was successful but the HTTP response content was invalid.", response.error().toString());
 
         fetcher.close();
@@ -295,6 +310,8 @@ public class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync("fakeETag").get();
         assertTrue(response.isFailed());
+        assertEquals(RefreshErrorCode.INVALID_SDK_KEY, response.errorCode());
+        assertNull(response.errorException());
         assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
 
         verify(mockLogger, times(1)).error(anyString(),  eq(1100), eq(ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey("12345")));
@@ -321,6 +338,8 @@ public class ConfigFetcherTest {
         FetchResponse response = fetcher.fetchAsync("fakeETag").get();
 
         assertTrue(response.isNotModified());
+        assertEquals(RefreshErrorCode.NONE, response.errorCode());
+        assertNull(response.errorException());
 
         verify(mockLogger, times(1)).debug(anyString(), eq(0), eq(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix("12345"))));
 
@@ -346,6 +365,8 @@ public class ConfigFetcherTest {
         FetchResponse response = fetcher.fetchAsync("fakeETag").get();
 
         assertTrue(response.isFailed());
+        assertEquals(RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, response.errorCode());
+        assertNotNull(response.errorException());
         assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
 
         verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(Exception.class));
@@ -417,6 +438,8 @@ public class ConfigFetcherTest {
         FetchResponse response = fetcher.fetchAsync(null).get();
 
         assertTrue(response.isFailed());
+        assertEquals(RefreshErrorCode.UNEXPECTED_HTTP_RESPONSE, response.errorCode());
+        assertNull(response.errorException());
         assertEquals(2, this.server.getRequestCount());
 
         fetcher.close();

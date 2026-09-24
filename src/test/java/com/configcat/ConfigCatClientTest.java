@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -253,9 +254,12 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(3, TimeUnit.SECONDS));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(3, TimeUnit.SECONDS));
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.NONE, result.errorCode());
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
-        cl.forceRefresh();
+        result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_TIMEOUT, result.errorCode());
+        assertNotNull(result.errorException());
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
 
         server.close();
@@ -296,9 +300,12 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500));
         server.enqueue(new MockResponse().setResponseCode(500));
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.NONE, result.errorCode());
         assertEquals("fakeValue", cl.getValueAsync(String.class, "fakeKey", null).get());
-        cl.forceRefresh();
+        result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.UNEXPECTED_HTTP_RESPONSE, result.errorCode());
+        assertNull(result.errorException());
         assertEquals("fakeValue", cl.getValueAsync(String.class, "fakeKey", null).get());
 
         server.close();
@@ -322,10 +329,14 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(3, TimeUnit.SECONDS));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(3, TimeUnit.SECONDS));
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, result.errorCode());
+        assertNotNull(result.errorException());
         assertSame(def, cl.getValue(String.class, "test", def));
 
-        cl.forceRefresh();
+        result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_TIMEOUT, result.errorCode());
+        assertNotNull(result.errorException());
         assertSame(def, cl.getValue(String.class, "test", def));
 
         server.shutdown();
@@ -346,7 +357,9 @@ public class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(3, TimeUnit.SECONDS));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(3, TimeUnit.SECONDS));
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_TIMEOUT, result.errorCode());
+        assertNotNull(result.errorException());
 
         server.shutdown();
         cl.close();
@@ -356,10 +369,12 @@ public class ConfigCatClientTest {
     void getAllValues() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
+        AtomicInteger evaluationCount = new AtomicInteger();
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
+            options.hooks().addOnFlagEvaluated(details -> evaluationCount.incrementAndGet());
         });
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_MULTIPLE));
@@ -369,6 +384,7 @@ public class ConfigCatClientTest {
 
         assertEquals(true, allValues.get("key1"));
         assertEquals(false, allValues.get("key2"));
+        assertEquals(2, evaluationCount.get());
 
         server.shutdown();
         cl.close();
@@ -420,6 +436,8 @@ public class ConfigCatClientTest {
         assertTrue((boolean) element.getValue());
         assertFalse(element.isDefaultValue());
         assertNull(element.getError());
+        assertEquals(EvaluationErrorCode.NONE, element.getErrorCode());
+        assertNull(element.getErrorException());
         assertEquals("fakeId1", element.getVariationId());
 
         //assert result 2
@@ -428,6 +446,8 @@ public class ConfigCatClientTest {
         assertFalse((boolean) element.getValue());
         assertFalse(element.isDefaultValue());
         assertNull(element.getError());
+        assertEquals(EvaluationErrorCode.NONE, element.getErrorCode());
+        assertNull(element.getErrorException());
         assertEquals("fakeId2", element.getVariationId());
         server.shutdown();
         cl.close();
@@ -457,6 +477,8 @@ public class ConfigCatClientTest {
         assertTrue((boolean) element.getValue());
         assertFalse(element.isDefaultValue());
         assertNull(element.getError());
+        assertEquals(EvaluationErrorCode.NONE, element.getErrorCode());
+        assertNull(element.getErrorException());
         assertEquals("fakeId1", element.getVariationId());
 
         //assert result 2
@@ -465,6 +487,8 @@ public class ConfigCatClientTest {
         assertFalse((boolean) element.getValue());
         assertFalse(element.isDefaultValue());
         assertNull(element.getError());
+        assertEquals(EvaluationErrorCode.NONE, element.getErrorCode());
+        assertNull(element.getErrorException());
         assertEquals("fakeId2", element.getVariationId());
         server.shutdown();
         cl.close();
@@ -635,7 +659,9 @@ public class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
         });
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.UNEXPECTED_HTTP_RESPONSE, result.errorCode());
+        assertNull(result.errorException());
         assertEquals("", cl.getValue(String.class, "fakeKey", ""));
 
         server.close();
@@ -655,7 +681,9 @@ public class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
         });
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.UNEXPECTED_HTTP_RESPONSE, result.errorCode());
+        assertNull(result.errorException());
         assertEquals("", cl.getValue(String.class, "fakeKey", ""));
 
         server.close();
@@ -675,7 +703,9 @@ public class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
         });
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.UNEXPECTED_HTTP_RESPONSE, result.errorCode());
+        assertNull(result.errorException());
         assertEquals("", cl.getValue(String.class, "fakeKey", ""));
 
         server.close();
@@ -757,19 +787,25 @@ public class ConfigCatClientTest {
 
         assertFalse(cl.isOffline());
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.NONE, result.errorCode());
+        assertNull(result.errorException());
 
         assertEquals(1, server.getRequestCount());
 
         cl.setOffline();
         assertTrue(cl.isOffline());
 
-        cl.forceRefresh();
+        result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.OFFLINE_CLIENT, result.errorCode());
+        assertNull(result.errorException());
 
         assertEquals(1, server.getRequestCount());
 
         cl.setOnline();
-        cl.forceRefresh();
+        result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.NONE, result.errorCode());
+        assertNull(result.errorException());
 
         assertEquals(2, server.getRequestCount());
 
@@ -792,7 +828,10 @@ public class ConfigCatClientTest {
 
         assertTrue(cl.isOffline());
 
-        cl.forceRefresh();
+        RefreshResult refreshResult = cl.forceRefresh();
+        assertFalse(refreshResult.isSuccess());
+        assertEquals(RefreshErrorCode.OFFLINE_CLIENT, refreshResult.errorCode());
+        assertNull(refreshResult.errorException());
 
         assertEquals(0, server.getRequestCount());
 
@@ -900,6 +939,19 @@ public class ConfigCatClientTest {
     }
 
     @Test
+    void forceRefreshReturnsLocalOnlyError() throws IOException {
+        ConfigCatClient client = ConfigCatClient.get("local-only", options ->
+                options.flagOverrides(OverrideDataSourceBuilder.map(Collections.emptyMap()), OverrideBehaviour.LOCAL_ONLY));
+
+        RefreshResult result = client.forceRefresh();
+
+        assertFalse(result.isSuccess());
+        assertEquals(RefreshErrorCode.LOCAL_ONLY_CLIENT, result.errorCode());
+        assertNull(result.errorException());
+        client.close();
+    }
+
+    @Test
     void testHooksAutoPollSub() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
@@ -946,6 +998,8 @@ public class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnFlagEvaluated(details -> {
                 assertEquals("", details.getValue());
+                assertEquals(EvaluationErrorCode.CONFIG_JSON_NOT_AVAILABLE, details.getErrorCode());
+                assertNull(details.getErrorException());
                 assertEquals("Config JSON is not present when evaluating setting 'key'. Returning the `defaultValue` parameter that you specified in your application: ''.", details.getError());
                 assertTrue(details.isDefaultValue());
                 called.set(true);
@@ -1092,6 +1146,31 @@ public class ConfigCatClientTest {
     }
 
     @Test
+    void getValueDetailsReturnsTypeMismatchError() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_TYPES));
+        AtomicReference<EvaluationDetails<Object>> hookDetails = new AtomicReference<>();
+
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.lazyLoad());
+            options.baseUrl(server.url("/").toString());
+            options.hooks().addOnFlagEvaluated(hookDetails::set);
+        });
+
+        EvaluationDetails<String> result = client.getValueDetails(String.class, "fakeKeyBoolean", "default");
+
+        assertEquals("default", result.getValue());
+        assertTrue(result.isDefaultValue());
+        assertEquals(EvaluationErrorCode.SETTING_VALUE_TYPE_MISMATCH, result.getErrorCode());
+        assertInstanceOf(EvaluationException.class, result.getErrorException());
+        assertSame(result.getErrorException(), hookDetails.get().getErrorException());
+        assertSame(result.getErrorCode(), hookDetails.get().getErrorCode());
+        server.shutdown();
+        client.close();
+    }
+
+    @Test
     void testWaitForReady() throws IOException, InterruptedException, ExecutionException {
         MockWebServer server = new MockWebServer();
         server.start();
@@ -1148,4 +1227,3 @@ public class ConfigCatClientTest {
 
 
 }
-

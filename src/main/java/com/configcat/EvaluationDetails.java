@@ -10,6 +10,8 @@ public class EvaluationDetails<T> {
     private final User user;
     private final boolean isDefaultValue;
     private final Object error;
+    private final EvaluationErrorCode errorCode;
+    private final Throwable errorException;
     private final long fetchTimeUnixMilliseconds;
     private final TargetingRule matchedTargetingRule;
     private final PercentageOption matchedPercentageOption;
@@ -20,6 +22,8 @@ public class EvaluationDetails<T> {
                              User user,
                              boolean isDefaultValue,
                              Object error,
+                             EvaluationErrorCode errorCode,
+                             Throwable errorException,
                              long fetchTimeUnixMilliseconds,
                              TargetingRule matchedTargetingRule,
                              PercentageOption matchedPercentageOption) {
@@ -29,17 +33,22 @@ public class EvaluationDetails<T> {
         this.user = user;
         this.isDefaultValue = isDefaultValue;
         this.error = error;
+        this.errorCode = errorCode;
+        this.errorException = errorException;
         this.fetchTimeUnixMilliseconds = fetchTimeUnixMilliseconds;
         this.matchedTargetingRule = matchedTargetingRule;
         this.matchedPercentageOption = matchedPercentageOption;
     }
 
-    static <T> EvaluationDetails<T> fromError(String key, T defaultValue, Object error, User user) {
-        return new EvaluationDetails<>(defaultValue, key, "", user, true, error, Constants.DISTANT_PAST, null, null);
+    static <T> EvaluationDetails<T> fromError(String key, T defaultValue, EvaluationErrorCode errorCode,
+                                               Object error, Throwable errorException, User user) {
+        return new EvaluationDetails<>(defaultValue, key, "", user, true, error, errorCode, errorException,
+                Constants.DISTANT_PAST, null, null);
     }
 
     <TR> EvaluationDetails<TR> asTypeSpecific() {
-        return new EvaluationDetails<>((TR) value, key, variationId, user, isDefaultValue, error, fetchTimeUnixMilliseconds, matchedTargetingRule, matchedPercentageOption);
+        return new EvaluationDetails<>((TR) value, key, variationId, user, isDefaultValue, error, errorCode,
+                errorException, fetchTimeUnixMilliseconds, matchedTargetingRule, matchedPercentageOption);
     }
 
     /**
@@ -81,10 +90,25 @@ public class EvaluationDetails<T> {
      * In case of an error, this field contains the error message.
      */
     public String getError() {
-        if(error !=  null) {
+        if (error != null) {
             return error.toString();
         }
         return null;
+    }
+
+    /**
+     * The code identifying the reason for the error in case the operation failed.
+     * If the evaluation was successful, this will be {@link EvaluationErrorCode#NONE}.
+     */
+    public EvaluationErrorCode getErrorCode() {
+        return errorCode;
+    }
+
+    /**
+     * The exception object related to the error in case the operation failed. (If the evaluation was successful, this will be null.)
+     */
+    public Throwable getErrorException() {
+        return errorException;
     }
 
     /**

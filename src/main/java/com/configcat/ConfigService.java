@@ -22,7 +22,7 @@ public class ConfigService implements Closeable {
     private final PollingMode pollingMode;
     private ScheduledExecutorService pollScheduler;
     private ScheduledExecutorService initScheduler;
-    private CompletableFuture<Result<Entry>> runningTask;
+    private CompletableFuture<Result<Entry, RefreshErrorCode>> runningTask;
     private final AtomicBoolean initialized = new AtomicBoolean(false);
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicBoolean offline;
@@ -58,7 +58,8 @@ public class ConfigService implements Closeable {
                         this.configCatHooks.invokeOnClientReady(determineCacheState(cachedEntry.get()));
                         FormattableLogMessage formattableLogMessage = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
                         this.logger.warn(4200, formattableLogMessage);
-                        completeRunningTask(Result.error(formattableLogMessage, cachedEntry.get()));
+                        completeRunningTask(Result.error(formattableLogMessage, cachedEntry.get(),
+                                RefreshErrorCode.CLIENT_INIT_TIMED_OUT, null));
                     } finally {
                         lock.unlock();
                     }
@@ -90,10 +91,15 @@ public class ConfigService implements Closeable {
         if (offline.get()) {
             String offlineWarning = ConfigCatLogMessages.CONFIG_SERVICE_CANNOT_INITIATE_HTTP_CALLS_WARN;
             logger.warn(3200, offlineWarning);
-            return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning));
+            return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning,
+                    RefreshErrorCode.OFFLINE_CLIENT, null));
         }
         return fetchIfOlder(Constants.DISTANT_FUTURE, false)
-                .thenApply(entryResult -> new RefreshResult(entryResult.error() == null, entryResult.error()));
+                .thenApply(entryResult -> {
+                    boolean success = entryResult.error() == null;
+                    return new RefreshResult(success, entryResult.error(),
+                            success ? RefreshErrorCode.NONE : entryResult.errorCode(), entryResult.errorException());
+                });
     }
 
     public CompletableFuture<SettingResult> getSettings() {
@@ -117,7 +123,7 @@ public class ConfigService implements Closeable {
 
     }
 
-    private CompletableFuture<Result<Entry>> fetchIfOlder(long threshold, boolean preferCached) {
+    private CompletableFuture<Result<Entry, RefreshErrorCode>> fetchIfOlder(long threshold, boolean preferCached) {
         // Sync up with the cache and use it when it's not expired.
         Entry fromCache = readCache();
         if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.get().getETag()) && fromCache.getFetchTime() > cachedEntry.get().getFetchTime()) {
@@ -127,11 +133,11 @@ public class ConfigService implements Closeable {
         // Cache isn't expired
         if (cachedEntry.get().getFetchTime() > threshold) {
             setInitialized();
-            return CompletableFuture.completedFuture(Result.success(cachedEntry.get()));
+            return CompletableFuture.completedFuture(Result.success(cachedEntry.get(), RefreshErrorCode.NONE));
         }
         // If we are in offline mode or the caller prefers cached values, do not initiate fetch.
         if (offline.get() || preferCached) {
-            return CompletableFuture.completedFuture(Result.success(cachedEntry.get()));
+            return CompletableFuture.completedFuture(Result.success(cachedEntry.get(), RefreshErrorCode.NONE));
         }
 
         lock.lock();
@@ -199,15 +205,15 @@ public class ConfigService implements Closeable {
                 cachedEntry.set(entry);
                 writeCache(entry);
                 configCatHooks.invokeOnConfigChanged(entry.getConfig().getEntries());
-                completeRunningTask(Result.success(entry));
+                completeRunningTask(Result.success(entry, RefreshErrorCode.NONE));
             } else {
                 if (response.isFetchTimeUpdatable()) {
                     cachedEntry.set(previousEntry.withFetchTime(System.currentTimeMillis()));
                     writeCache(cachedEntry.get());
                 }
                 completeRunningTask(response.isFailed()
-                        ? Result.error(response.error(), cachedEntry.get())
-                        : Result.success(cachedEntry.get()));
+                        ? Result.error(response.error(), cachedEntry.get(), response.errorCode(), response.errorException())
+                        : Result.success(cachedEntry.get(), RefreshErrorCode.NONE));
             }
             setInitialized();
         } finally {
@@ -215,7 +221,7 @@ public class ConfigService implements Closeable {
         }
     }
 
-    private void completeRunningTask(Result<Entry> result) {
+    private void completeRunningTask(Result<Entry, RefreshErrorCode> result) {
         runningTask.complete(result);
         runningTask = null;
     }
