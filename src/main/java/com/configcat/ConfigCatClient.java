@@ -89,7 +89,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         validateReturnType(classOfT);
-        User effectiveUser = getEvaluateUser(user);
+        User effectiveUser = getEffectiveUser(user);
         try {
             return this.getValueAsync(classOfT, key, effectiveUser, defaultValue).get();
         } catch (InterruptedException e) {
@@ -120,7 +120,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         validateReturnType(classOfT);
 
-        User effectiveUser = getEvaluateUser(user);
+        User effectiveUser = getEffectiveUser(user);
 
         return this.getSettingsAsync()
                 .thenApply(settingResult -> this.getValueFromSettingsMap(classOfT, settingResult, key, effectiveUser, defaultValue));
@@ -138,7 +138,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         validateReturnType(classOfT);
 
-        User effectiveUser = getEvaluateUser(user);
+        User effectiveUser = getEffectiveUser(user);
 
         try {
             return this.getValueDetailsAsync(classOfT, key, effectiveUser, defaultValue).get();
@@ -170,7 +170,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         validateReturnType(classOfT);
-        User effectiveUser = getEvaluateUser(user);
+        User effectiveUser = getEffectiveUser(user);
 
         return this.getSettingsAsync()
                 .thenApply(settingsResult -> {
@@ -203,9 +203,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public Map<String, Object> getAllValues(User user) {
-        User effectiveUser = getEvaluateUser(user);
         try {
-            return this.getAllValuesAsync(effectiveUser).get();
+            return this.getAllValuesAsync(user).get();
         } catch (InterruptedException e) {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
@@ -223,7 +222,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<Map<String, Object>> getAllValuesAsync(User user) {
-        User effectiveUser = getEvaluateUser(user);
+        User effectiveUser = getEffectiveUser(user);
 
         return this.getSettingsAsync()
                 .thenApply(settingResult -> {
@@ -259,9 +258,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public List<EvaluationDetails<Object>> getAllValueDetails(User user) {
-        User effectiveUser = getEvaluateUser(user);
         try {
-            return this.getAllValueDetailsAsync(effectiveUser).get();
+            return this.getAllValueDetailsAsync(user).get();
         } catch (InterruptedException e) {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
@@ -279,7 +277,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public CompletableFuture<List<EvaluationDetails<Object>>> getAllValueDetailsAsync(User user) {
-        User effectiveUser = getEvaluateUser(user);
+        User effectiveUser = getEffectiveUser(user);
         return this.getSettingsAsync()
                 .thenApply(settingResult -> {
                     try {
@@ -654,12 +652,12 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     /**
-     * Checks the user for evaluation, if the user null return with the default user .
+     * Determines the effective user for evaluation.
      *
-     * @param user The user for evaluation.
-     * @return if the user null return with the default user else with the user.
+     * @param user The user passed to the SDK.
+     * @return The provided user if not null; otherwise, the default user.
      */
-    private User getEvaluateUser(final User user) {
+    private User getEffectiveUser(final User user) {
         return user != null ? user : defaultUser;
     }
 
