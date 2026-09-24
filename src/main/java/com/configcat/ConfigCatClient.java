@@ -91,7 +91,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         validateReturnType(classOfT);
         User effectiveUser = getEffectiveUser(user);
         try {
-            return this.getValueAsync(classOfT, key, effectiveUser, defaultValue).get();
+            return this.getValueAsync(classOfT, key, user, defaultValue).get();
         } catch (InterruptedException e) {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
@@ -141,7 +141,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         User effectiveUser = getEffectiveUser(user);
 
         try {
-            return this.getValueDetailsAsync(classOfT, key, effectiveUser, defaultValue).get();
+            return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
         } catch (InterruptedException e) {
             String error = "Thread interrupted.";
             this.logger.error(0, error, e);
