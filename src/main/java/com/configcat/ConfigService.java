@@ -68,7 +68,11 @@ public class ConfigService implements Closeable {
 
         } else {
             // Sync up with cache before reporting ready state
-            cachedEntry.set(readCache());
+            Entry fromCache = readCache();
+            if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.get().getETag())){
+                cachedEntry.set(fromCache);
+                configCatHooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
+            }
             setInitialized();
         }
     }

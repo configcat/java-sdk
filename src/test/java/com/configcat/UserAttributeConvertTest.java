@@ -29,8 +29,10 @@ public class UserAttributeConvertTest {
                 //String Array data
                 Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "stringArrayContainsAnyOfDogDefaultCat", String.class, new String[]{"x", "read"}, "Dog"),
                 Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "stringArrayContainsAnyOfDogDefaultCat", String.class, new String[]{"x", "Read"}, "Cat"),
+                Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "stringArrayContainsAnyOfDogDefaultCat", String.class, new String[]{"x", "read", null}, "Cat"),
                 Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "stringArrayContainsAnyOfDogDefaultCat", String.class, Arrays.asList("x", "read"), "Dog"),
                 Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "stringArrayContainsAnyOfDogDefaultCat", String.class, Arrays.asList("x", "Read"), "Cat"),
+                Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "stringArrayContainsAnyOfDogDefaultCat", String.class, Arrays.asList("x", "read", null), "Cat"),
                 Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "stringArrayContainsAnyOfDogDefaultCat", String.class, "[\"x\", \"read\"]", "Dog"),
                 Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "stringArrayContainsAnyOfDogDefaultCat", String.class, "[\"x\", \"Read\"]", "Cat"),
                 Arguments.of("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "stringArrayContainsAnyOfDogDefaultCat", String.class, "x, read", "Cat"),
