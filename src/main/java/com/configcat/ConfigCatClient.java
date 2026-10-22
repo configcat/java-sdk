@@ -46,11 +46,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     createHttpClient(options.httpOptions()),
                     this.logger,
                     sdkKey,
-                    !options.isBaseURLCustom()
-                            ? options.dataGovernance == DataGovernance.GLOBAL
-                            ? BASE_URL_GLOBAL
-                            : BASE_URL_EU
-                            : options.baseUrl,
+                    determineBaseUrl(options.baseUrl, options.dataGovernance, options.isBaseURLCustom()),
                     options.isBaseURLCustom(),
                     options.pollingMode.getPollingIdentifier());
 
@@ -288,8 +284,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         Map<String, Setting> settings = settingResult.settings();
                         List<EvaluationDetails<Object>> result = new ArrayList<>();
 
-                        for (String key : settings.keySet()) {
-                            Setting setting = settings.get(key);
+                        for (Map.Entry<String, Setting> entry : settings.entrySet()) {
+                            String key = entry.getKey();
+                            Setting setting = entry.getValue();
 
                             EvaluationDetails<Object> evaluationDetails = this.evaluateObject(this.classBySettingType(setting.getType()), setting,
                                     key, effectiveUser, settingResult.fetchTime(), settings);
@@ -723,6 +720,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
         //configcat-sdk-1/22/22 rules
         return splitSDKKey.length == 3 && splitSDKKey[0].equals(Constants.SDK_KEY_PREFIX) && splitSDKKey[1].length() == Constants.SDK_KEY_SECTION_LENGTH && splitSDKKey[2].length() == Constants.SDK_KEY_SECTION_LENGTH;
+    }
+
+    private static String determineBaseUrl(String baseUrl, DataGovernance dataGovernance, boolean isBaseUrlCustom) {
+        if (isBaseUrlCustom) {
+            return baseUrl;
+        }
+        return dataGovernance == DataGovernance.GLOBAL ? BASE_URL_GLOBAL : BASE_URL_EU;
     }
 
     private EvaluationDetails<Object> evaluateObject(Class<?> classOfT, Setting setting, String key, User effectiveUser, Long fetchTime, Map<String, Setting> settings) {

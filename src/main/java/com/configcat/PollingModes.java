@@ -5,6 +5,10 @@ package com.configcat;
  */
 public final class PollingModes {
 
+    private PollingModes() {
+        // Private constructor to prevent instantiation.
+    }
+
     private static final int DEFAULT_AUTO_POLL_INTERVAL_IN_SECONDS = 60;
     private static final int DEFAULT_MAX_INIT_WAIT_TIME_IN_SECONDS = 5;
     private static final int DEFAULT_CACHE_REFRESH_INTERVAL_IN_SECONDS = 60;
