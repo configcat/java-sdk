@@ -12,6 +12,7 @@ class OverrideDataSource implements Closeable {
 
     @Override
     public void close() throws IOException {
+        // No resources to close in this implementation.
     }
 }
 

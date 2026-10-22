@@ -46,6 +46,8 @@ public class ConfigCatHooks {
      * onReady event fires when the auto polling's maxInitWaitTimeInSeconds is reached.
      *
      * @param callback the method to call when the event fires.
+     *
+     * @deprecated Use {@link #addOnClientReady(Consumer)} instead.
      */
     @Deprecated
     public void addOnClientReady(Runnable callback) {

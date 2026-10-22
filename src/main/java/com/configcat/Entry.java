@@ -23,16 +23,16 @@ public class Entry {
     }
 
     public Entry withFetchTime(long fetchTime) {
-        String cacheString = getCacheString();
-        int fetchTimeIndex = cacheString.indexOf("\n");
+        String entryCacheString = getCacheString();
+        int fetchTimeIndex = entryCacheString.indexOf("\n");
         if (fetchTimeIndex == -1) {
             return this;
         }
-        int eTagIndex = cacheString.indexOf("\n", fetchTimeIndex + 1);
+        int eTagIndex = entryCacheString.indexOf("\n", fetchTimeIndex + 1);
         if (eTagIndex == -1) {
             return this;
         }
-        String configJson = cacheString.substring(eTagIndex + 1);
+        String configJson = entryCacheString.substring(eTagIndex + 1);
         return new Entry(getConfig(), getETag(), configJson, fetchTime);
     }
 

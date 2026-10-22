@@ -9,6 +9,10 @@ import java.util.Locale;
 
 final class UserAttributeConverter {
 
+    private UserAttributeConverter() {
+        // Private constructor to prevent instantiation.
+    }
+
     public static String userAttributeToString(Object userAttribute) {
         if (userAttribute == null) {
             return null;

@@ -41,7 +41,7 @@ public enum RefreshErrorCode implements ErrorCode {
     /** Client initialization could not complete within `maxInitWaitTimeSeconds`. */
     CLIENT_INIT_TIMED_OUT(4200);
 
-    public final int code;
+    private final int code;
 
     RefreshErrorCode(int code) {
         this.code = code;
