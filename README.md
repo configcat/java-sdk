@@ -16,12 +16,12 @@ ConfigCat SDK for Java provides easy integration for your application to [Config
 <dependency>
   <groupId>com.configcat</groupId>
   <artifactId>configcat-java-client</artifactId>
-  <version>[8.0.0,)</version>
+  <version>[10.0.0,)</version>
 </dependency>
 ```
 *Gradle:*
 ```groovy
-implementation "com.configcat:configcat-java-client:8.+"
+implementation "com.configcat:configcat-java-client:10.+"
 ```
 
 ### 2. Go to the <a href="https://app.configcat.com/sdkkey" target="_blank">ConfigCat Dashboard</a> to get your *SDK Key*:

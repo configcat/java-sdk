@@ -32,7 +32,7 @@ public enum EvaluationErrorCode implements ErrorCode {
      */
     SETTING_KEY_MISSING(1001);
 
-    public final int code;
+    private final int code;
 
     EvaluationErrorCode(int code) {
         this.code = code;

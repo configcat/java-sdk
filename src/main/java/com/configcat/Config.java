@@ -37,7 +37,10 @@ public class Config {
     public Map<String, Setting> getEntries() {
         // NOTE: Deserializing a JSON like '{ "f": null }' overwrites entries with null.
         // However, we want to treat null as an empty map in that case too.
-        return entries != null ? entries : (entries = new HashMap<>());
+        if(entries == null) {
+            entries = new HashMap<>();
+        }
+        return entries;
     }
 
     boolean isEmpty() {
