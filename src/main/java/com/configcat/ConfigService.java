@@ -130,25 +130,27 @@ public class ConfigService implements Closeable {
     private CompletableFuture<Result<Entry, RefreshErrorCode>> fetchIfOlder(long threshold, boolean preferCached) {
         // Sync up with the cache and use it when it's not expired.
         Entry fromCache = readCache();
-        if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.get().getETag()) && fromCache.getFetchTime() > cachedEntry.get().getFetchTime()) {
+        Entry current = cachedEntry.get();
+        if (!fromCache.isEmpty() && !fromCache.getETag().equals(current.getETag()) && fromCache.getFetchTime() > current.getFetchTime()) {
             configCatHooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
-            cachedEntry.set(fromCache);
+            cachedEntry.compareAndSet(current, fromCache);
         }
+        current = cachedEntry.get();
         // Cache isn't expired
-        if (cachedEntry.get().getFetchTime() > threshold) {
+        if (current.getFetchTime() > threshold) {
             setInitialized();
-            return CompletableFuture.completedFuture(Result.success(cachedEntry.get(), RefreshErrorCode.NONE));
+            return CompletableFuture.completedFuture(Result.success(current, RefreshErrorCode.NONE));
         }
         // If we are in offline mode or the caller prefers cached values, do not initiate fetch.
         if (offline.get() || preferCached) {
-            return CompletableFuture.completedFuture(Result.success(cachedEntry.get(), RefreshErrorCode.NONE));
+            return CompletableFuture.completedFuture(Result.success(current, RefreshErrorCode.NONE));
         }
 
         lock.lock();
         try {
             if (runningTask == null) { // No fetch is running, initiate a new one.
                 runningTask = new CompletableFuture<>();
-                configFetcher.fetchAsync(cachedEntry.get().getETag())
+                configFetcher.fetchAsync(current.getETag())
                         .thenAccept(this::processResponse);
             }
 
@@ -212,8 +214,10 @@ public class ConfigService implements Closeable {
                 completeRunningTask(Result.success(entry, RefreshErrorCode.NONE));
             } else {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry.set(previousEntry.withFetchTime(System.currentTimeMillis()));
-                    writeCache(cachedEntry.get());
+                    Entry updateEntry = previousEntry.withFetchTime(System.currentTimeMillis());
+                    if(cachedEntry.compareAndSet(previousEntry, updateEntry)){
+                        writeCache(updateEntry);
+                    }
                 }
                 completeRunningTask(response.isFailed()
                         ? Result.error(response.error(), cachedEntry.get(), response.errorCode(), response.errorException())

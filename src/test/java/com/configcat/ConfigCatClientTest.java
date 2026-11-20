@@ -1,8 +1,10 @@
 package com.configcat;
 
 import okhttp3.OkHttpClient;
+import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -17,6 +19,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigCatClientTest {
     private static final String TEST_JSON = "{ p: { s: 'test-salt' }, f: { fakeKey: {  t: 1, v: {s: 'fakeValue'}, s: 0, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_FORMAT_VALUE = "{ p: { s: 'test-salt' }, f: { fakeKey: {  t: 1, v: {s: %s}, s: 0, p: [] ,r: [] } } }";
     private static final String TEST_JSON_MULTIPLE = "{ p: { s: 'test-salt' }, f: { key1: { t: 0, v: {b: true}, i: 'fakeId1', p: [] ,r: [] }, key2: { t: 0, v: {b: false}, i: 'fakeId2', p: [] ,r: [] } } }";
     public static final String TEST_JSON_DEFAULT_USER = "{ p: { s: 'test-salt' }, 'f':{'fakeKey':{  t: 1, 'v': {s: 'defaultValue'},'i':'defaultId', r: [ {c: [ {u: { a: 'Identifier', c: 2, l: ['test1']}}],s: { v: {s: 'fakeValue1'},i: 'test1Id'}},{c: [{u: {a: 'Identifier', c: 2,l: ['test2']}}],s: { v: {s: 'fakeValue2'},i: 'test2Id'}}] } } }";
     public static final String RULES_JSON = "{ p: { s: 'test-salt' }, f: { key: {  t: 1, v: {s: 'def'}, t: 1, i: 'defVar', p: [] , r: [ {c: [ {u: { a: 'Identifier', c: 2, l: ['@test1.com']}}],s: { v: {s: 'fake1'},i: 'id1'}},{c: [{u: {a: 'Identifier', c: 2,l: ['@test2.com']}}],s: { v: {s: 'fake2'},i: 'id2'}}] } } }";
@@ -265,6 +269,77 @@ public class ConfigCatClientTest {
         server.close();
         cl.close();
     }
+
+    @Test
+    void testOlderExternalCacheEntryDoesNotReplaceNewerInMemoryEntry() throws IOException {
+        long now = System.currentTimeMillis();
+        String newer = Helpers.cacheValueFromConfigJsonWithTime(String.format(TEST_JSON_FORMAT_VALUE, "newer"), now);
+        String older = Helpers.cacheValueFromConfigJsonWithTime(String.format(TEST_JSON_FORMAT_VALUE, "older"), now - 60000);
+        SingleValueCache cache = new SingleValueCache(newer);
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.cache(cache);
+        });
+
+        Map<String, Object> values = cl.getAllValues();
+        assertEquals("newer", values.get("fakeKey"));
+
+        cache.write("fakeCacheKey", older);
+        values = cl.getAllValues();
+        assertEquals("newer", values.get("fakeKey"));
+
+        cl.close();
+    }
+
+    @Test
+    void testNotModifiedDoesNotRefreshEntryReplacedDuringFetch() throws IOException, ExecutionException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        CountDownLatch requestReceived = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+
+        server.setDispatcher(
+                new Dispatcher() {
+
+                    @Override
+                    public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+                        requestReceived.countDown();
+                        release.await(10, TimeUnit.SECONDS);      // hold the response
+                        return new MockResponse().setResponseCode(304);
+                    }
+                }
+        );
+
+        long now = System.currentTimeMillis();
+        String original = Helpers.cacheValueFromConfigJsonWithTime(String.format(TEST_JSON_FORMAT_VALUE, "original"), now - 120000);
+        String replacement = Helpers.cacheValueFromConfigJsonWithEtagAndTime(String.format(TEST_JSON_FORMAT_VALUE, "replacement"), "replacementTag", now - 60000);
+        SingleValueCache cache = new SingleValueCache(original);
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.cache(cache);
+            options.baseUrl(server.url("/").toString());
+            options.httpOptions().readTimeoutMillis(1000);
+        });
+
+        CompletableFuture<RefreshResult> refreshResultCompletableFuture = cl.forceRefreshAsync();
+        assertTrue(requestReceived.await(5, TimeUnit.SECONDS));
+
+        cache.write("fakeCacheKey", replacement);
+        Map<String, Object> allValues = cl.getAllValues();
+        assertEquals("replacement", allValues.get("fakeKey"));
+
+        release.countDown();                                     // now let the 304 through
+        RefreshResult refreshResult = refreshResultCompletableFuture.get();
+        assertEquals(RefreshErrorCode.NONE, refreshResult.errorCode());
+        assertTrue(refreshResult.isSuccess());
+
+        server.close();
+        cl.close();
+    }
+
 
     @Test
     void maxInitWaitTimeTest() throws IOException {
