@@ -330,5 +330,28 @@ public class AutoPollingTest {
 
         configService.close();
     }
+
+    @Test
+    void testInitWaitTimeReturnCached() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test1")).setBodyDelay(2, TimeUnit.SECONDS));
+
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonWithTime(String.format(TEST_JSON, "test"), Constants.DISTANT_PAST));
+
+        PollingMode pollingMode = PollingModes.autoPoll(60, 1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService configService = new ConfigService("", fetcher, pollingMode, cache, logger, false, new ConfigCatHooks());
+
+        long start = System.currentTimeMillis();
+        assertEquals("test", configService.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
+        long duration = System.currentTimeMillis() - start;
+        assertTrue(duration < 1500);
+
+        configService.close();
+    }
 }
 

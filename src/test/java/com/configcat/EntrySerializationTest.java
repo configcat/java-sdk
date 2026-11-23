@@ -97,7 +97,7 @@ public class EntrySerializationTest {
         long currentTimeMillis = System.currentTimeMillis();
         Exception assertThrows = assertThrows(Exception.class, () -> Entry.fromString(String.format(SERIALIZED_DATA, currentTimeMillis / 1000, "fakeTag", "")));
 
-        assertEquals("Empty config jsom value.", assertThrows.getMessage());
+        assertEquals("Empty config json value.", assertThrows.getMessage());
 
         assertThrows = assertThrows(Exception.class, () -> Entry.fromString(String.format(SERIALIZED_DATA, currentTimeMillis / 1000, "fakeTag", "wrongjson")));
 
