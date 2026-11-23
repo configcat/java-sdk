@@ -151,7 +151,7 @@ public class ConfigService implements Closeable {
             if (runningTask == null) { // No fetch is running, initiate a new one.
                 runningTask = new CompletableFuture<>();
                 Entry finalCurrent = current;
-                configFetcher.fetchAsync(current.getETag())
+                configFetcher.fetchAsync(finalCurrent.getETag())
                         .thenAccept(response -> this.processResponse(response, finalCurrent));
             }
 
