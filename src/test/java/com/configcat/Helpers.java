@@ -18,8 +18,12 @@ final class Helpers {
     }
 
     static String cacheValueFromConfigJsonWithEtag(String json, String etag) {
+        return cacheValueFromConfigJsonWithEtagAndTime(json, etag, System.currentTimeMillis());
+    }
+
+    static String cacheValueFromConfigJsonWithEtagAndTime(String json, String etag, long time) {
         Config config = Utils.gson.fromJson(json, Config.class);
-        Entry entry = new Entry(config, etag, json, System.currentTimeMillis());
+        Entry entry = new Entry(config, etag, json, time);
         return entry.getCacheString();
     }
 

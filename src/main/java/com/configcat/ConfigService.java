@@ -69,7 +69,7 @@ public class ConfigService implements Closeable {
         } else {
             // Sync up with cache before reporting ready state
             Entry fromCache = readCache();
-            if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.get().getETag())){
+            if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.get().getETag())) {
                 cachedEntry.set(fromCache);
                 configCatHooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
             }
@@ -130,26 +130,31 @@ public class ConfigService implements Closeable {
     private CompletableFuture<Result<Entry, RefreshErrorCode>> fetchIfOlder(long threshold, boolean preferCached) {
         // Sync up with the cache and use it when it's not expired.
         Entry fromCache = readCache();
-        if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.get().getETag()) && fromCache.getFetchTime() > cachedEntry.get().getFetchTime()) {
+        Entry current = cachedEntry.get();
+        if (!fromCache.isEmpty() &&
+                (current.isEmpty() || (!fromCache.getETag().equals(current.getETag()) && fromCache.getFetchTime() > current.getFetchTime())) &&
+                cachedEntry.compareAndSet(current, fromCache)) {
             configCatHooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
-            cachedEntry.set(fromCache);
         }
+        current = cachedEntry.get();
         // Cache isn't expired
-        if (cachedEntry.get().getFetchTime() > threshold) {
+        if (current.getFetchTime() > threshold) {
             setInitialized();
-            return CompletableFuture.completedFuture(Result.success(cachedEntry.get(), RefreshErrorCode.NONE));
+            return CompletableFuture.completedFuture(Result.success(current, RefreshErrorCode.NONE));
         }
         // If we are in offline mode or the caller prefers cached values, do not initiate fetch.
         if (offline.get() || preferCached) {
-            return CompletableFuture.completedFuture(Result.success(cachedEntry.get(), RefreshErrorCode.NONE));
+            setInitialized();
+            return CompletableFuture.completedFuture(Result.success(current, RefreshErrorCode.NONE));
         }
 
         lock.lock();
         try {
             if (runningTask == null) { // No fetch is running, initiate a new one.
                 runningTask = new CompletableFuture<>();
-                configFetcher.fetchAsync(cachedEntry.get().getETag())
-                        .thenAccept(this::processResponse);
+                Entry finalCurrent = current;
+                configFetcher.fetchAsync(finalCurrent.getETag())
+                        .thenAccept(response -> this.processResponse(response, finalCurrent));
             }
 
             return runningTask;
@@ -200,8 +205,7 @@ public class ConfigService implements Closeable {
         return offline.get();
     }
 
-    private void processResponse(FetchResponse response) {
-        Entry previousEntry = cachedEntry.get();
+    private void processResponse(FetchResponse response, Entry current) {
         lock.lock();
         try {
             if (response.isFetched()) {
@@ -212,8 +216,10 @@ public class ConfigService implements Closeable {
                 completeRunningTask(Result.success(entry, RefreshErrorCode.NONE));
             } else {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry.set(previousEntry.withFetchTime(System.currentTimeMillis()));
-                    writeCache(cachedEntry.get());
+                    Entry updateEntry = current.withFetchTime(System.currentTimeMillis());
+                    if (cachedEntry.compareAndSet(current, updateEntry)) {
+                        writeCache(updateEntry);
+                    }
                 }
                 completeRunningTask(response.isFailed()
                         ? Result.error(response.error(), cachedEntry.get(), response.errorCode(), response.errorException())

@@ -39,6 +39,7 @@ public class Entry {
     public boolean isExpired(long threshold) {
         return fetchTime <= threshold ;
     }
+
     public Entry(Config config, String eTag, String configJson, long fetchTime) {
         this.config = config;
         this.eTag = eTag;
@@ -79,7 +80,7 @@ public class Entry {
         }
         String configJson = cacheValue.substring(eTagIndex + 1);
         if (configJson.isEmpty()) {
-            throw new IllegalArgumentException("Empty config jsom value.");
+            throw new IllegalArgumentException("Empty config json value.");
         }
         try {
             Config config = Utils.deserializeConfig(configJson);
