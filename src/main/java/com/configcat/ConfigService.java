@@ -150,8 +150,9 @@ public class ConfigService implements Closeable {
         try {
             if (runningTask == null) { // No fetch is running, initiate a new one.
                 runningTask = new CompletableFuture<>();
+                Entry finalCurrent = current;
                 configFetcher.fetchAsync(current.getETag())
-                        .thenAccept(this::processResponse);
+                        .thenAccept(response -> this.processResponse(response, finalCurrent));
             }
 
             return runningTask;
@@ -202,8 +203,7 @@ public class ConfigService implements Closeable {
         return offline.get();
     }
 
-    private void processResponse(FetchResponse response) {
-        Entry previousEntry = cachedEntry.get();
+    private void processResponse(FetchResponse response,  Entry current) {
         lock.lock();
         try {
             if (response.isFetched()) {
@@ -214,8 +214,8 @@ public class ConfigService implements Closeable {
                 completeRunningTask(Result.success(entry, RefreshErrorCode.NONE));
             } else {
                 if (response.isFetchTimeUpdatable()) {
-                    Entry updateEntry = previousEntry.withFetchTime(System.currentTimeMillis());
-                    if(cachedEntry.compareAndSet(previousEntry, updateEntry)){
+                    Entry updateEntry = current.withFetchTime(System.currentTimeMillis());
+                    if(cachedEntry.compareAndSet(current, updateEntry)){
                         writeCache(updateEntry);
                     }
                 }

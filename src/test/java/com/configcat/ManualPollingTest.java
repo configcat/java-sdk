@@ -1,14 +1,19 @@
 package com.configcat;
 
 import okhttp3.OkHttpClient;
+import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -113,6 +118,62 @@ public class ManualPollingTest {
         assertEquals(1, cache.getMap().size());
 
         service.close();
+    }
+
+    @Test
+    void testNotModifiedDoesNotRefreshEntryReplacedDuringFetch() throws Exception {
+        assertResponseDoesNotRefreshEntryReplacedDuringFetch(304, RefreshErrorCode.NONE);
+    }
+
+    @Test
+    void testNonTransientErrorDoesNotRefreshEntryReplacedDuringFetch() throws Exception {
+        assertResponseDoesNotRefreshEntryReplacedDuringFetch(404, RefreshErrorCode.INVALID_SDK_KEY);
+    }
+
+    private void assertResponseDoesNotRefreshEntryReplacedDuringFetch(int status, RefreshErrorCode expectedErrorCode) throws Exception {
+        CompletableFuture<String> requestedETag = new CompletableFuture<>();
+        CountDownLatch allowResponse = new CountDownLatch(1);
+        this.server.setDispatcher(new Dispatcher() {
+            @NotNull
+            @Override
+            public MockResponse dispatch(@NotNull RecordedRequest request) throws InterruptedException {
+                requestedETag.complete(request.getHeader("If-None-Match"));
+                allowResponse.await(10, TimeUnit.SECONDS);
+                return new MockResponse().setResponseCode(status);
+            }
+        });
+
+        long now = System.currentTimeMillis();
+        String original = Helpers.cacheValueFromConfigJsonWithEtagAndTime(String.format(TEST_JSON, "original"), "original", now - 120000);
+        String replacement = Helpers.cacheValueFromConfigJsonWithEtagAndTime(String.format(TEST_JSON, "replacement"), "replacement", now - 60000);
+        SingleValueCache cache = new SingleValueCache(original);
+
+        PollingMode mode = PollingModes.manualPoll();
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigService service = new ConfigService("", fetcher, mode, cache, logger, false, new ConfigCatHooks());
+
+        try {
+            CompletableFuture<RefreshResult> refresh = service.refresh();
+            long replacementFetchTime = Entry.fromString(replacement).getFetchTime();
+
+            try {
+                assertEquals("original", requestedETag.get(5, TimeUnit.SECONDS));
+                cache.write("", replacement);
+                SettingResult settings = service.getSettings().get();
+                assertEquals("replacement", settings.settings().get("fakeKey").getSettingsValue().getStringValue());
+                assertEquals(replacementFetchTime, settings.fetchTime());
+            } finally {
+                allowResponse.countDown();
+            }
+
+            RefreshResult result = refresh.get(5, TimeUnit.SECONDS);
+            assertEquals(expectedErrorCode, result.errorCode());
+            assertEquals(expectedErrorCode == RefreshErrorCode.NONE, result.isSuccess());
+            assertEquals(replacementFetchTime, service.getSettings().get().fetchTime());
+            assertEquals(replacement, cache.read(""));
+        } finally {
+            service.close();
+        }
     }
 
     @Test
